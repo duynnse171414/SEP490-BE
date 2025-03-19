@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, EyeOff } from "lucide-react";
 import { LoginUserDTO } from "../types";
 import { EvervaultCard } from "@/components/ui/evervault-card";
+import { AuthContext } from "../contexts/AuthContext";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 type LoginFormProps = {
   onSubmit: (data: LoginUserDTO) => void;
@@ -19,6 +21,8 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const [loginMessage, setErrorMessage] = useState("");
+  const AuthContext = useAuthContext();
 
   useEffect(() => {
     if (isFocused && passwordRef.current) {
@@ -26,13 +30,25 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
     }
   }, [isFocused]);
 
+  useEffect(() => {
+    setErrorMessage(AuthContext.loginMessage || "");
+  }, [AuthContext.loginMessage]);
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrorMessage("");
     onSubmit({ email, password });
+    setErrorMessage(AuthContext.loginMessage || "");
   };
 
   return (
-    <div className={cn("animated-background mx-auto w-full items-center justify-center py-4", className)} {...props}>
+    <div
+      className={cn(
+        "animated-background mx-auto w-full items-center justify-center py-4",
+        className
+      )}
+      {...props}
+    >
       <div className="absolute inset-0 -z-10">
         <EvervaultCard text="hover" />
       </div>
@@ -63,7 +79,10 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
               <div className="grid gap-2 relative">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <a href="#" className="ml-auto inline-block text-sm underline-offset-4 hover:underline">
+                  <a
+                    href="#"
+                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  >
                     Forgot your password?
                   </a>
                 </div>
@@ -100,6 +119,9 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
                 )}
               </div>
 
+              {loginMessage && (
+                <p className="text-red-500 text-sm">{loginMessage}</p>
+              )}
               <Button type="submit" className="w-full">
                 Login
               </Button>
