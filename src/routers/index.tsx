@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { MainLayout } from "../layouts/MainLayout";
 import SplashScreen from "@/sections/SplashScreen";
 import { AdminLayout } from "@/layouts/AdminLayout";
+// import ManageListStaff from "@/pages/admin/ManageListStaff";
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import("../pages/HomePage"));
@@ -18,8 +19,7 @@ const AboutPage = lazy(() => import("../pages/about/AboutPage"));
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
 const DashboardPage = lazy(() => import("../pages/dashboard/dashboardPage"));
 const ReportPage = lazy(() => import("../pages/report/report"));
-
-
+const StaffListPage = lazy(() => import("../pages/admin/StaffListPage"));
 
 const router = createBrowserRouter([
   {
@@ -32,22 +32,19 @@ const router = createBrowserRouter([
       { path: "comments", element: <CommentsPage /> },
       { path: "albums", element: <AlbumsPage /> },
       { path: "photos", element: <PhotosPage /> },
-      { path: "todos", element: <TodosPage /> },
+      { path: "staff", element: <StaffListPage /> },
       { path: "users", element: <UsersPage /> },
       { path: "users/:id", element: <UserDetailPage /> },
       { path: "about", element: <AboutPage /> },
       { path: "dashboard", element: <DashboardPage /> },
       { path: "report", element: <ReportPage /> },
-
+      // { path: "admin", element: <ManageListStaff /> },
     ],
   },
   {
     path: "admin",
     element: <AdminLayout />,
-    children: [
-      { path: "dashboard", element: <DashboardPage /> },
-    ],
-
+    children: [{ path: "dashboard", element: <DashboardPage /> }],
   },
   {
     path: "*",
