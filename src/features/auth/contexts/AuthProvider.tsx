@@ -15,7 +15,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [success, setSuccess] = useState<boolean>(false);
 
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("loggedUser");
+    const storedUser = localStorage.getItem("loggedUser");
     if (storedUser) {
       setLoggedUser(JSON.parse(storedUser));
     }
@@ -38,11 +38,10 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           role: decodedToken[
             "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
           ],
-          
           token: data.accessToken,
         };
 
-        sessionStorage.setItem("loggedUser", JSON.stringify(loggedUser));
+        localStorage.setItem("loggedUser", JSON.stringify(loggedUser)); 
         setLoggedUser(loggedUser);
         setSuccess(true);
         return { success: true };
@@ -65,7 +64,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    sessionStorage.removeItem("loggedUser");
+    localStorage.removeItem("loggedUser");
     setLoggedUser(null);
   };
 
