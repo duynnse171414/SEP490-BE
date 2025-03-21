@@ -46,20 +46,20 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSuccess(true);
         return { success: true };
       } else {
-        setLoginMessage(response.message || "Wrong Username or Password");
+        setLoginMessage(response.message || "Wrong Email or Password");
         setTimeout(() => {
           setLoginMessage(null);
         }, 3000);
 
-        return { success: false, message: response.message || "Wrong Username or Password" };
+        return { success: false, message: response.message || "Wrong Email or Password" };
       }
     } catch (error) {
-      setLoginMessage("Wrong Username or Password");
+      setLoginMessage("Wrong Email or Password");
       setTimeout(() => {
         setLoginMessage(null);
       }, 2000);
 
-      return { success: false, message: "Wrong Username or Password" };
+      return { success: false, message: "Wrong Email or Password" };
     }
   };
 
