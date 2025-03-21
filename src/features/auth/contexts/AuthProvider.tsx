@@ -38,6 +38,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           role: decodedToken[
             "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
           ],
+          
+          token: data.accessToken,
         };
 
         sessionStorage.setItem("loggedUser", JSON.stringify(loggedUser));
@@ -53,12 +55,12 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return { success: false, message: response.message || "Wrong Username or Password" };
       }
     } catch (error) {
-      setLoginMessage("Login failed. Please try again.");
+      setLoginMessage("Wrong Username or Password");
       setTimeout(() => {
         setLoginMessage(null);
       }, 2000);
 
-      return { success: false, message: "Login failed. Please try again." };
+      return { success: false, message: "Wrong Username or Password" };
     }
   };
 
