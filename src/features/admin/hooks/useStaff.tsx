@@ -25,7 +25,7 @@ export const useStaffs = (pageNumber: number = 1) => {
   const params = { pageNumber };
   const { data, error, mutate } = useSWR<Staff[]>(
     BASE_URL + `/Staff/GetStaffs`,
-    (url) => fetcherWithParams(url, { params }),
+    (url) => fetcherWithParams(url, {}),
     {
       dedupingInterval: 60000,
       refreshInterval: 0,
