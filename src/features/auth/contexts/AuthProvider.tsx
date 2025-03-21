@@ -3,75 +3,75 @@ import { AuthContext } from "./AuthContext";
 import { User } from "@/features/users/types";
 import { LoginUserDTO } from "../types";
 import { postData } from "@/api/fetchers";
-import { jwtDecode } from "jwt-decode"; // Ensure you import it
+import { jwtDecode } from "jwt-decode";
 
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [loggedUser, setLoggedUser] = useState<User | null>(null);
+  const [loginMessage, setLoginMessage] = useState<string | null>(null);
+  const [success, setSuccess] = useState<boolean>(false);
 
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("user");
+    const storedUser = sessionStorage.getItem("loggedUser");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      setLoggedUser(JSON.parse(storedUser));
     }
   }, []);
 
-  const login = (userData: LoginUserDTO) => {
-    const respones = postData("auths/login", userData);
-    respones?.then((res) => {
-      const data = res.data;
-      console.log("Response Data:", data);
-      if (data.accessToken) {
-        const decodedToken = jwtDecode(data.accessToken);
-        console.log("Decoded Token:", decodedToken);
+  const login = async (userData: LoginUserDTO) => {
+    try {
+      const response = await postData("auths/login", userData);
+      const data = response.data;
+      const success = response.success;
+
+      if (success && data.accessToken) {
+        const decodedToken: any = jwtDecode(data.accessToken);
+
+        const loggedUser: User = {
+          email:
+            decodedToken[
+              "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+            ],
+          role: decodedToken[
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          ],
+        };
+
+        sessionStorage.setItem("loggedUser", JSON.stringify(loggedUser));
+        setLoggedUser(loggedUser);
+        setSuccess(true);
+        return { success: true };
       } else {
-        console.error("No accessToken found in response");
+        setLoginMessage(response.message || "Wrong Username or Password");
+        setTimeout(() => {
+          setLoginMessage(null);
+        }, 3000);
+
+        return { success: false, message: response.message || "Wrong Username or Password" };
       }
-    });
+    } catch (error) {
+      setLoginMessage("Login failed. Please try again.");
+      setTimeout(() => {
+        setLoginMessage(null);
+      }, 2000);
 
-    const sampleUser: User = {
-      id: 1,
-      name: userData.email,
-      username: userData.email,
-      email: userData.email,
-      phone: "+1-202-555-0173",
-      website: "https://johndoe.dev",
-      address: {
-        street: "123 Main St",
-        suite: "Apt 4B",
-        city: "New York",
-        zipcode: "10001",
-        geo: {
-          lat: "40.7128",
-          lng: "-74.0060",
-        },
-      },
-      company: {
-        name: "Doe Technologies",
-        catchPhrase: "Innovating the Future",
-        bs: "tech solutions and software development",
-      },
-    };
-
-    sessionStorage.setItem("user", JSON.stringify(sampleUser));
-    setUser(sampleUser);
+      return { success: false, message: "Login failed. Please try again." };
+    }
   };
 
   const logout = () => {
-    sessionStorage.removeItem("user");
-    setUser(null);
+    sessionStorage.removeItem("loggedUser");
+    setLoggedUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user: loggedUser, login, logout, loginMessage, success }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export default AuthProvider;
-
-
