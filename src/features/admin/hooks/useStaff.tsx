@@ -8,7 +8,7 @@ const BASE_URL = "https://localhost:7100/api";
 
 export const useStaff = (page: number) => {
   const { data, error, mutate } = useSWR<Staff[]>(
-    BASE_URL + `/Staff/GetStaffs?page=${page}`, // Thay api/staffs bằng endpoint của bạn
+    BASE_URL + `/Staffs/GetStaffs?page=${page}`, // Thay api/staffs bằng endpoint
     (url) => fetcherWithParams(url, {}),
     {
       dedupingInterval: 60000,
@@ -25,7 +25,7 @@ export const useStaffs = (pageNumber: number = 1) => {
   const params = { pageNumber };
   const { data, error, mutate } = useSWR<Staff[]>(
     BASE_URL + `/Staff/GetStaffs`,
-    (url) => fetcherWithParams(url, {}),
+    (url) => fetcherWithParams(url, { params }),
     {
       dedupingInterval: 60000,
       refreshInterval: 0,

@@ -21,7 +21,7 @@ import {
   Download,
 } from "lucide-react";
 
-const StaffListPage = () => {
+const StaffPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
   const { data: staffs, isLoading, error } = useStaff(pageNumber);
 
@@ -87,6 +87,7 @@ const StaffListPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold">No.</TableHead>
                       <TableHead className="font-semibold">Email</TableHead>
                       <TableHead className="font-semibold">
                         Staff Name
@@ -103,11 +104,14 @@ const StaffListPage = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {staffs.map((staff) => (
+                    {staffs.map((staff, index) => (
                       <TableRow
                         key={staff.staffId}
                         className="hover:bg-muted/50"
                       >
+                        <TableCell className="text">
+                          {(pageNumber - 1) * 3 + index + 1}
+                        </TableCell>
                         <TableCell className="font-medium">
                           {staff.email}
                         </TableCell>
@@ -171,4 +175,4 @@ const StaffListPage = () => {
   );
 };
 
-export default StaffListPage;
+export default StaffPage;
