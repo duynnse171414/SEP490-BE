@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { AuthContext } from "./AuthContext";
 import { User } from "@/features/users/types";
 import { LoginUserDTO } from "../types";
@@ -13,6 +14,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loggedUser, setLoggedUser] = useState<User | null>(null);
   const [loginMessage, setLoginMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const storedUser = localStorage.getItem("loggedUser");
@@ -44,6 +46,11 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem("loggedUser", JSON.stringify(loggedUser)); 
         setLoggedUser(loggedUser);
         setSuccess(true);
+
+        if (loggedUser.role === "admin") {
+          navigate("/admin/dashboard");
+        }
+
         return { success: true };
       } else {
         setLoginMessage(response.message || "Wrong Email or Password");
