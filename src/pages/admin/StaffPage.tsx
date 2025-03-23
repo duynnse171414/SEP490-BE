@@ -1,6 +1,6 @@
 "use client";
 
-import { useStaff } from "@/features/admin/hooks/useStaff";
+import { useStaff, useStaffs } from "@/features/admin/hooks/useStaff";
 import { useState } from "react";
 import {
   Table,
@@ -20,10 +20,13 @@ import {
   Upload,
   Download,
 } from "lucide-react";
+// import { Staff } from "@/features/admin/types";
 
 const StaffPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
-  const { data: staffs, isLoading, error } = useStaff(pageNumber);
+  const { data: staffResponse, isLoading, error } = useStaffs(pageNumber);
+  const staffs = staffResponse?.items;
+  const totalPages = staffResponse?.totalPages;
 
   const handlePageChange = (newPageNumber: number) => {
     setPageNumber(newPageNumber);
@@ -110,7 +113,7 @@ const StaffPage = () => {
                         className="hover:bg-muted/50"
                       >
                         <TableCell className="text">
-                          {(pageNumber - 1) * 3 + index + 1}
+                          {(pageNumber - 1) * 10 + index + 1}
                         </TableCell>
                         <TableCell className="font-medium">
                           {staff.email}
@@ -159,7 +162,7 @@ const StaffPage = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(pageNumber + 1)}
-                    disabled={staffs.length < 3}
+                    disabled={!staffs || pageNumber === totalPages}
                     className="h-8 w-8 p-0 cursor-pointer"
                   >
                     <ChevronRight className="h-4 w-4" />

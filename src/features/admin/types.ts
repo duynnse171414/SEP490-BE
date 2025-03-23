@@ -8,3 +8,8 @@ export interface Staff {
   isActive: boolean;
   createAt: string;
 }
+
+export interface StaffResponse {
+  items: Staff[];
+  totalPages: number;
+}

@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import { fetcherWithParams } from "@/api/fetchers";
-import { Staff } from "../types";
+import { Staff, StaffResponse } from "../types";
 // import { useState } from "react";
 // import { getStaffs } from "@/api/staffs";
 
@@ -22,10 +22,10 @@ export const useStaff = (page: number) => {
 };
 
 export const useStaffs = (pageNumber: number = 1) => {
-  const params = { pageNumber };
-  const { data, error, mutate } = useSWR<Staff[]>(
-    BASE_URL + `/Staff/GetStaffs`,
-    (url) => fetcherWithParams(url, { params }),
+  // const params = { pageNumber };
+  const { data, error, mutate } = useSWR<StaffResponse>(
+    BASE_URL + `/Staffs/GetStaffs?page=${pageNumber}`,
+    (url) => fetcherWithParams(url, {}),
     {
       dedupingInterval: 60000,
       refreshInterval: 0,
