@@ -84,7 +84,7 @@ export function AddStaffToProjectDialog() {
       <DialogTrigger asChild>
         <Button variant="default">Add Staff to Project</Button>
       </DialogTrigger>
-      <DialogContent className="px-4 py-2 cursor-pointer">
+      <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle>Add Staff to Project</DialogTitle>
         </DialogHeader>
