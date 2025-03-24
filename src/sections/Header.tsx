@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
-import { AuthContext } from "../contexts/AuthContext";
+import { AuthContext } from "../features/auth/contexts/AuthContext";
 
 import {
   Drawer,
