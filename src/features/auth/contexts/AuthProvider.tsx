@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { AuthContext } from "./AuthContext";
 import { User } from "@/features/users/types";
 import { LoginUserDTO } from "../types";
@@ -19,6 +20,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loggedUser, setLoggedUser] = useState<User | null>(null);
   const [loginMessage, setLoginMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
+  const navigate = useNavigate(); // Hook điều hướng
 
   const isTokenValid = (token: string): boolean => {
     try {
@@ -58,6 +60,12 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem("loggedUser", JSON.stringify(loggedUser));
         setLoggedUser(loggedUser);
         setSuccess(true);
+        if (loggedUser.role === "admin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/");
+        }
+
         return { success: true };
       } else {
         showLoginMessage(response.message || "Wrong Email or Password");
@@ -72,12 +80,16 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("loggedUser");
     setLoggedUser(null);
+    navigate("/login"); 
   };
 
   useEffect(() => {
     const user = getValidUserFromStorage();
     if (user) {
       setLoggedUser(user);
+      if (user.role === "admin") {
+        navigate("/admin/dashboard");
+      }
 
       const decodedToken: DecodedToken = jwtDecode(user.token);
       const timeUntilExpiration = decodedToken.exp * 1000 - Date.now();
@@ -90,7 +102,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return () => clearTimeout(timeout);
       }
     }
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (loggedUser) {
