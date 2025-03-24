@@ -1,6 +1,6 @@
 "use client";
 
-import { useStaff } from "@/features/admin/hooks/useStaff";
+import { useStaffs } from "@/features/staff/hooks/useStaff";
 import { useRef, useState } from "react";
 import {
   Table,
@@ -20,6 +20,7 @@ import {
   Upload,
   Download,
 } from "lucide-react";
+// import { Staff } from "@/features/admin/types";
 
 import { Input } from "@/components/ui/input";
 import { postData } from "@/api/fetchers";
@@ -29,10 +30,12 @@ interface ExcelData {
   [key: string]: string | number;
 }
 
-const StaffListPage = () => {
+const StaffPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
-  const { data: staffs, isLoading, error } = useStaff(pageNumber);
+  const { data: staffResponse, isLoading, error } = useStaffs(pageNumber);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const staffs = staffResponse?.items;
+  const totalPages = staffResponse?.totalPages;
 
   const handlePageChange = (newPageNumber: number) => {
     setPageNumber(newPageNumber);
@@ -154,6 +157,7 @@ const StaffListPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold">No.</TableHead>
                       <TableHead className="font-semibold">Email</TableHead>
                       <TableHead className="font-semibold">
                         Staff Name
@@ -170,11 +174,14 @@ const StaffListPage = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {staffs.map((staff) => (
+                    {staffs.map((staff, index) => (
                       <TableRow
                         key={staff.staffId}
                         className="hover:bg-muted/50"
                       >
+                        <TableCell className="text">
+                          {(pageNumber - 1) * 10 + index + 1}
+                        </TableCell>
                         <TableCell className="font-medium">
                           {staff.email}
                         </TableCell>
@@ -222,10 +229,10 @@ const StaffListPage = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => handlePageChange(pageNumber + 1)}
-                    disabled={staffs.length < 3}
+                    disabled={!staffs || pageNumber === totalPages}
                     className="h-8 w-8 p-0 cursor-pointer"
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 sdjdjdjdjdjdjw-4" />
                     <span className="sr-only">Next page</span>
                   </Button>
                 </div>
@@ -238,4 +245,4 @@ const StaffListPage = () => {
   );
 };
 
-export default StaffListPage;
+export default StaffPage;
