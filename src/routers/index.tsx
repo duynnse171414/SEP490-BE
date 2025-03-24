@@ -19,8 +19,7 @@ const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
 const DashboardPage = lazy(() => import("../pages/dashboard/dashboardPage"));
 const ReportPage = lazy(() => import("../pages/report/report"));
 const ProjectDashboard = lazy(() => import("../features/dashboard/components/ProjectDashboard"));
-
-
+const ClaimsPage = lazy(() => import("../pages/claims/ClaimsPage"));
 
 const router = createBrowserRouter([
   {
@@ -40,6 +39,7 @@ const router = createBrowserRouter([
       { path: "dashboard", element: <DashboardPage /> },
       { path: "report", element: <ReportPage /> },
       { path: "projects", element: <ProjectDashboard /> },
+      { path: "claims", element: <ClaimsPage /> },
     ],
   },
   {
