@@ -80,7 +80,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("loggedUser");
     setLoggedUser(null);
-    navigate("/login"); 
+    navigate("/"); 
   };
 
   useEffect(() => {

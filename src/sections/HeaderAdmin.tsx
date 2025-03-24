@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { BarChart, LayoutDashboard, Folder, Cog, LogOut } from "lucide-react"; 
-import { RoleGuard } from "@/guards/roleGuard";
 import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 
 const HeaderAdmin = () => {
   const navigate = useNavigate(); 
+  const { logout } = useAuthContext();
 
   return (
-    <RoleGuard>
-      <div className="flex h-screen">
+<div className="flex h-screen">
         {/* Sidebar */}
         <aside className="w-64 p-4 flex flex-col">
           <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
@@ -25,13 +25,12 @@ const HeaderAdmin = () => {
             <Button variant="ghost" className="flex gap-2 items-center" onClick={() => navigate("/admin/settings")}>
               <Cog className="w-5 h-5" /> Settings
             </Button>
-            <Button variant="ghost" className="flex gap-2 items-center" onClick={() => navigate("/admin/logout")}>
+            <Button variant="ghost" className="flex gap-2 items-center" onClick={logout}>
               <LogOut className="w-5 h-5" /> Logout
             </Button>
           </nav>
         </aside>
       </div>
-    </RoleGuard>
   );
 };
 
