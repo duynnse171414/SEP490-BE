@@ -20,7 +20,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loggedUser, setLoggedUser] = useState<User | null>(null);
   const [loginMessage, setLoginMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const isTokenValid = (token: string): boolean => {
     try {

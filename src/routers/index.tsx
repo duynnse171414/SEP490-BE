@@ -18,6 +18,7 @@ const AboutPage = lazy(() => import("../pages/about/AboutPage"));
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
 const DashboardPage = lazy(() => import("../pages/dashboard/dashboardPage"));
 const ReportPage = lazy(() => import("../pages/report/report"));
+const ProjectDashboard = lazy(() => import("../features/dashboard/components/ProjectDashboard"));
 
 
 
@@ -38,14 +39,15 @@ const router = createBrowserRouter([
       { path: "about", element: <AboutPage /> },
       { path: "dashboard", element: <DashboardPage /> },
       { path: "report", element: <ReportPage /> },
-
+      { path: "projects", element: <ProjectDashboard /> },
     ],
   },
   {
-    path: "admin",
+    path: "admin/",
     element: <AdminLayout />,
     children: [
       { path: "dashboard", element: <DashboardPage /> },
+      { path: "projects", element: <ProjectDashboard /> },
     ],
 
   },
