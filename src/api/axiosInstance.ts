@@ -15,24 +15,28 @@ const axiosInstance: AxiosInstance = axios.create({
     "Content-Type": "application/json",
   },
 });
-
-const defaultHeaders = { ...axiosInstance.defaults.headers.common };
+//const defaultHeaders = { ...axiosInstance.defaults.headers.common };
 
 axiosInstance.interceptors.request.use(
   async (config) => {
-    config.headers["If-None-Match"] = "your-etag";
+    const storedUser = localStorage.getItem("loggedUser");
 
-    config.headers = {
-      ...config.headers,
-      ...defaultHeaders,
-    } as AxiosRequestHeaders;
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      const token = parsedUser.token;
+
+      if (token) {
+        config.headers["Authorization"] = `Bearer ${token}`;
+      }
+    }
 
     return config;
   },
   (error) => {
-    Promise.reject(error);
+    return Promise.reject(error);
   }
 );
+
 
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
