@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { postData } from "@/api/fetchers";
 import * as XLSX from "xlsx";
+import { AddStaffToProjectDialog } from "./AddStaffToProject";
 
 interface ExcelData {
   [key: string]: string | number;
@@ -106,6 +107,8 @@ const StaffPage = () => {
             Staff Management
           </CardTitle>
           <div className="flex items-center space-x-2">
+            <AddStaffToProjectDialog />
+
             <Input
               ref={fileInputRef}
               id="fileInput"
