@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom"; 
 import { AuthContext } from "./AuthContext";
 import { User } from "@/features/users/types";
 import { LoginUserDTO } from "../types";
@@ -20,7 +20,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loggedUser, setLoggedUser] = useState<User | null>(null);
   const [loginMessage, setLoginMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
-  const navigate = useNavigate(); // Hook điều hướng
+  const navigate = useNavigate(); 
 
   const isTokenValid = (token: string): boolean => {
     try {
