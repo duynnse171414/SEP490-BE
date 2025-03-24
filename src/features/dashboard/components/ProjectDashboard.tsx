@@ -25,7 +25,7 @@ import { GetAllProjectDTO } from "../type";
 import HeaderAdmin from "@/sections/HeaderAdmin";
 import CustomPagination from "@/components/common/CustomPagination";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 7;
 
 const ProjectDashboard = () => {
   const [projects, setProjects] = useState<GetAllProjectDTO[]>([]);

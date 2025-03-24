@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { BarChart, LayoutDashboard, Folder, Cog } from "lucide-react"; 
+import { BarChart, LayoutDashboard, Folder, Cog, LogOut } from "lucide-react"; 
 import { RoleGuard } from "@/guards/roleGuard";
 import { useNavigate } from "react-router-dom";
 
@@ -24,6 +24,9 @@ const HeaderAdmin = () => {
             </Button>
             <Button variant="ghost" className="flex gap-2 items-center" onClick={() => navigate("/admin/settings")}>
               <Cog className="w-5 h-5" /> Settings
+            </Button>
+            <Button variant="ghost" className="flex gap-2 items-center" onClick={() => navigate("/admin/logout")}>
+              <LogOut className="w-5 h-5" /> Logout
             </Button>
           </nav>
         </aside>
