@@ -1,6 +1,6 @@
 "use client";
 
-import { useStaffs } from "@/features/admin/hooks/useStaff";
+import { useStaffs } from "@/features/staff/hooks/useStaff";
 import { useState } from "react";
 import {
   Table,
