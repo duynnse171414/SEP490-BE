@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Download,
 } from "lucide-react";
+const BASE_URL = "https://localhost:7100/api";
 interface Staff {
   staffId: string; // FK từ bảng Project
   staffName: string;
@@ -40,6 +41,15 @@ const ProjectDetailPage: React.FC = () => {
     fetchProjectDetail();
   }, [id]);
 
+  const handelExportExcel = async () => {
+    // const response = await axios.post(`${BASE_URL}/Project/export-to-excel`,
+    //   {
+        
+    //   });
+    alert("Export Excel Coming soon");
+  };
+
+
   if (error) {
     return <div className="text-red-500 text-center p-4">Error: {error}</div>;
   }
@@ -52,7 +62,7 @@ const ProjectDetailPage: React.FC = () => {
         variant="outline"
         size="sm"
         className="cursor-pointer flex items-center gap-2 text-black"
-        onClick={() => alert("Export functionality coming soon!")}
+        onClick={handelExportExcel}
       >
         <Download className="h-4 w-4" />
         Export
