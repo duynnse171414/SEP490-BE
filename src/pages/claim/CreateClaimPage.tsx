@@ -21,6 +21,7 @@ const CreateClaimPage: React.FC = () => {
         value: staff.staffId,
         label: staff.staffName
     })) || [];
+    const [expectedDate, setExpectedDate] = useState<string>('');
 
     if (projectsLoading || pmsLoading || staffsLoading) return <p>Loading...</p>;
     if (projectsError) return <p className="text-red-500">Error at project fetching: {projectsError.message}</p>;
@@ -91,6 +92,54 @@ const CreateClaimPage: React.FC = () => {
         return true;
     };
 
+    const handleSubmit = () => {
+        const listRequest: { date: string; workingHours: number }[] = [];
+
+        dayForms.forEach(form => {
+            const { startDate, endDate, workingHours } = form;
+            if (!startDate || !endDate || !workingHours) return;
+
+            const workingHoursFloat = parseFloat(workingHours);
+            if (isNaN(workingHoursFloat)) return;
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            const current = new Date(start);
+            while (current <= end) {
+                const dateStr = current.toISOString(); // full ISO for C#
+                listRequest.push({
+                    date: dateStr,
+                    workingHours: workingHoursFloat
+                });
+                current.setDate(current.getDate() + 1);
+            }
+        });
+
+        // Tạo payload cơ bản
+        const payload: any = {
+            projectId: selectedProject!,
+            approverId: approverId!,
+            listRequest: listRequest
+        };
+
+        // Thêm expectedDate nếu có
+        if (expectedDate) {
+            payload.expectedDate = new Date(expectedDate).toISOString();
+        }
+
+        // Thêm inforStaffs nếu có chọn
+        const staffIds = informTo.map(item => item.value);
+        if (staffIds.length > 0) {
+            payload.inforStaffs = staffIds;
+        }
+
+        console.log("📤 Payload to backend (optional fields handled):", payload);
+
+        // Gửi API tại đây nếu cần
+        // axios.post('/api/claim-request', payload).then(...);
+    };
+    
     return (
         <div className="container mx-auto p-4">
             <div>
@@ -104,6 +153,7 @@ const CreateClaimPage: React.FC = () => {
                     <div className="flex justify-center items-center w-1/10">
                         <button
                             disabled={!isFormValid()}
+                            onClick={handleSubmit}
                             className={`border p-1.5 px-4 rounded-md ${!isFormValid()
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 : 'bg-gray-200 text-white hover:bg-blue-200 hover:text-blue-600 hover:font-semibold'
@@ -270,9 +320,12 @@ const CreateClaimPage: React.FC = () => {
                                 <div className="flex flex-col m-3">
                                     <label className="mb-2">Expected Approve</label>
                                     <input
-                                        className="border border-gray-300 rounded-md bg-white p-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500"
+                                        className="border border-gray-300 rounded-md bg-white p-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-50"
                                         min={now}
-                                        type="datetime-local" />
+                                        type="datetime-local"
+                                        value={expectedDate}
+                                        onChange={(e) => setExpectedDate(e.target.value)}
+                                    />
                                 </div>
                             </form>
                         </div>
