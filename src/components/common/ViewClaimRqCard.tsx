@@ -1,8 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Clock, User, Briefcase, Calendar, CheckCircle2, XCircle } from "lucide-react";
+import { Clock, User, Briefcase, Calendar, Check } from "lucide-react";
 import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
 import {
     Tooltip,
     TooltipContent,
@@ -10,41 +9,32 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ClaimRequestDTO, ClaimStatus } from "@/features/claims/types";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface ViewClaimRqCardProps {
     claim: ClaimRequestDTO;
     className?: string;
-    isExtendable?: boolean;
-    onApprove?: () => void;
-    onReject?: () => void;
     onSelect?: (checked: boolean) => void;
+    selected?: boolean;
 }
-
-const statusConfig = {
-    [ClaimStatus.Draft]: { color: "bg-gray-100 text-gray-700" },
-    [ClaimStatus.PendingApproval]: { color: "bg-yellow-100 text-yellow-700" },
-    [ClaimStatus.Approved]: { color: "bg-green-100 text-green-700" },
-    [ClaimStatus.Paid]: { color: "bg-blue-100 text-blue-700" },
-    [ClaimStatus.Rejected]: { color: "bg-red-100 text-red-700" },
-    [ClaimStatus.Cancelled]: { color: "bg-slate-100 text-slate-700" },
-};
 
 export const ViewClaimRqCard = ({
     claim,
     className,
-    isExtendable = false,
-    onApprove,
-    onReject,
     onSelect,
+    selected = false,
 }: ViewClaimRqCardProps) => {
     return (
-        <Card className={cn("w-full max-w-xs", className)}>
+        <Card
+            className={cn(
+                "w-full max-w-xs transition-colors relative overflow-hidden",
+                className,
+                selected ? "ring-1 ring-primary bg-primary/5" : "hover:ring-1 hover:ring-primary/30",
+                "ring-inset"
+            )}
+            onClick={() => onSelect?.(!selected)}
+        >
             <CardHeader className="text-center">
                 <div className="flex justify-center items-center gap-4 text-muted-foreground">
-                    <div className="px-4 pt-4">
-                        <Checkbox onCheckedChange={(checked) => onSelect?.(!!checked)} />
-                    </div>
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         <span className="text-sm">
@@ -63,7 +53,9 @@ export const ViewClaimRqCard = ({
                 <div className="flex justify-center items-center gap-2">
                     <span className={cn(
                         "px-3 py-1 rounded-full text-xs font-medium",
-                        statusConfig[claim.claimStatus].color
+                        claim.claimStatus === ClaimStatus.Approved ? "bg-green-500 text-white" :
+                            claim.claimStatus === ClaimStatus.Rejected ? "bg-red-500 text-white" :
+                                "bg-yellow-500 text-white"
                     )}>
                         {ClaimStatus[claim.claimStatus]}
                     </span>
@@ -134,46 +126,6 @@ export const ViewClaimRqCard = ({
                     </TooltipProvider>
                 )}
             </CardFooter>
-
-            {isExtendable && (
-                <div className="-mb-6 mt-2">
-                    <div className="grid grid-cols-2 gap-px bg-muted">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full rounded-b-sm bg-card border-t hover:bg-red-50 text-red-600 hover:text-red-700 h-12 text-sm font-medium transition-colors"
-                                        onClick={onReject}
-                                    >
-                                        <XCircle className="h-4 w-4 mr-2" />
-                                        Reject
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom">
-                                    <p>Reject Claim</p>
-                                </TooltipContent>
-                            </Tooltip>
-
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        className="w-full rounded-b-sm bg-card border-t hover:bg-green-50 text-green-600 hover:text-green-700 h-12 text-sm font-medium transition-colors"
-                                        onClick={onApprove}
-                                    >
-                                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                                        Approve
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom">
-                                    <p>Approve Claim</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
-                </div>
-            )}
         </Card>
     );
 };
