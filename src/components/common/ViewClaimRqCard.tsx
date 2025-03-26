@@ -10,6 +10,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ClaimRequestDTO, ClaimStatus } from "@/features/claims/types";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ViewClaimRqCardProps {
     claim: ClaimRequestDTO;
@@ -17,6 +18,7 @@ interface ViewClaimRqCardProps {
     isExtendable?: boolean;
     onApprove?: () => void;
     onReject?: () => void;
+    onSelect?: (checked: boolean) => void;
 }
 
 const statusConfig = {
@@ -33,12 +35,16 @@ export const ViewClaimRqCard = ({
     className,
     isExtendable = false,
     onApprove,
-    onReject
+    onReject,
+    onSelect,
 }: ViewClaimRqCardProps) => {
     return (
         <Card className={cn("w-full max-w-xs", className)}>
             <CardHeader className="text-center">
                 <div className="flex justify-center items-center gap-4 text-muted-foreground">
+                    <div className="px-4 pt-4">
+                        <Checkbox onCheckedChange={(checked) => onSelect?.(!!checked)} />
+                    </div>
                     <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         <span className="text-sm">
