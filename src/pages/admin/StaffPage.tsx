@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { useStaffs } from "@/features/admin/hooks/useStaff";
 import { useDeleteStaff } from "@/features/admin/hooks/useDeleteStaff";
@@ -14,15 +16,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Loader2, Upload, Download } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Upload,
+  Download,
+} from "lucide-react";
 import UpdateModal from "@/components/ui/updateModal";
 import DeleteModal from "@/components/ui/deleteModal";
 
-
-
 const StaffPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
-  const { data: staffResponse, isLoading, error, mutate } = useStaffs(pageNumber);
+  const {
+    data: staffResponse,
+    isLoading,
+    error,
+    mutate,
+  } = useStaffs(pageNumber);
   const { mutate: deleteStaffMutate } = useDeleteStaff();
   const { mutate: updateStaffMutate } = useUpdateStaff();
   const [staffs, setStaffs] = useState(staffResponse?.items || []);
@@ -31,10 +42,10 @@ const StaffPage = () => {
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const totalPages = staffResponse?.totalPages;
 
-
   type Staff = {
     staffId: number;
     staffName: string;
+    username: string; // Added username field
     email: string;
     jobRank: string;
     salary: number;
@@ -42,7 +53,6 @@ const StaffPage = () => {
     isActive: boolean;
     createAt: string;
   };
-
 
   useEffect(() => {
     setStaffs(staffResponse?.items || []); // Cập nhật danh sách nhân viên khi API trả về
@@ -67,7 +77,7 @@ const StaffPage = () => {
         ); // Lọc danh sách với ID là số
         mutate(); // Đồng bộ dữ liệu với server
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.error("Error deleting staff:", error.message);
       },
     });
@@ -83,7 +93,7 @@ const StaffPage = () => {
         );
         mutate();
       },
-      onError: (error) => {
+      onError: (error: any) => {
         console.error("Error updating staff:", error.message);
       },
     });
@@ -134,7 +144,7 @@ const StaffPage = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason }),
         });
-  
+
         handleDeleteStaff(selectedStaff.staffId.toString());
       } catch (error) {
         console.error("Error handling delete reason or deleting staff:", error);
@@ -142,8 +152,7 @@ const StaffPage = () => {
     }
     handleDeleteModalClose();
   };
-  
-  
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Card className="shadow-lg">
@@ -181,15 +190,13 @@ const StaffPage = () => {
             onSubmit={handleModalSubmit}
             staff={selectedStaff}
           />
-
           {/* Modal Delete */}
           <DeleteModal
             isOpen={isDeleteModalOpen}
             onClose={handleDeleteModalClose}
             onConfirm={handleDeleteModalConfirm}
             staffName={selectedStaff?.staffName}
-          />;
-
+          />
 
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -216,20 +223,37 @@ const StaffPage = () => {
                     <TableRow className="bg-muted/50">
                       <TableHead className="font-semibold">No.</TableHead>
                       <TableHead className="font-semibold">Email</TableHead>
-                      <TableHead className="font-semibold">Name</TableHead>
+                      <TableHead className="font-semibold">
+                        Username
+                      </TableHead>{" "}
+                      {/* Added Username column */}
+                      <TableHead className="font-semibold">
+                        Staff Name
+                      </TableHead>
                       <TableHead className="font-semibold">Job Rank</TableHead>
                       <TableHead className="font-semibold">Salary</TableHead>
-                      <TableHead className="font-semibold">Department</TableHead>
+                      <TableHead className="font-semibold">
+                        Department
+                      </TableHead>
                       <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Created At</TableHead>
+                      <TableHead className="font-semibold">
+                        Created At
+                      </TableHead>
                       <TableHead className="font-semibold">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {staffs.map((staff, index) => (
-                      <TableRow key={staff.staffId} className="hover:bg-muted/50">
-                        <TableCell>{(pageNumber - 1) * 10 + index + 1}</TableCell>
+                      <TableRow
+                        key={staff.staffId}
+                        className="hover:bg-muted/50"
+                      >
+                        <TableCell>
+                          {(pageNumber - 1) * 10 + index + 1}
+                        </TableCell>
                         <TableCell>{staff.email}</TableCell>
+                        <TableCell>{staff.username}</TableCell>{" "}
+                        {/* Display username */}
                         <TableCell>{staff.staffName}</TableCell>
                         <TableCell>{staff.jobRank}</TableCell>
                         <TableCell>${staff.salary?.toLocaleString()}</TableCell>
@@ -251,6 +275,7 @@ const StaffPage = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => handleUpdateClick(staff)}
+                            className="cursor-pointer"
                           >
                             Update
                           </Button>
@@ -258,6 +283,7 @@ const StaffPage = () => {
                             size="sm"
                             variant="destructive"
                             onClick={() => handleDeleteClick(staff)}
+                            className="cursor-pointer"
                           >
                             Delete
                           </Button>
@@ -279,6 +305,7 @@ const StaffPage = () => {
                     size="sm"
                     onClick={() => handlePageChange(pageNumber - 1)}
                     disabled={pageNumber === 1}
+                    className="cursor-pointer"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -288,6 +315,7 @@ const StaffPage = () => {
                     size="sm"
                     onClick={() => handlePageChange(pageNumber + 1)}
                     disabled={pageNumber === totalPages}
+                    className="cursor-pointer"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
