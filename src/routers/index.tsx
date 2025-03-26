@@ -3,7 +3,6 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { MainLayout } from "../layouts/MainLayout";
 import SplashScreen from "@/sections/SplashScreen";
 import { AdminLayout } from "@/layouts/AdminLayout";
-// import ManageListStaff from "@/pages/admin/ManageListStaff";
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import("../pages/HomePage"));
@@ -19,7 +18,11 @@ const AboutPage = lazy(() => import("../pages/about/AboutPage"));
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
 const DashboardPage = lazy(() => import("../pages/dashboard/dashboardPage"));
 const ReportPage = lazy(() => import("../pages/report/report"));
-const StaffListPage = lazy(() => import("../pages/admin/StaffListPage"));
+const StaffPage = lazy(() => import("../pages/admin/StaffPage"));
+
+// Import Project Pages
+const ProjectPage = lazy(() => import("../pages/project/ProjectPage"));
+const ProjectDetailPage = lazy(() => import("../pages/project/ProjectDetail"));
 
 const router = createBrowserRouter([
   {
@@ -32,19 +35,23 @@ const router = createBrowserRouter([
       { path: "comments", element: <CommentsPage /> },
       { path: "albums", element: <AlbumsPage /> },
       { path: "photos", element: <PhotosPage /> },
-      { path: "staff", element: <StaffListPage /> },
       { path: "users", element: <UsersPage /> },
       { path: "users/:id", element: <UserDetailPage /> },
       { path: "about", element: <AboutPage /> },
       { path: "dashboard", element: <DashboardPage /> },
       { path: "report", element: <ReportPage /> },
       { path: "todos", element: <TodosPage /> },
+      { path: "projects", element: <ProjectPage /> }, // Add Project List Page
+      { path: "projects/:id", element: <ProjectDetailPage /> }, // Add Project Detail Page
     ],
   },
   {
     path: "admin",
     element: <AdminLayout />,
-    children: [{ path: "dashboard", element: <DashboardPage /> }],
+    children: [
+      { path: "dashboard", element: <DashboardPage /> },
+      { path: "staff", element: <StaffPage /> },
+    ],
   },
   {
     path: "*",
@@ -57,3 +64,5 @@ export const AppRouter = () => (
     <RouterProvider router={router} />
   </Suspense>
 );
+
+export default AppRouter;

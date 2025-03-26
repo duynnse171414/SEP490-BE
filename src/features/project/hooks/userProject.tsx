@@ -36,4 +36,3 @@ export const useStaffs = (pageNumber: number = 1) => {
 
   return { data, error, isLoading: !data && !error, mutate };
 };
-
