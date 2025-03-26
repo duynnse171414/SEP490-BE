@@ -18,7 +18,7 @@ const AboutPage = lazy(() => import("../pages/about/AboutPage"));
 const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
 const DashboardPage = lazy(() => import("../pages/dashboard/dashboardPage"));
 const ReportPage = lazy(() => import("../pages/report/report"));
-
+const CreateClaimPage = lazy(() => import("../pages/claim/CreateClaimPage"));
 
 
 const router = createBrowserRouter([
@@ -38,7 +38,7 @@ const router = createBrowserRouter([
       { path: "about", element: <AboutPage /> },
       { path: "dashboard", element: <DashboardPage /> },
       { path: "report", element: <ReportPage /> },
-
+      { path: "claim", element: <CreateClaimPage/>}
     ],
   },
   {
