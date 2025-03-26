@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import UpdateModal from "@/components/ui/updateModal";
 import DeleteModal from "@/components/ui/deleteModal";
+import { Staff } from "@/features/admin/types";
 
 const StaffPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
@@ -42,17 +43,17 @@ const StaffPage = () => {
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const totalPages = staffResponse?.totalPages;
 
-  type Staff = {
-    staffId: number;
-    staffName: string;
-    username: string; // Added username field
-    email: string;
-    jobRank: string;
-    salary: number;
-    departmentName: string;
-    isActive: boolean;
-    createAt: string;
-  };
+  // type Staff = {
+  //   staffId: number
+  //   staffName: string
+  //   username: string // Added username field
+  //   email: string
+  //   jobRank: string
+  //   salary: number
+  //   departmentName: string
+  //   isActive: boolean
+  //   createAt: string
+  // }
 
   useEffect(() => {
     setStaffs(staffResponse?.items || []); // Cập nhật danh sách nhân viên khi API trả về
@@ -252,8 +253,7 @@ const StaffPage = () => {
                           {(pageNumber - 1) * 10 + index + 1}
                         </TableCell>
                         <TableCell>{staff.email}</TableCell>
-                        <TableCell>{staff.username}</TableCell>{" "}
-                        {/* Display username */}
+                        <TableCell>{staff.username}</TableCell>
                         <TableCell>{staff.staffName}</TableCell>
                         <TableCell>{staff.jobRank}</TableCell>
                         <TableCell>${staff.salary?.toLocaleString()}</TableCell>

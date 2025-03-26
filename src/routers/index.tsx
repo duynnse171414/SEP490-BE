@@ -43,15 +43,13 @@ const router = createBrowserRouter([
       { path: "todos", element: <TodosPage /> },
       { path: "projects", element: <ProjectPage /> }, // Add Project List Page
       { path: "projects/:id", element: <ProjectDetailPage /> }, // Add Project Detail Page
+      { path: "staffs", element: <StaffPage /> },
     ],
   },
   {
     path: "admin",
     element: <AdminLayout />,
-    children: [
-      { path: "dashboard", element: <DashboardPage /> },
-      { path: "staff", element: <StaffPage /> },
-    ],
+    children: [{ path: "dashboard", element: <DashboardPage /> }],
   },
   {
     path: "*",
