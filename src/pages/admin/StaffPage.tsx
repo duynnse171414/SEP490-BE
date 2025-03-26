@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useRef ,useState, useEffect } from "react";
 import { useStaffs } from "@/features/admin/hooks/useStaff";
 import { useDeleteStaff } from "@/features/admin/hooks/useDeleteStaff";
 import { useUpdateStaff } from "@/features/admin/hooks/useUpdateStaff";
@@ -41,6 +41,107 @@ const StaffPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const totalPages = staffResponse?.totalPages;
+
+  interface ExcelData {
+    [key: string]: string | number;
+  }
+  const BASE_URL = "https://localhost:7100/api";
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedStaffs, setSelectedStaffs] = useState<Set<string>>(new Set());
+  const [allSelected, setAllSelected] = useState(false);
+  const [allStaffs, setAllStaffs] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (staffResponse?.items) {
+      setAllStaffs((prev) => {
+        const updatedList = [...prev, ...staffResponse.items];
+        return Array.from(new Set(updatedList.map((s) => s.staffId))).map(
+          (id) => updatedList.find((s) => s.staffId === id)
+        );
+      });
+    }
+  }, [staffResponse]);
+  
+  useEffect(() => {
+    setAllSelected(selectedStaffs.size === allStaffs.length && allStaffs.length > 0);
+    }, [selectedStaffs, allStaffs]);
+  
+  const handleSelectAll = () => {
+    if (allSelected) {
+      setSelectedStaffs(new Set());
+    } else {
+      setSelectedStaffs(new Set(allStaffs.map((staff) => staff.staffId)));
+    }
+  };
+  
+  const handleSelectStaff = (staffId: string) => {
+    setSelectedStaffs((prev) => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(staffId)) {
+        newSelected.delete(staffId);
+      } else {
+        newSelected.add(staffId);
+      }
+      return newSelected;
+    });
+  };
+  
+  const jobRankMap: Record<string, number> = {
+    Manager: 0,
+    Executive: 1,
+    Assistant: 2,
+    LeadDesigner: 3,
+    Developer: 4,
+    Senior: 5,
+    Director: 6,
+  };
+  
+  const fixCreateAt = (dateStr) => {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime()) || date.getFullYear() < 1900) {
+      return "2025-03-26T03:32:28.493Z"; 
+    }
+    return date.toISOString(); // Chuyển thành định dạng chuẩn
+  };
+    
+  
+  const handleExport = async () => {
+    const selectedStaffData = allStaffs
+    .filter((staff) => selectedStaffs.has(staff.staffId))
+    .map((staff) => ({
+    email: staff.email,
+    userName: staff.userName,
+    staffName: staff.staffName,
+    jobRank: jobRankMap[staff.jobRank] ?? 0,
+    salary: staff.salary,
+    departmentName: staff.departmentName,
+    isActive: staff.isActive,
+    createAt: fixCreateAt(staff.createAt),
+  }));
+  
+    const response = await fetch(`${BASE_URL}/Staffs/export-to-excel`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "*/*",
+      },
+      body: JSON.stringify(selectedStaffData),
+    });
+  
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Staffs-${new Date().toISOString().split("T")[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      const errorMessage = await response.text();
+      console.error("Failed to export file:", response.status, errorMessage);
+    }
+  };
 
   type Staff = {
     staffId: number;
@@ -175,7 +276,7 @@ const StaffPage = () => {
               variant="outline"
               size="sm"
               className="cursor-pointer flex items-center gap-2"
-              onClick={() => alert("Export functionality coming soon!")}
+              onClick={handleExport}
             >
               <Download className="h-4 w-4" />
               Export
@@ -221,6 +322,9 @@ const StaffPage = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
+                      <TableHead>
+                        <input type="checkbox" checked={allSelected} onChange={handleSelectAll} />
+                      </TableHead>
                       <TableHead className="font-semibold">No.</TableHead>
                       <TableHead className="font-semibold">Email</TableHead>
                       <TableHead className="font-semibold">
@@ -249,6 +353,13 @@ const StaffPage = () => {
                         className="hover:bg-muted/50"
                       >
                         <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={selectedStaffs.has(staff.staffId)}
+                            onChange={() => handleSelectStaff(staff.staffId)}
+                          />
+                        </TableCell>
+                        <TableCell>
                           {(pageNumber - 1) * 10 + index + 1}
                         </TableCell>
                         <TableCell>{staff.email}</TableCell>
@@ -263,7 +374,7 @@ const StaffPage = () => {
                             className={
                               staff.isActive
                                 ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
+                                : "bg-red-200 text-red-800"
                             }
                           >
                             {staff.isActive ? "Active" : "Inactive"}

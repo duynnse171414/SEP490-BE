@@ -1,6 +1,7 @@
 export interface Staff {
   staffId: string;
   email: string;
+  username: string;
   staffName: string;
   jobRank: string;
   salary: number;
