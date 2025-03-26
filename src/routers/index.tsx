@@ -19,6 +19,7 @@ const NotFoundPage = lazy(() => import("../pages/NotFoundPage"));
 const DashboardPage = lazy(() => import("../pages/dashboard/dashboardPage"));
 const ReportPage = lazy(() => import("../pages/report/report"));
 const CreateClaimPage = lazy(() => import("../pages/claim/CreateClaimPage"));
+const ProjectDashboard = lazy(() => import("../features/dashboard/components/ProjectDashboard"));
 
 
 const router = createBrowserRouter([
@@ -39,13 +40,15 @@ const router = createBrowserRouter([
       { path: "dashboard", element: <DashboardPage /> },
       { path: "report", element: <ReportPage /> },
       { path: "claim", element: <CreateClaimPage/>}
+      { path: "projects", element: <ProjectDashboard /> },
     ],
   },
   {
-    path: "admin",
+    path: "admin/",
     element: <AdminLayout />,
     children: [
       { path: "dashboard", element: <DashboardPage /> },
+      { path: "projects", element: <ProjectDashboard /> },
     ],
 
   },

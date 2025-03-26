@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
+import { AuthContext } from "../features/auth/contexts/AuthContext";
+
 import {
   Drawer,
   DrawerContent,
@@ -80,7 +82,8 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { user, logout, login } = useAuthContext();
-
+  const AuthContext = useAuthContext();
+  const [isSuccess, setIsSuccess] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!user);
 
   useEffect(() => {
@@ -90,7 +93,11 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const handleLoginSubmit = ({ email, password }: LoginUserDTO) => {
     console.log("Logging in with email and password");
     login({ email, password });
+    if(isSuccess) {
     setIsLoginDrawerOpen(false);
+    } else {
+      setIsLoginDrawerOpen(true);
+    }
     if (onDrawerStateChange) {
       onDrawerStateChange(false);
     }
@@ -202,13 +209,13 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
             </div>
 
             {isAuthenticated ? (
-              <DropdownMenu>
+              <DropdownMenu>  
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                     <Avatar className="h-9 w-9 border-2 border-primary/20">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} alt={user?.name} />
+                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} alt={user?.email} />
                       <AvatarFallback className="bg-primary/10 text-primary">
-                        {user?.name.charAt(0)}
+                        {user?.email.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -216,7 +223,7 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user?.name}</p>
+                      <p className="text-sm font-medium leading-none">{user?.email}</p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.email}
                       </p>
