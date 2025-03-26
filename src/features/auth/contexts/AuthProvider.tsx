@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "./AuthContext";
 import { User } from "@/features/users/types";
 import { LoginUserDTO } from "../types";
 import { postData } from "@/api/fetchers";
 import { jwtDecode } from "jwt-decode";
+import { time } from "console";
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -33,10 +34,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const getValidUserFromStorage = (): User | null => {
     const storedUser = localStorage.getItem("loggedUser");
-    if (!storedUser) return null;
-
-    const parsedUser: User = JSON.parse(storedUser);
-    return isTokenValid(parsedUser.token) ? parsedUser : null;
+    return storedUser ? JSON.parse(storedUser) : null;
   };
 
   const showLoginMessage = (message: string) => {
@@ -48,13 +46,19 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await postData("auths/login", userData);
       if (response.success && response.data.accessToken) {
-        if (!isTokenValid(response.data.accessToken)) throw new Error("Token not valid");
-
+        if (!isTokenValid(response.data.accessToken))
+          throw new Error("Token not valid");
         const decodedToken: DecodedToken = jwtDecode(response.data.accessToken);
         const loggedUser: User = {
-          email: decodedToken["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"],
-          role: decodedToken["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"],
+          email:
+            decodedToken[
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+            ],
+          role: decodedToken[
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          ],
           token: response.data.accessToken,
+          refreshToken: response.data.refreshToken,
         };
 
         localStorage.setItem("loggedUser", JSON.stringify(loggedUser));
@@ -65,11 +69,13 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           navigate("/");
         }
-
         return { success: true };
       } else {
         showLoginMessage(response.message || "Wrong Email or Password");
-        return { success: false, message: response.message || "Wrong Email or Password" };
+        return {
+          success: false,
+          message: response.message || "Wrong Email or Password",
+        };
       }
     } catch (error) {
       showLoginMessage("Wrong Email or Password");
@@ -80,7 +86,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("loggedUser");
     setLoggedUser(null);
-    navigate("/"); 
+    navigate("/");
   };
 
   useEffect(() => {
@@ -90,38 +96,64 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (user.role === "admin") {
         navigate("/admin/dashboard");
       }
-
-      const decodedToken: DecodedToken = jwtDecode(user.token);
-      const timeUntilExpiration = decodedToken.exp * 1000 - Date.now();
-
-      if (timeUntilExpiration > 0) {
-        const timeout = setTimeout(() => {
-          logout();
-        }, timeUntilExpiration);
-
-        return () => clearTimeout(timeout);
-      }
     }
   }, [navigate]);
 
   useEffect(() => {
     if (loggedUser) {
       const decodedToken: DecodedToken = jwtDecode(loggedUser.token);
-      const timeUntilExpiration = decodedToken.exp * 1000 - Date.now();
-
+      const timeTokenExpired = decodedToken.exp * 1000 - Date.now() - 3000;
       const interval = setInterval(() => {
         const validUser = getValidUserFromStorage();
-        if (!validUser) {
-          logout();
+        const timeUntilExpiration = decodedToken.exp * 1000 - Date.now();
+        if (timeTokenExpired <= 0) {
+          clearInterval(interval);
         }
-      }, timeUntilExpiration);
+        if (timeUntilExpiration < 5000) {
+          const refreshTokenIfNeeded = async () => {
+            try {
+              const response = await postData(
+                `auths/refresh-token/${loggedUser.refreshToken}`,
+                null
+              );
+              if (response.success && response.data.accessToken) {
+                const newDecodedToken: DecodedToken = jwtDecode(
+                  response.data.accessToken
+                );
+                const updatedUser: User = {
+                  email:
+                    newDecodedToken[
+                    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                    ],
+                  role: newDecodedToken[
+                    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                  ],
+                  token: response.data.accessToken,
+                  refreshToken: response.data.refreshToken,
+                };
+                localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+                setLoggedUser(updatedUser);
+              }
+              if (!response.success) {
+                clearInterval(interval);
+                logout();
+              }
+            } catch (error) {
+              logout();
+            }
+          };
+          refreshTokenIfNeeded();
+        }
+      }, timeTokenExpired);
 
       return () => clearInterval(interval);
     }
   }, [loggedUser]);
 
   return (
-    <AuthContext.Provider value={{ user: loggedUser, login, logout, loginMessage, success }}>
+    <AuthContext.Provider
+      value={{ user: loggedUser, login, logout, loginMessage, success }}
+    >
       {children}
     </AuthContext.Provider>
   );
