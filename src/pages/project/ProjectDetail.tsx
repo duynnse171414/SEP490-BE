@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-
+import { Button } from "@/components/ui/button";
+import {
+  Download,
+} from "lucide-react";
 interface Staff {
   staffId: string; // FK từ bảng Project
   staffName: string;
@@ -43,7 +46,18 @@ const ProjectDetailPage: React.FC = () => {
 
   return (
     <div className="container mx-auto p-4 bg-black text-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Project Detail - ID: {id}</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold mb-4">Project Detail - ID: {id}</h1>
+        <Button
+        variant="outline"
+        size="sm"
+        className="cursor-pointer flex items-center gap-2 text-black"
+        onClick={() => alert("Export functionality coming soon!")}
+      >
+        <Download className="h-4 w-4" />
+        Export
+      </Button>
+      </div> 
       <h2 className="text-xl font-semibold mb-3">Staff List:</h2>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-gray-800 border border-gray-600 text-white">
