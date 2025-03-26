@@ -1,10 +1,10 @@
 export enum ClaimStatus {
-    Draft = 1,
-    PendingApproval = 2,
-    Approved = 3,
-    Paid = 4,
-    Rejected = 5,
-    Cancelled = 6
+    Draft = 0,
+    PendingApproval = 1,
+    Approved = 2,
+    Paid = 3,
+    Rejected = 4,
+    Cancelled = 5
 }
 export interface ClaimRequestDTO {
     claimId: string;

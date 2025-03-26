@@ -5,7 +5,6 @@ import { User } from "@/features/users/types";
 import { LoginUserDTO } from "../types";
 import { postData } from "@/api/fetchers";
 import { jwtDecode } from "jwt-decode";
-import { time } from "console";
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -104,7 +103,6 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const decodedToken: DecodedToken = jwtDecode(loggedUser.token);
       const timeTokenExpired = decodedToken.exp * 1000 - Date.now() - 3000;
       const interval = setInterval(() => {
-        const validUser = getValidUserFromStorage();
         const timeUntilExpiration = decodedToken.exp * 1000 - Date.now();
         if (timeTokenExpired <= 0) {
           clearInterval(interval);
