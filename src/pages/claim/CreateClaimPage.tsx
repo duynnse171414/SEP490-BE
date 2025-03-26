@@ -1,3 +1,4 @@
+import { postData } from "@/api/fetchers";
 import { useProject } from "@/features/project/hooks/useProject";
 import { usePmStaff } from "@/features/staff/hooks/usePmStaff";
 import { useStaffProject } from "@/features/staff/hooks/useStaffProject";
@@ -135,7 +136,12 @@ const CreateClaimPage: React.FC = () => {
         }
 
         console.log("📤 Payload to backend (optional fields handled):", payload);
-
+        try {
+            const response = postData("/ClaimRequests", payload);
+            console.log("success:", response);
+          } catch (err) {
+            console.error("Error:", err);
+          }
         // Gửi API tại đây nếu cần
         // axios.post('/api/claim-request', payload).then(...);
     };
