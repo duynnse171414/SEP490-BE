@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Loader2, Upload, Download } from "lucide-react";
 import UpdateModal from "@/components/ui/updateModal";
 import DeleteModal from "@/components/ui/deleteModal";
-
+import { toast } from "@/components/ui/toast";
 
 
 const StaffPage = () => {
@@ -54,26 +54,28 @@ const StaffPage = () => {
   };
 
   const handleDeleteStaff = (staffId: string) => {
-    const numericStaffId = Number(staffId);
-    if (isNaN(numericStaffId)) {
-      console.error("Invalid staff ID:", staffId);
-      return;
-    }
-
-    deleteStaffMutate(numericStaffId, {
+    deleteStaffMutate(staffId, {
       onSuccess: () => {
         setStaffs((prev) =>
-          prev.filter((staff) => Number(staff.staffId) !== numericStaffId)
-        ); // Lọc danh sách với ID là số
-        mutate(); // Đồng bộ dữ liệu với server
+          prev.map((staff) =>
+            staff.staffId === staffId ? { ...staff, isActive: false } : staff
+          )
+        ); // Mark staff as inactive
+        toast.success("Staff deactivated successfully!");
+        mutate(); // Synchronize data with the server if needed
       },
       onError: (error) => {
-        console.error("Error deleting staff:", error.message);
+        console.error("Error deactivating staff:", error.message);
+        toast.error("Failed to deactivate staff.");
       },
     });
   };
+  
+
 
   const handleUpdateStaff = (updatedStaff: any) => {
+    console.log("Sending updated staff data:", updatedStaff);
+
     updateStaffMutate(updatedStaff, {
       onSuccess: () => {
         setStaffs((prev) =>
@@ -81,13 +83,16 @@ const StaffPage = () => {
             staff.staffId === updatedStaff.staffId ? updatedStaff : staff
           )
         );
-        mutate();
+        mutate(); // Cập nhật dữ liệu từ server
+        toast.success("Staff updated successfully!");
       },
       onError: (error) => {
         console.error("Error updating staff:", error.message);
+        toast.error("Failed to update staff. Please try again.");
       },
     });
   };
+
 
   const handlePageChange = (newPageNumber: number) => {
     setPageNumber(newPageNumber);
@@ -129,12 +134,12 @@ const StaffPage = () => {
   const handleDeleteModalConfirm = async (reason: string) => {
     if (selectedStaff) {
       try {
-        await fetch(`/api/staffs/${selectedStaff.staffId}/reason`, {
-          method: "POST",
+        await fetch(`/api/staffs/${selectedStaff.staffId}`, {
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason }),
         });
-  
+
         handleDeleteStaff(selectedStaff.staffId.toString());
       } catch (error) {
         console.error("Error handling delete reason or deleting staff:", error);
@@ -142,8 +147,8 @@ const StaffPage = () => {
     }
     handleDeleteModalClose();
   };
-  
-  
+
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Card className="shadow-lg">
@@ -245,6 +250,7 @@ const StaffPage = () => {
                             {staff.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
+
                         <TableCell>{formatDate(staff.createAt)}</TableCell>
                         <TableCell className="flex space-x-2">
                           <Button

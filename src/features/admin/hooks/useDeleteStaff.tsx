@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 
-const deleteStaff = async (staffId: number): Promise<any> => {
+const deleteStaff = async (staffId: string): Promise<any> => {
   const response = await fetch(`https://localhost:7100/api/Staffs/${staffId}`, {
     method: "DELETE",
   });
@@ -12,13 +12,13 @@ const deleteStaff = async (staffId: number): Promise<any> => {
 };
 
 export const useDeleteStaff = () => {
-  return useMutation<number, Error, number>({
+  return useMutation<string, Error, string>({
     mutationFn: deleteStaff,
     onSuccess: () => {
-      console.log("Staff deleted successfully");
+      console.log("Staff deactivated successfully");
     },
     onError: (error) => {
-      console.error("Error deleting staff:", error.message);
+      console.error("Error deactivating staff:", error.message);
     },
   });
 };
