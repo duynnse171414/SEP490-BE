@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef ,useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useStaffs } from "@/features/admin/hooks/useStaff";
 import { useDeleteStaff } from "@/features/admin/hooks/useDeleteStaff";
 import { useUpdateStaff } from "@/features/admin/hooks/useUpdateStaff";
@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import UpdateModal from "@/components/ui/updateModal";
 import DeleteModal from "@/components/ui/deleteModal";
+import { Staff } from "@/features/admin/types";
 
 const StaffPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
@@ -61,11 +62,13 @@ const StaffPage = () => {
       });
     }
   }, [staffResponse]);
-  
+
   useEffect(() => {
-    setAllSelected(selectedStaffs.size === allStaffs.length && allStaffs.length > 0);
-    }, [selectedStaffs, allStaffs]);
-  
+    setAllSelected(
+      selectedStaffs.size === allStaffs.length && allStaffs.length > 0
+    );
+  }, [selectedStaffs, allStaffs]);
+
   const handleSelectAll = () => {
     if (allSelected) {
       setSelectedStaffs(new Set());
@@ -73,7 +76,7 @@ const StaffPage = () => {
       setSelectedStaffs(new Set(allStaffs.map((staff) => staff.staffId)));
     }
   };
-  
+
   const handleSelectStaff = (staffId: string) => {
     setSelectedStaffs((prev) => {
       const newSelected = new Set(prev);
@@ -85,7 +88,7 @@ const StaffPage = () => {
       return newSelected;
     });
   };
-  
+
   const jobRankMap: Record<string, number> = {
     Manager: 0,
     Executive: 1,
@@ -95,39 +98,38 @@ const StaffPage = () => {
     Senior: 5,
     Director: 6,
   };
-  
-  const fixCreateAt = (dateStr) => {
+
+  const fixCreateAt = (dateStr: any) => {
     const date = new Date(dateStr);
     if (isNaN(date.getTime()) || date.getFullYear() < 1900) {
-      return "2025-03-26T03:32:28.493Z"; 
+      return "2025-03-26T03:32:28.493Z";
     }
     return date.toISOString(); // Chuyển thành định dạng chuẩn
   };
-    
-  
+
   const handleExport = async () => {
     const selectedStaffData = allStaffs
-    .filter((staff) => selectedStaffs.has(staff.staffId))
-    .map((staff) => ({
-    email: staff.email,
-    userName: staff.userName,
-    staffName: staff.staffName,
-    jobRank: jobRankMap[staff.jobRank] ?? 0,
-    salary: staff.salary,
-    departmentName: staff.departmentName,
-    isActive: staff.isActive,
-    createAt: fixCreateAt(staff.createAt),
-  }));
-  
+      .filter((staff) => selectedStaffs.has(staff.staffId))
+      .map((staff) => ({
+        email: staff.email,
+        userName: staff.userName,
+        staffName: staff.staffName,
+        jobRank: jobRankMap[staff.jobRank] ?? 0,
+        salary: staff.salary,
+        departmentName: staff.departmentName,
+        isActive: staff.isActive,
+        createAt: fixCreateAt(staff.createAt),
+      }));
+
     const response = await fetch(`${BASE_URL}/Staffs/export-to-excel`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "*/*",
+        Accept: "*/*",
       },
       body: JSON.stringify(selectedStaffData),
     });
-  
+
     if (response.ok) {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -323,7 +325,11 @@ const StaffPage = () => {
                   <TableHeader>
                     <TableRow className="bg-muted/50">
                       <TableHead>
-                        <input type="checkbox" checked={allSelected} onChange={handleSelectAll} />
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          onChange={handleSelectAll}
+                        />
                       </TableHead>
                       <TableHead className="font-semibold">No.</TableHead>
                       <TableHead className="font-semibold">Email</TableHead>
@@ -363,8 +369,7 @@ const StaffPage = () => {
                           {(pageNumber - 1) * 10 + index + 1}
                         </TableCell>
                         <TableCell>{staff.email}</TableCell>
-                        <TableCell>{staff.username}</TableCell>{" "}
-                        {/* Display username */}
+                        <TableCell>{staff.username}</TableCell>
                         <TableCell>{staff.staffName}</TableCell>
                         <TableCell>{staff.jobRank}</TableCell>
                         <TableCell>${staff.salary?.toLocaleString()}</TableCell>

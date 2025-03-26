@@ -6,6 +6,7 @@ export interface Staff {
   jobRank: string;
   salary: number;
   departmentName: string;
+  roleInProject: string;
   isActive: boolean;
   createAt: string;
 }

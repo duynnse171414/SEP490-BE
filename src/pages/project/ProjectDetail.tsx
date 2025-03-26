@@ -1,102 +1,160 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
 import { useParams } from "react-router-dom";
-import axios from "axios";
-import { Button } from "@/components/ui/button";
+import { useProject } from "@/features/project/hooks/userProject";
 import {
-  Download,
-} from "lucide-react";
-const BASE_URL = "https://localhost:7100/api";
-interface Staff {
-  staffId: string; // FK từ bảng Project
-  staffName: string;
-  roleinProject?: string; // Nếu không có role trong API, để tùy chọn
-}
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 
-const ProjectDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const [staffList, setStaffList] = useState<Staff[]>([]);
-  const [error, setError] = useState<string | null>(null);
+const ProjectDetail = () => {
+  // Lấy projectId từ URL
+  const { id } = useParams();
+  const projectId = Number(id);
 
-  useEffect(() => {
-    const fetchProjectDetail = async () => {
-      try {
-        const response = await axios.get(`https://localhost:7100/api/Project/${id}`);
-        console.log("API Response:", response.data); // Log dữ liệu để kiểm tra
-        const projectData = response.data?.data; // Lấy `data` từ phản hồi
-        if (projectData && projectData.staffs) {
-          setStaffList(projectData.staffs); // Gán `staffs` vào state
-        } else {
-          setStaffList([]); // Trường hợp không có `staffs`
-        }
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          console.error("Axios error:", error.response?.data || error.message);
-          setError(error.response?.data || error.message);
-        } else {
-          console.error("Unexpected error:", error);
-          setError("An unexpected error occurred.");
-        }
-      }
-    };
-    fetchProjectDetail();
-  }, [id]);
+  // Gọi API lấy thông tin project
+  const { data: project, isLoading, error } = useProject(projectId);
+  console.log(project);
 
-  const handelExportExcel = async () => {
-    // const response = await axios.post(`${BASE_URL}/Project/export-to-excel`,
-    //   {
-        
-    //   });
-    alert("Export Excel Coming soon");
+  // Định dạng ngày tháng
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (e) {
+      return dateString;
+    }
   };
 
-
-  if (error) {
-    return <div className="text-red-500 text-center p-4">Error: {error}</div>;
-  }
-
   return (
-    <div className="container mx-auto p-4 bg-black text-white min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold mb-4">Project Detail - ID: {id}</h1>
-        <Button
-        variant="outline"
-        size="sm"
-        className="cursor-pointer flex items-center gap-2 text-black"
-        onClick={handelExportExcel}
-      >
-        <Download className="h-4 w-4" />
-        Export
-      </Button>
-      </div> 
-      <h2 className="text-xl font-semibold mb-3">Staff List:</h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-gray-800 border border-gray-600 text-white">
-          <thead className="bg-gray-900 text-gray-300">
-            <tr>
-              <th className="border border-gray-700 px-4 py-2">Staff ID</th>
-              <th className="border border-gray-700 px-4 py-2">Name</th>
-            </tr>
-          </thead>
-          <tbody>
-            {staffList.length > 0 ? (
-              staffList.map((staff) => (
-                <tr key={staff.staffId} className="hover:bg-gray-700">
-                  <td className="border border-gray-700 px-4 py-2">{staff.staffId}</td>
-                  <td className="border border-gray-700 px-4 py-2">{staff.staffName}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={2} className="text-center text-gray-400 py-4">
-                  No staff members found for this project.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+    <div className="container mx-auto py-8 px-4">
+      <Card className="shadow-lg">
+        {/* Header */}
+        <CardHeader className="bg-primary/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle className="text-2xl font-bold text-primary">
+            Project Details
+          </CardTitle>
+        </CardHeader>
+
+        <CardContent className="p-6">
+          {/* Loading & Error Handling */}
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <span className="ml-2 text-lg text-muted-foreground">
+                Loading project data...
+              </span>
+            </div>
+          ) : error ? (
+            <div className="bg-destructive/10 text-destructive p-4 rounded-md flex items-center justify-center h-32">
+              <p className="font-medium">Error: {error.message}</p>
+            </div>
+          ) : !project ? (
+            <div className="bg-muted p-8 rounded-md flex items-center justify-center h-32">
+              <p className="text-muted-foreground text-lg">
+                No project data found.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Thông tin Project */}
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold">Project Information</h2>
+                <div className="grid grid-cols-2 gap-4 mt-2 text-muted-foreground">
+                  <p>
+                    <strong>Project Code:</strong> {project.projectCode}
+                  </p>
+                  <p>
+                    <strong>Project Name:</strong> {project.projectName}
+                  </p>
+                  <p>
+                    <strong>Start Date:</strong> {formatDate(project.startDate)}
+                  </p>
+                  <p>
+                    <strong>End Date:</strong> {formatDate(project.endDate)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Table danh sách Staff */}
+              <div className="rounded-md border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold">No.</TableHead>
+                      <TableHead className="font-semibold">Email</TableHead>
+                      <TableHead className="font-semibold">Username</TableHead>
+                      <TableHead className="font-semibold">
+                        Staff Name
+                      </TableHead>
+                      <TableHead className="font-semibold">Job Rank</TableHead>
+                      <TableHead className="font-semibold">Salary</TableHead>
+                      <TableHead className="font-semibold">
+                        Department
+                      </TableHead>
+                      <TableHead className="font-semibold">Role</TableHead>
+                      <TableHead className="font-semibold">Status</TableHead>
+                      <TableHead className="font-semibold">
+                        Created At
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {project?.staffs?.length ? (
+                      project.staffs.map((staff, index) => (
+                        <TableRow
+                          key={staff.staffId}
+                          className="hover:bg-muted/50"
+                        >
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell>{staff.email}</TableCell>
+                          <TableCell>{staff.username}</TableCell>
+                          <TableCell>{staff.staffName}</TableCell>
+                          <TableCell>{staff.jobRank}</TableCell>
+                          <TableCell>
+                            ${staff.salary?.toLocaleString()}
+                          </TableCell>
+                          <TableCell>{staff.departmentName}</TableCell>
+                          <TableCell>{staff.roleInProject}</TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                staff.isActive
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }
+                            >
+                              {staff.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{formatDate(staff.createAt)}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={10}
+                          className="text-center py-4 text-muted-foreground"
+                        >
+                          No staff data available.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
 
-export default ProjectDetailPage;
+export default ProjectDetail;
