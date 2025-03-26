@@ -7,7 +7,7 @@ export const useStaffProject = (projectId?: number) => {
   const shouldFetch = typeof projectId === 'number' && !isNaN(projectId);
 
   const { data, error, isLoading } = useSWR<ApiResponse<GetAllPmOfProjectItem>>(
-    shouldFetch ? `api/StaffProject/${projectId}` : null,
+    shouldFetch ? `/StaffProject/${projectId}` : null,
     fetcher,
   );
 

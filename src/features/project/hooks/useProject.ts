@@ -5,7 +5,7 @@ import { GetAllProject } from "../types";
 
 export const useProject = () => {
     const { data, error, isLoading } = useSWR<ApiResponse<GetAllProject>>(
-      `api/Project/owned`,
+      `/Project/owned`,
       fetcher,
     );
   
