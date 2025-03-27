@@ -21,9 +21,24 @@ export const useProjects = (page: number) => {
   return { data, error, isLoading: !data && !error, mutate };
 };
 
+// export const useProject = (id: number) => {
+//   // const params = { pageNumber };
+//   const { data, error, mutate } = useSWR<Project>(
+//     BASE_URL + `/Project/${id}`,
+//     (url) => fetcherWithParams(url, {}),
+//     {
+//       dedupingInterval: 60000,
+//       refreshInterval: 0,
+//       revalidateOnFocus: false,
+//       revalidateOnReconnect: true,
+//     }
+//   );
+
+//   return { data, error, isLoading: !data && !error, mutate };
+// };
+
 export const useProject = (id: number) => {
-  // const params = { pageNumber };
-  const { data, error, mutate } = useSWR<Project>(
+  const { data, error, mutate } = useSWR<{ data: Project }>(
     BASE_URL + `/Project/${id}`,
     (url) => fetcherWithParams(url, {}),
     {
@@ -34,5 +49,11 @@ export const useProject = (id: number) => {
     }
   );
 
-  return { data, error, isLoading: !data && !error, mutate };
+  return { 
+    data: data?.data,  // Lấy đúng dữ liệu trong "data"
+    error, 
+    isLoading: !data && !error, 
+    mutate 
+  };
 };
+

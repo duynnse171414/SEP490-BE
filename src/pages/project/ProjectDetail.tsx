@@ -1,5 +1,9 @@
 "use client";
-
+import { Button } from "@/components/ui/button";
+import {
+  Upload,
+  Download,
+} from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useProject } from "@/features/project/hooks/userProject";
 import {
@@ -13,7 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-
+const BASE_URL = "https://localhost:7100/api";
 const ProjectDetail = () => {
   // Lấy projectId từ URL
   const { id } = useParams();
@@ -31,6 +35,46 @@ const ProjectDetail = () => {
       return dateString;
     }
   };
+  //Export file staff in project
+  const handleExport = async () => {
+    if (!project) return;
+  
+    const selectedStaffData = {
+      projectName: project.projectName,
+      projectCode: project.projectCode,
+      staffs: project.staffs.map((staff) => ({
+        staffName: staff.staffName,
+        roleInProject: staff.roleInProject,
+        startDate: project.startDate,
+        endDate: project.endDate,
+        createAt: staff.createAt,
+      })),
+    };
+  
+    const response = await fetch(`${BASE_URL}/Project/export-to-excel`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "*/*",
+      },
+      body: JSON.stringify(selectedStaffData),
+    });
+  
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Staffs-In-Project-${new Date().toISOString().split("T")[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      const errorMessage = await response.text();
+      console.error("Failed to export file:", response.status, errorMessage);
+    }
+  };
+  
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -40,6 +84,17 @@ const ProjectDetail = () => {
           <CardTitle className="text-2xl font-bold text-primary">
             Project Details
           </CardTitle>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="cursor-pointer flex items-center gap-2"
+              onClick={handleExport}
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          </div>
         </CardHeader>
 
         <CardContent className="p-6">
