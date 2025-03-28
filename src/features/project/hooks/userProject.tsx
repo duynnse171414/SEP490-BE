@@ -34,7 +34,7 @@ export const useProject = (id: number) => {
   );
 
   return {
-    data: data?.data, // Lấy đúng dữ liệu trong "data"
+    data: data, // Lấy đúng dữ liệu trong "data"
     error,
     isLoading: !data && !error,
     mutate,

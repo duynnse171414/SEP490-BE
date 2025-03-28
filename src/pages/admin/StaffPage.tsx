@@ -124,6 +124,8 @@ const StaffPage = () => {
         createAt: fixCreateAt(staff.createAt),
       }));
 
+    console.log(selectedStaffData);
+
     const response = await fetch(`${BASE_URL}/Staffs/export-to-excel`, {
       method: "POST",
       headers: {
