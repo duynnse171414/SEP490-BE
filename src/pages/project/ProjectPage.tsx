@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { AddStaffToProjectDialog } from "../admin/staff/AddStaffToProject";
 
 const ProjectPage: React.FC = () => {
   const [pageNumber, setPageNumber] = useState(1);
@@ -40,6 +41,9 @@ const ProjectPage: React.FC = () => {
             Project Management
           </CardTitle>
           {/* Thêm các nút chức năng khác nếu cần */}
+          <div className="flex items-center space-x-2">
+            <AddStaffToProjectDialog />
+          </div>
         </CardHeader>
         <CardContent className="p-6">
           {isLoading ? (

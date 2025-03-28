@@ -26,6 +26,9 @@ import {
 import UpdateModal from "@/components/ui/updateModal";
 import DeleteModal from "@/components/ui/deleteModal";
 import { Staff } from "@/features/admin/types";
+import { Input } from "@/components/ui/input";
+import { postData } from "@/api/fetchers";
+import * as XLSX from "xlsx";
 
 const StaffPage = () => {
   const [pageNumber, setPageNumber] = useState(1);
@@ -256,6 +259,55 @@ const StaffPage = () => {
     handleDeleteModalClose();
   };
 
+  // Hàm xử lý khi người dùng click vào nút Import
+  const handleButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const binaryStr = e.target?.result;
+      if (!binaryStr) return;
+
+      const workbook = XLSX.read(binaryStr, { type: "binary" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData: ExcelData[] = (
+        XLSX.utils.sheet_to_json(sheet) as ExcelData[]
+      ).map(({ __rowNum__, ...rest }) => rest);
+
+      console.log("Dữ liệu từ file Excel:", jsonData);
+
+      const formattedData = jsonData.map((item) => ({
+        userName: item.UserName,
+        email: item.Email,
+        staffName: item.StaffName,
+        jobRank: Number(item.JobRank),
+        salary: item.Salary,
+        departmentName: item.DepartmentName,
+        isActive: item.IsActive === "Active" ? true : false,
+        createAt: item.CreateAt.toLocaleString(),
+      }));
+      console.log("Dữ liệu sau khi format:", formattedData);
+      try {
+        const data = await postData("Staffs/import-files", formattedData); // Gọi hàm importStaffs để lưu dữ liệu
+        console.log(data);
+        console.log("Dữ liệu đã được lưu thành công");
+        alert("Dữ liệu đã được import thành công!"); // Thông báo cho người dùng
+      } catch (error) {
+        console.error("Lỗi khi lưu dữ liệu:", error);
+        alert("Có lỗi xảy ra khi import dữ liệu."); // Thông báo lỗi cho người dùng
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Card className="shadow-lg">
@@ -265,13 +317,21 @@ const StaffPage = () => {
           </CardTitle>
           <div className="flex items-center space-x-2">
             <CreateStaffButton onSuccess={handleNewStaff} />
+            <Input
+              ref={fileInputRef}
+              id="fileInput"
+              type="file"
+              accept=".xls,.xlsx"
+              className="absolute opacity-0 w-0 h-0"
+              onChange={handleFileUpload}
+            />
             <Button
               variant="outline"
               size="sm"
               className="cursor-pointer flex items-center gap-2"
-              onClick={() => alert("Import functionality coming soon!")}
+              onClick={handleButtonClick}
             >
-              <Upload className="h-4 w-4" />
+              <Upload className="h-4 w-4" type="file" />
               Import
             </Button>
             <Button

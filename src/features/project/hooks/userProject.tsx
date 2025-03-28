@@ -1,7 +1,7 @@
 import useSWR from "swr";
-import { fetcher, fetcherWithParams } from "@/api/fetchers";
 import { Project, ProjectReponse } from "../types";
-import { Staff } from "@/features/admin/types";
+import { fetcherWithParams } from "@/api/fetchers";
+
 // import { useState } from "react";
 // import { getStaffs } from "@/api/staffs";
 
@@ -21,22 +21,6 @@ export const useProjects = (page: number) => {
   return { data, error, isLoading: !data && !error, mutate };
 };
 
-// export const useProject = (id: number) => {
-//   // const params = { pageNumber };
-//   const { data, error, mutate } = useSWR<Project>(
-//     BASE_URL + `/Project/${id}`,
-//     (url) => fetcherWithParams(url, {}),
-//     {
-//       dedupingInterval: 60000,
-//       refreshInterval: 0,
-//       revalidateOnFocus: false,
-//       revalidateOnReconnect: true,
-//     }
-//   );
-
-//   return { data, error, isLoading: !data && !error, mutate };
-// };
-
 export const useProject = (id: number) => {
   const { data, error, mutate } = useSWR<{ data: Project }>(
     BASE_URL + `/Project/${id}`,
@@ -49,11 +33,10 @@ export const useProject = (id: number) => {
     }
   );
 
-  return { 
-    data: data?.data,  // Lấy đúng dữ liệu trong "data"
-    error, 
-    isLoading: !data && !error, 
-    mutate 
+  return {
+    data: data?.data, // Lấy đúng dữ liệu trong "data"
+    error,
+    isLoading: !data && !error,
+    mutate,
   };
 };
-
