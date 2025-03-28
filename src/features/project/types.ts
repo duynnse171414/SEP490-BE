@@ -1,3 +1,4 @@
+import { Staff } from "../admin/types";
 import { StaffNotInProject, StaffProject } from "../staff/types";
 
 export interface Project {
@@ -28,4 +29,13 @@ export interface ApiResponse<T> {
   message: string;
   data: T;
   error: string | null;
+  startDate: string;
+  endDate: string;
+  isDeleted: boolean;
+  staffs: Staff[];
+}
+
+export interface ProjectReponse {
+  items: Project[];
+  totalPages: number;
 }

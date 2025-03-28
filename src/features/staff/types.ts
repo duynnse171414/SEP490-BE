@@ -3,6 +3,7 @@ import { Project } from "../project/types";
 export interface Staff {
   staffId: string;
   email: string;
+  username: string;
   staffName: string;
   jobRank: string;
   salary: number;
@@ -26,12 +27,12 @@ export interface StaffProject {
   project: Project;
   staff: Staff;
   roleInProject: string;
-  createAt?: string | null;
-  createBy?: string | null;
-  updateAt?: string | null;
-  updateBy?: string | null;
-  deleteAt?: string | null;
-  deleteBy?: string | null;
+  createAt?: string;
+  createBy?: string;
+  updateAt?: string;
+  updateBy?: string;
+  deleteAt?: string;
+  deleteBy?: string;
 }
 
 export interface StaffNotInProject {

@@ -20,7 +20,6 @@ import {
   Upload,
   Download,
 } from "lucide-react";
-// import { Staff } from "@/features/admin/types";
 
 import { Input } from "@/components/ui/input";
 import { postData } from "@/api/fetchers";
