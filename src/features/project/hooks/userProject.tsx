@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import { fetcherWithParams } from "@/api/fetchers";
-import { Staff, StaffResponse } from "../types";
+import { Staff, StaffResponse } from "@/features/staff/types";
 // import { useState } from "react";
 // import { getStaffs } from "@/api/staffs";
 
