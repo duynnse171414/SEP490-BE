@@ -242,7 +242,7 @@ const StaffPage = () => {
   const handleDeleteModalConfirm = async (reason: string) => {
     if (selectedStaff) {
       try {
-        await fetch(`/api/staffs/${selectedStaff.staffId}/reason`, {
+        await fetch(`/api/Staffs/${selectedStaff.staffId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason }),

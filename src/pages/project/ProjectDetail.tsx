@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import {
-  Upload,
+  // Upload,
   Download,
 } from "lucide-react";
 import { useParams } from "react-router-dom";
@@ -38,7 +38,7 @@ const ProjectDetail = () => {
   //Export file staff in project
   const handleExport = async () => {
     if (!project) return;
-  
+
     const selectedStaffData = {
       projectName: project.projectName,
       projectCode: project.projectCode,
@@ -50,7 +50,7 @@ const ProjectDetail = () => {
         createAt: staff.createAt,
       })),
     };
-  
+
     const response = await fetch(`${BASE_URL}/Project/export-to-excel`, {
       method: "POST",
       headers: {
@@ -59,13 +59,15 @@ const ProjectDetail = () => {
       },
       body: JSON.stringify(selectedStaffData),
     });
-  
+
     if (response.ok) {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Staffs-In-Project-${new Date().toISOString().split("T")[0]}.xlsx`;
+      a.download = `Staffs-In-Project-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -74,7 +76,6 @@ const ProjectDetail = () => {
       console.error("Failed to export file:", response.status, errorMessage);
     }
   };
-  
 
   return (
     <div className="container mx-auto py-8 px-4">
