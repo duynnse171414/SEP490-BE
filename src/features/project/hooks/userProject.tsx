@@ -21,22 +21,22 @@ export const useProjects = (page: number) => {
   return { data, error, isLoading: !data && !error, mutate };
 };
 
-export const useProject = (id: number) => {
-  const { data, error, mutate } = useSWR<{ data: Project }>(
-    BASE_URL + `/Project/${id}`,
-    (url) => fetcherWithParams(url, {}),
-    {
-      dedupingInterval: 60000,
-      refreshInterval: 0,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-    }
-  );
+// export const useProject = (id: number) => {
+//   const { data, error, mutate } = useSWR<{ data: Project }>(
+//     BASE_URL + `/Project/${id}`,
+//     (url) => fetcherWithParams(url, {}),
+//     {
+//       dedupingInterval: 60000,
+//       refreshInterval: 0,
+//       revalidateOnFocus: false,
+//       revalidateOnReconnect: true,
+//     }
+//   );
 
-  return {
-    data: data, // Lấy đúng dữ liệu trong "data"
-    error,
-    isLoading: !data && !error,
-    mutate,
-  };
-};
+//   return {
+//     data: data?.data, // Lấy đúng dữ liệu trong "data"
+//     error,
+//     isLoading: !data && !error,
+//     mutate,
+//   };
+// };

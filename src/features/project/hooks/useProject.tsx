@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { fetcher, postData } from "@/api/fetchers";
+import { fetcher, fetcherWithParams, postData } from "@/api/fetchers";
 import { Project, RoleInProject, ApiResponse } from "../types";
 import { Staff, StaffNotInProject } from "@/features/staff/types";
 
@@ -70,4 +70,24 @@ export const useAddStaffToProject = async (
     console.error("Error adding staff to project:", error);
     throw error;
   }
+};
+
+export const useProject = (id: number) => {
+  const { data, error, mutate } = useSWR<{ data: Project }>(
+    BASE_URL + `/Project/${id}`,
+    (url) => fetcherWithParams(url, {}),
+    {
+      dedupingInterval: 60000,
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+    }
+  );
+
+  return {
+    data: data?.data, // Lấy đúng dữ liệu trong "data"
+    error,
+    isLoading: !data && !error,
+    mutate,
+  };
 };

@@ -5,7 +5,7 @@ import {
   Download,
 } from "lucide-react";
 import { useParams } from "react-router-dom";
-import { useProject } from "@/features/project/hooks/userProject";
+import { useProject } from "@/features/project/hooks/useProject";
 import {
   Table,
   TableBody,
@@ -42,8 +42,8 @@ const ProjectDetail = () => {
     const selectedStaffData = {
       projectName: project.projectName,
       projectCode: project.projectCode,
-      staffs: project.staffs.map((staff) => ({
-        staffName: staff.staffName,
+      staffs: project.staffProjects.map((staff) => ({
+        staffName: staff.staff.staffName,
         roleInProject: staff.roleInProject,
         startDate: project.startDate,
         endDate: project.endDate,
@@ -162,34 +162,36 @@ const ProjectDetail = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {project?.staffs?.length ? (
-                      project.staffs.map((staff, index) => (
+                    {project?.staffProjects?.length ? (
+                      project.staffProjects.map((staff, index) => (
                         <TableRow
                           key={staff.staffId}
                           className="hover:bg-muted/50"
                         >
                           <TableCell>{index + 1}</TableCell>
-                          <TableCell>{staff.email}</TableCell>
-                          <TableCell>{staff.username}</TableCell>
-                          <TableCell>{staff.staffName}</TableCell>
-                          <TableCell>{staff.jobRank}</TableCell>
+                          <TableCell>{staff.staff.email}</TableCell>
+                          <TableCell>{staff.staff.username}</TableCell>
+                          <TableCell>{staff.staff.staffName}</TableCell>
+                          <TableCell>{staff.staff.jobRank}</TableCell>
                           <TableCell>
-                            ${staff.salary?.toLocaleString()}
+                            ${staff.staff.salary?.toLocaleString()}
                           </TableCell>
-                          <TableCell>{staff.departmentName}</TableCell>
+                          <TableCell>{staff.staff.departmentName}</TableCell>
                           <TableCell>{staff.roleInProject}</TableCell>
                           <TableCell>
                             <Badge
                               className={
-                                staff.isActive
+                                staff.staff.isActive
                                   ? "bg-green-100 text-green-800"
                                   : "bg-gray-100 text-gray-800"
                               }
                             >
-                              {staff.isActive ? "Active" : "Inactive"}
+                              {staff.staff.isActive ? "Active" : "Inactive"}
                             </Badge>
                           </TableCell>
-                          <TableCell>{formatDate(staff.createAt)}</TableCell>
+                          <TableCell>
+                            {formatDate(staff.staff.createAt)}
+                          </TableCell>
                         </TableRow>
                       ))
                     ) : (
