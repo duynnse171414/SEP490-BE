@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { Project, ProjectReponse } from "../types";
+import { ProjectReponse } from "../types";
 import { fetcherWithParams } from "@/api/fetchers";
 
 // import { useState } from "react";

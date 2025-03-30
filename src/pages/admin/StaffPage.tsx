@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import UpdateModal from "@/components/ui/updateModal";
 import DeleteModal from "@/components/ui/deleteModal";
-import { Staff } from "@/features/admin/types";
+// import { Staff } from "@/features/admin/types";
 import { Input } from "@/components/ui/input";
 import { postData } from "@/api/fetchers";
 import * as XLSX from "xlsx";

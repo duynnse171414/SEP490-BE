@@ -1,5 +1,5 @@
 import { Staff } from "../admin/types";
-import { StaffNotInProject, StaffProject } from "../staff/types";
+// import { StaffNotInProject, StaffProject } from "../staff/types";
 
 export interface Project {
   projectId: number;
@@ -10,7 +10,7 @@ export interface Project {
   budget: number;
   isDeleted: boolean;
   projectDetail?: string;
-  staffProjects: StaffProject[];
+  staffs: Staff[];
   createAt?: string;
   createBy?: string;
   updateAt?: string;
