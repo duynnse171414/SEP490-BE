@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
-import { AuthContext } from "../features/auth/contexts/AuthContext";
-
 import {
   Drawer,
   DrawerContent,
@@ -20,7 +18,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { LoginForm } from "@/features/auth/components/login-form";
 import {
@@ -62,7 +59,6 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 
 const jsonPlaceholderItems = [
   { title: "Posts", description: "View and manage blog posts", href: "/posts", icon: <ClipboardList className="h-5 w-5 text-primary" /> },
@@ -82,8 +78,6 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { user, logout, login } = useAuthContext();
-  const AuthContext = useAuthContext();
-  const [isSuccess, setIsSuccess] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!user);
 
   useEffect(() => {
@@ -93,7 +87,7 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const handleLoginSubmit = ({ email, password }: LoginUserDTO) => {
     console.log("Logging in with email and password");
     login({ email, password });
-    if(isSuccess) {
+    if(isLoginDrawerOpen) {
     setIsLoginDrawerOpen(false);
     } else {
       setIsLoginDrawerOpen(true);
@@ -235,6 +229,11 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                       <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
+                      <Link to="/dashboard">My Claims</Link>
+                      <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <CreditCard className="mr-2 h-4 w-4" />

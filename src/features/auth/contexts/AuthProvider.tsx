@@ -99,6 +99,22 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [navigate]);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token) as any;
+        if (decoded.exp * 1000 > Date.now()) {
+          setLoggedUser(decoded);
+        } else {
+          localStorage.removeItem("token");
+        }
+      } catch (error) {
+        localStorage.removeItem("token");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (loggedUser) {
       const decodedToken: DecodedToken = jwtDecode(loggedUser.token);
       const timeTokenExpired = decodedToken.exp * 1000 - Date.now() - 3000;

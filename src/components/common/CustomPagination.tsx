@@ -14,7 +14,11 @@ interface PaginationProps {
   onPageChange: (newPage: number) => void;
 }
 
-const CustomPagination: React.FC<PaginationProps> = ({ page, hasNextPage, onPageChange }) => {
+const CustomPagination: React.FC<PaginationProps> = ({
+  page,
+  hasNextPage,
+  onPageChange,
+}) => {
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || (newPage > page && !hasNextPage)) return;
     onPageChange(newPage);
@@ -39,7 +43,10 @@ const CustomPagination: React.FC<PaginationProps> = ({ page, hasNextPage, onPage
 
           {page > 1 && (
             <PaginationItem>
-              <Button variant="outline" onClick={() => handlePageChange(page - 1)}>
+              <Button
+                variant="outline"
+                onClick={() => handlePageChange(page - 1)}
+              >
                 {page - 1}
               </Button>
             </PaginationItem>
@@ -51,7 +58,10 @@ const CustomPagination: React.FC<PaginationProps> = ({ page, hasNextPage, onPage
 
           {hasNextPage && (
             <PaginationItem>
-              <Button variant="outline" onClick={() => handlePageChange(page + 1)}>
+              <Button
+                variant="outline"
+                onClick={() => handlePageChange(page + 1)}
+              >
                 {page + 1}
               </Button>
             </PaginationItem>
