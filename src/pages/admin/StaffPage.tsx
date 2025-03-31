@@ -308,6 +308,7 @@ const StaffPage = () => {
       const data = await postData("Staffs/import-files", formattedData); // Gọi hàm importStaffs để lưu dữ liệu
       console.log(data);
       console.log("Dữ liệu đã được lưu thành công");
+      mutate(); // Cập nhật lại danh sách nhân viên sau khi import thành công
       // try {
 
       //   alert("Dữ liệu đã được import thành công!"); // Thông báo cho người dùng
