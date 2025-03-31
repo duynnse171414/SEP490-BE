@@ -142,8 +142,7 @@ const CreateClaimPage: React.FC = () => {
           } catch (err) {
             console.error("Error:", err);
           }
-        // Gửi API tại đây nếu cần
-        // axios.post('/api/claim-request', payload).then(...);
+
     };
     
     return (
