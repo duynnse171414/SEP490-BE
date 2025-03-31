@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
-import { AuthContext } from "../features/auth/contexts/AuthContext";
 
 import {
   Drawer,
@@ -20,7 +19,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { LoginForm } from "@/features/auth/components/login-form";
 import {
@@ -62,7 +60,6 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 
 const jsonPlaceholderItems = [
   { title: "Posts", description: "View and manage blog posts", href: "/posts", icon: <ClipboardList className="h-5 w-5 text-primary" /> },
@@ -82,8 +79,7 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { user, logout, login } = useAuthContext();
-  const AuthContext = useAuthContext();
-  const [isSuccess, setIsSuccess] = useState("");
+  const [isSuccess] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!user);
 
   useEffect(() => {
@@ -93,8 +89,8 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const handleLoginSubmit = ({ email, password }: LoginUserDTO) => {
     console.log("Logging in with email and password");
     login({ email, password });
-    if(isSuccess) {
-    setIsLoginDrawerOpen(false);
+    if (isSuccess) {
+      setIsLoginDrawerOpen(false);
     } else {
       setIsLoginDrawerOpen(true);
     }
@@ -178,8 +174,8 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuLink>
-                    <Link to="/about">
-                      <span>About</span>
+                    <Link to="/claims">
+                      <span>Approve Claim</span>
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
@@ -209,7 +205,7 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
             </div>
 
             {isAuthenticated ? (
-              <DropdownMenu>  
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                     <Avatar className="h-9 w-9 border-2 border-primary/20">
@@ -377,12 +373,12 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 </ul>
               </div>
               <Link
-                to="/about"
+                to="/claims"
                 className="flex items-center gap-2 text-lg font-medium hover:text-primary"
                 onClick={() => setIsNavDrawerOpen(false)}
               >
                 <Info size={18} />
-                <span>About</span>
+                <span>Approve Claim</span>
               </Link>
               <Link
                 to="/contact"

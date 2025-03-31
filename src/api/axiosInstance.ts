@@ -10,7 +10,7 @@ import { Backend_URL } from "@/config.global";
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: Backend_URL,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     "Content-Type": "application/json",
   },
