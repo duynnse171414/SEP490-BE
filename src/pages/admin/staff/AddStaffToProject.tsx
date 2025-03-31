@@ -32,19 +32,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StaffNotInProject } from "@/features/staff/types";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
-export function AddStaffToProjectDialog() {
-  const [selectedProject, setSelectedProject] = useState<string>("");
+export function AddStaffToProjectDialog(projectId?: string, open?: boolean) {
+  const [selectedProject, setSelectedProject] = useState<string>(
+    projectId || ""
+  );
   const [selectedStaffs, setSelectedStaffs] = useState<string[]>([]);
   const [staffRoles, setStaffRoles] = useState<Record<string, string>>({});
 
   const { data: projects, isLoading: isLoadingProjects } = useProjects();
   const { data: availableStaffs, isLoading: isLoadingStaffs } =
     useStaffNotInProject(selectedProject);
+
   const { data: roles, isLoading: isLoadingRoles } = useRoleInProject();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  const { id } = useParams();
+  const navigate = useNavigate();
 
   const handleProjectChange = (projectId: string) => {
     setSelectedProject(projectId);
@@ -97,18 +105,31 @@ export function AddStaffToProjectDialog() {
       // Reset form và hiển thị thông báo thành công
       setSelectedStaffs([]);
       setStaffRoles({});
-      alert("Staff(s) added to project successfully!");
+      toast.success("Staff(s) added to project successfully!", {
+        description: "The project has been updated with the new staff members.",
+        duration: 3000,
+      });
+
       setIsOpen(false);
+
+      if (projectId) {
+        // If we're on a project detail page, refresh the current page
+        window.location.reload();
+      }
     } catch (error) {
       console.error("Failed to add staffs to project:", error);
-      alert("Failed to add staff(s) to project. Please try again.");
+      toast.error("Failed to add staff(s) to project", {
+        description:
+          "Please try again or contact support if the problem persists.",
+        duration: 5000,
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="default">Add Staff to Project</Button>
       </DialogTrigger>

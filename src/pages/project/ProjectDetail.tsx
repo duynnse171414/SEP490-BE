@@ -17,6 +17,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+import { AddStaffToProjectDialog } from "../admin/staff/AddStaffToProject";
 const BASE_URL = "https://localhost:7100/api";
 const ProjectDetail = () => {
   // Lấy projectId từ URL
@@ -25,7 +26,6 @@ const ProjectDetail = () => {
 
   // Gọi API lấy thông tin project
   const { data: project, isLoading, error } = useProject(projectId);
-  console.log(project);
 
   // Định dạng ngày tháng
   const formatDate = (dateString: string) => {
@@ -86,6 +86,8 @@ const ProjectDetail = () => {
             Project Details
           </CardTitle>
           <div className="flex items-center space-x-2">
+            {AddStaffToProjectDialog(id, true)}
+
             <Button
               variant="outline"
               size="sm"
