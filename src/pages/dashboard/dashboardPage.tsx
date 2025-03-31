@@ -8,7 +8,8 @@ import {
   Ticket,
   LayoutDashboard,
   Ban,
-  RotateCcw
+  RotateCcw,
+  Trash2Icon
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ClaimRequest } from "@/types/claims";
@@ -16,7 +17,7 @@ import { claimApi } from "@/api/claimApi";
 import { useNavigate } from "react-router-dom";
 import "../css/dashboardPage.css";
 import { useTheme } from "next-themes";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 type ViewType = "draft" | "pending" | "approved" | "paid" | "rejected" | "cancelled" | "returned";
 
@@ -28,103 +29,40 @@ interface CustomPaginationProps {
 
 const CustomPagination = ({ page, hasNextPage, onPageChange }: CustomPaginationProps) => {
   return (
-    <div className="flex justify-center gap-2 mt-4">
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="flex justify-center gap-2"
+    >
+      <Button
+        variant="outline"
+        onClick={() => onPageChange(page - 1)}
+        disabled={page === 1}
+        className="border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white
+          transition-all duration-300 hover:scale-105"
       >
-        <Button
-          variant="outline"
-          onClick={() => onPageChange(page - 1)}
-          disabled={page === 1}
-          className="border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white
-            transition-all duration-300 ease-in-out"
-        >
-          Previous
-        </Button>
-      </motion.div>
-
-      <motion.div
-        key={page}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-2"
+        Previous
+      </Button>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-900 dark:text-white">Page {page}</span>
+      </div>
+      <Button
+        variant="outline"
+        onClick={() => onPageChange(page + 1)}
+        disabled={!hasNextPage}
+        className="border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white
+          transition-all duration-300 hover:scale-105"
       >
-        <span className="text-sm text-gray-900 dark:text-white transition-colors duration-300">
-          Page {page}
-        </span>
-      </motion.div>
-
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Button
-          variant="outline"
-          onClick={() => onPageChange(page + 1)}
-          disabled={!hasNextPage}
-          className="border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white
-            transition-all duration-300 ease-in-out"
-        >
-          Next
-        </Button>
-      </motion.div>
-    </div>
+        Next
+      </Button>
+    </motion.div>
   );
 };
-
-// Thêm style này vào file CSS của bạn hoặc tạo một styled component
-const styles = `
-  @keyframes lightToDark {
-    0% {
-      clip-path: circle(0% at top right);
-    }
-    100% {
-      clip-path: circle(150% at top right);
-    }
-  }
-
-  @keyframes darkToLight {
-    0% {
-      clip-path: circle(0% at top right);
-    }
-    100% {
-      clip-path: circle(150% at top right);
-    }
-  }
-
-  .dashboard-container {
-    position: relative;
-  }
-
-  .dashboard-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background-color: var(--bg-color);
-    z-index: -1;
-    animation: none;
-  }
-
-  .dashboard-container[data-theme-changing="dark"]::before {
-    --bg-color: rgb(17 24 39); /* bg-gray-900 */
-    animation: lightToDark 0.5s ease-in-out forwards;
-  }
-
-  .dashboard-container[data-theme-changing="light"]::before {
-    --bg-color: white;
-    animation: darkToLight 0.5s ease-in-out forwards;
-  }
-`;
 
 const DashboardPage = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const [prevTheme, setPrevTheme] = useState(theme);
-  const [isChanging, setIsChanging] = useState(false);
   const pageSize = 10;
   const [totalClaims, setTotalClaims] = useState(0);
   const [currentView, setCurrentView] = useState<ViewType>("pending");
@@ -296,18 +234,6 @@ const DashboardPage = () => {
       );
     }
   }, [selectedMonth]); // Thêm selectedMonth vào dependencies
-
-  // Theo dõi thay đổi theme
-  useEffect(() => {
-    if (theme !== prevTheme) {
-      setIsChanging(true);
-      const timer = setTimeout(() => {
-        setIsChanging(false);
-        setPrevTheme(theme);
-      }, 500); // Thời gian bằng với thời gian animation
-      return () => clearTimeout(timer);
-    }
-  }, [theme, prevTheme]);
 
   const handleViewChange = (view: ViewType) => {
     setCurrentView(view);
@@ -493,324 +419,305 @@ const DashboardPage = () => {
   };
 
   return (
-    <>
-      <style>{styles}</style>
-      <div className="flex">
-        <div 
-          className="dashboard-container flex-1 p-6 bg-white dark:bg-gray-900 transition-colors duration-500"
-          data-theme-changing={isChanging ? theme : undefined}
+    <div className="flex">
+      <div className="flex-1 p-6 bg-white dark:bg-gray-900 transition-colors duration-300 ease-in-out">
+        {/* Header với animation fade in từ trên xuống */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex justify-between items-center mb-6"
         >
-          {/* Header với animation fade in từ trên xuống */}
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex justify-between items-center mb-6"
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">Dashboard</h1>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 transition-all duration-300 hover:scale-105"
           >
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">Dashboard</h1>
-            <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 transition-all duration-300 hover:scale-105"
-            >
-              <Plus className="w-4 h-4" />
-              Create claim Request
-            </Button>
-          </motion.div>
+            <Plus className="w-4 h-4" />
+            Create claim Request
+          </Button>
+        </motion.div>
 
-          {/* Total Claims Card với animation scale và hover */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 mb-8 transform transition-all duration-300 hover:shadow-lg"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-3xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">{totalClaims}</h3>
-                <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">Total Requests</p>
-              </div>
-              <div className="p-4 bg-blue-100/30 dark:bg-blue-900/30 rounded-lg transition-colors duration-300">
-                <LayoutDashboard className="w-8 h-8 text-blue-600 dark:text-blue-400 transition-colors duration-300" />
-              </div>
+        {/* Total Claims Card với animation scale và hover */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 mb-8 transform transition-all duration-300 hover:shadow-lg"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-3xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">{totalClaims}</h3>
+              <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">Total Requests</p>
             </div>
-          </motion.div>
+            <div className="p-4 bg-blue-100/30 dark:bg-blue-900/30 rounded-lg transition-colors duration-300">
+              <LayoutDashboard className="w-8 h-8 text-blue-600 dark:text-blue-400 transition-colors duration-300" />
+            </div>
+          </div>
+        </motion.div>
 
-          {/* Status Cards Grid với animation stagger */}
-          <motion.div 
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: { opacity: 0 },
-              visible: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.1
-                }
+        {/* Status Cards Grid với animation stagger */}
+        <motion.div 
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.1
               }
+            }
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-6 mb-8"
+        >
+          {/* Wrap mỗi card trong motion.div */}
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, x: -20 },
+              visible: { opacity: 1, x: 0 }
             }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-6 mb-8"
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 
+              cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105
+              ${currentView === "draft" ? "ring-2 ring-blue-500" : ""}`}
+            onClick={() => handleViewChange("draft")}
           >
-            {/* Wrap mỗi card trong motion.div */}
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, x: -20 },
-                visible: { opacity: 1, x: 0 }
-              }}
-              className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 
-                cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105
-                ${currentView === "draft" ? "ring-2 ring-blue-500" : ""}`}
-              onClick={() => handleViewChange("draft")}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                    {draftTotal}
-                  </h3>
-                  <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Draft Requests</p>
-                </div>
-                <div className="p-3 bg-gray-200/30 dark:bg-gray-900/30 rounded-lg transition-colors duration-300">
-                  <FileText className="w-6 h-6 text-gray-600 dark:text-gray-400 transition-colors duration-300" />
-                </div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                  {draftTotal}
+                </h3>
+                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Draft Requests</p>
               </div>
-            </motion.div>
-
-            {/* Pending Card */}
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, x: -20 },
-                visible: { opacity: 1, x: 0 }
-              }}
-              className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
-                currentView === "pending" ? "ring-2 ring-blue-500" : ""
-              }`}
-              onClick={() => handleViewChange("pending")}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                    {pendingTotal}
-                  </h3>
-                  <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Pending Approval</p>
-                </div>
-                <div className="p-3 bg-yellow-100/30 dark:bg-yellow-900/30 rounded-lg transition-colors duration-300">
-                  <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400 transition-colors duration-300" />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Approved Card */}
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, x: -20 },
-                visible: { opacity: 1, x: 0 }
-              }}
-              className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
-                currentView === "approved" ? "ring-2 ring-blue-500" : ""
-              }`}
-              onClick={() => handleViewChange("approved")}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                    {approvedTotal}
-                  </h3>
-                  <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Approved Requests</p>
-                </div>
-                <div className="p-3 bg-green-100/30 dark:bg-green-900/30 rounded-lg transition-colors duration-300">
-                  <FileText className="w-6 h-6 text-green-600 dark:text-green-400 transition-colors duration-300" />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Paid Card */}
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, x: -20 },
-                visible: { opacity: 1, x: 0 }
-              }}
-              className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
-                currentView === "paid" ? "ring-2 ring-blue-500" : ""
-              }`}
-              onClick={() => handleViewChange("paid")}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                    {paidTotal}
-                  </h3>
-                  <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Paid Requests</p>
-                </div>
-                <div className="p-3 bg-purple-100/30 dark:bg-purple-900/30 rounded-lg transition-colors duration-300">
-                  <Ticket className="w-6 h-6 text-purple-600 dark:text-purple-400 transition-colors duration-300" />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Rejected Card */}
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, x: -20 },
-                visible: { opacity: 1, x: 0 }
-              }}
-              className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
-                currentView === "rejected" ? "ring-2 ring-blue-500" : ""
-              }`}
-              onClick={() => handleViewChange("rejected")}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                    {rejectedTotal}
-                  </h3>
-                  <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Rejected Requests</p>
-                </div>
-                <div className="p-3 bg-red-100/30 dark:bg-red-900/30 rounded-lg transition-colors duration-300">
-                  <X  className="w-6 h-6 text-red-600 dark:text-red-400 transition-colors duration-300" />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Cancelled Card */}
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, x: -20 },
-                visible: { opacity: 1, x: 0 }
-              }}
-              className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
-                currentView === "cancelled" ? "ring-2 ring-blue-500" : ""
-              }`}
-              onClick={() => handleViewChange("cancelled")}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                    {cancelledTotal}
-                  </h3>
-                  <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Cancelled Requests</p>
-                </div>
-                <div className="p-3 bg-gray-200/30 dark:bg-gray-900/30 rounded-lg transition-colors duration-300">
-                  <Ban className="w-6 h-6 text-gray-600 dark:text-gray-400 transition-colors duration-300" />
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Returned Card */}
-            <motion.div
-              variants={{
-                hidden: { opacity: 0, x: -20 },
-                visible: { opacity: 1, x: 0 }
-              }}
-              className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 
-                cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105
-                ${currentView === "returned" ? "ring-2 ring-blue-500" : ""}`}
-              onClick={() => handleViewChange("returned")}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                    {returnedTotal}
-                  </h3>
-                  <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Returned Requests</p>
-                </div>
-                <div className="p-3 bg-orange-100/30 dark:bg-orange-900/30 rounded-lg transition-colors duration-300">
-                  <RotateCcw className="w-6 h-6 text-orange-500 dark:text-orange-400 transition-colors duration-300" />
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Claims Table với animation fade in từ dưới lên */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow p-4 mt-8"
-          >
-            {/* Table Header với hover effect */}
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">{getViewTitle()}</h2>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Filter by Create At:</span>
-                <input
-                  type="month"
-                  value={selectedMonth}
-                  onChange={handleMonthChange}
-                  className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-3 py-2 border border-gray-200 dark:border-gray-600
-                    transition-all duration-300 ease-in-out hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
+              <div className="p-3 bg-gray-200/30 dark:bg-gray-900/30 rounded-lg transition-colors duration-300">
+                <FileText className="w-6 h-6 text-gray-600 dark:text-gray-400 transition-colors duration-300" />
               </div>
             </div>
-
-            {/* Loading Spinner với animation */}
-            {loading ? (
-              <div className="flex justify-center p-4">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-600 dark:text-white" />
-              </div>
-            ) : (
-              <>
-                {(getCurrentRequests()?.length || 0) === 0 ? (
-                  <div className="text-center py-8 text-gray-600 dark:text-gray-400">
-                    No requests found
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-gray-200 dark:border-gray-700">
-                          <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Project ID</th>
-                          <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Hours</th>
-                          <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Claim Date</th>
-                          <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Create At</th>
-                        </tr>
-                      </thead>
-                      <AnimatePresence mode="wait">
-                        <motion.tbody
-                          key={currentPage}
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          {getCurrentRequests()?.map((request, index) => (
-                            <motion.tr
-                              key={request.claimId}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                              onClick={() => handleRowClick(request.claimId)}
-                              className="border-b border-gray-200 dark:border-gray-700 
-                                hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer 
-                                transition-all duration-300 ease-in-out"
-                            >
-                              <td className="px-4 py-2 text-gray-900 dark:text-gray-200">{request.projectId}</td>
-                              <td className="px-4 py-2 text-gray-900 dark:text-gray-200">{request.workingHours}</td>
-                              <td className="px-4 py-2 text-gray-900 dark:text-gray-200">
-                                {new Date(request.claimDate).toLocaleDateString()}
-                              </td>
-                              <td className="px-4 py-2 text-gray-900 dark:text-gray-200">
-                                {new Date(request.createAt).toLocaleDateString()}
-                              </td>
-                            </motion.tr>
-                          ))}
-                        </motion.tbody>
-                      </AnimatePresence>
-                    </table>
-                  </div>
-                )}
-                {getCurrentRequests()?.length > 0 && (
-                  <div className="mt-4">
-                    <CustomPagination
-                      page={currentPage}
-                      hasNextPage={hasNextPage}
-                      onPageChange={handlePageChange}
-                    />
-                  </div>
-                )}
-              </>
-            )}
           </motion.div>
+
+          {/* Pending Card */}
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, x: -20 },
+              visible: { opacity: 1, x: 0 }
+            }}
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
+              currentView === "pending" ? "ring-2 ring-blue-500" : ""
+            }`}
+            onClick={() => handleViewChange("pending")}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                  {pendingTotal}
+                </h3>
+                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Pending Approval</p>
+              </div>
+              <div className="p-3 bg-yellow-100/30 dark:bg-yellow-900/30 rounded-lg transition-colors duration-300">
+                <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400 transition-colors duration-300" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Approved Card */}
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, x: -20 },
+              visible: { opacity: 1, x: 0 }
+            }}
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
+              currentView === "approved" ? "ring-2 ring-blue-500" : ""
+            }`}
+            onClick={() => handleViewChange("approved")}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                  {approvedTotal}
+                </h3>
+                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Approved Requests</p>
+              </div>
+              <div className="p-3 bg-green-100/30 dark:bg-green-900/30 rounded-lg transition-colors duration-300">
+                <FileText className="w-6 h-6 text-green-600 dark:text-green-400 transition-colors duration-300" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Paid Card */}
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, x: -20 },
+              visible: { opacity: 1, x: 0 }
+            }}
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
+              currentView === "paid" ? "ring-2 ring-blue-500" : ""
+            }`}
+            onClick={() => handleViewChange("paid")}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                  {paidTotal}
+                </h3>
+                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Paid Requests</p>
+              </div>
+              <div className="p-3 bg-purple-100/30 dark:bg-purple-900/30 rounded-lg transition-colors duration-300">
+                <Ticket className="w-6 h-6 text-purple-600 dark:text-purple-400 transition-colors duration-300" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Rejected Card */}
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, x: -20 },
+              visible: { opacity: 1, x: 0 }
+            }}
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
+              currentView === "rejected" ? "ring-2 ring-blue-500" : ""
+            }`}
+            onClick={() => handleViewChange("rejected")}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                  {rejectedTotal}
+                </h3>
+                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Rejected Requests</p>
+              </div>
+              <div className="p-3 bg-red-100/30 dark:bg-red-900/30 rounded-lg transition-colors duration-300">
+                <X  className="w-6 h-6 text-red-600 dark:text-red-400 transition-colors duration-300" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Cancelled Card */}
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, x: -20 },
+              visible: { opacity: 1, x: 0 }
+            }}
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
+              currentView === "cancelled" ? "ring-2 ring-blue-500" : ""
+            }`}
+            onClick={() => handleViewChange("cancelled")}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                  {cancelledTotal}
+                </h3>
+                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Cancelled Requests</p>
+              </div>
+              <div className="p-3 bg-gray-200/30 dark:bg-gray-900/30 rounded-lg transition-colors duration-100">
+                <Trash2Icon className="w-6 h-6 text-blue-600 dark:text-blue-400 transition-colors duration-100" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Returned Card */}
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, x: -20 },
+              visible: { opacity: 1, x: 0 }
+            }}
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 
+              cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105
+              ${currentView === "returned" ? "ring-2 ring-blue-500" : ""}`}
+            onClick={() => handleViewChange("returned")}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
+                  {returnedTotal}
+                </h3>
+                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Returned Requests</p>
+              </div>
+              <div className="p-3 bg-orange-100/30 dark:bg-orange-900/30 rounded-lg transition-colors duration-300">
+                <RotateCcw className="w-6 h-6 text-orange-500 dark:text-orange-400 transition-colors duration-300" />
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* Claims Table - Bỏ motion.div, chỉ giữ div bình thường */}
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow p-4 mt-8 transition-colors duration-300">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">{getViewTitle()}</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Filter by Create At:</span>
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={handleMonthChange}
+                className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-3 py-2 
+                  border border-gray-200 dark:border-gray-600
+                  transition-colors duration-300
+                  hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center p-4">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-600 dark:text-white" />
+            </div>
+          ) : (
+            <>
+              {(getCurrentRequests()?.length || 0) === 0 ? (
+                <div className="text-center py-8 text-gray-600 dark:text-gray-400 transition-colors duration-300">
+                  No requests found
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white transition-colors duration-300">Staff ID</th>
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white transition-colors duration-300">Project ID</th>
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white transition-colors duration-300">Hours</th>
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white transition-colors duration-300">Claim Date</th>
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white transition-colors duration-300">Create At</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getCurrentRequests()?.map((request) => (
+                        <tr
+                          key={request.claimId}
+                          onClick={() => handleRowClick(request.claimId)}
+                          className="border-b border-gray-200 dark:border-gray-700 
+                            hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer 
+                            transition-colors duration-300"
+                        >
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200 transition-colors duration-300">{request.staffId}</td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200 transition-colors duration-300">{request.projectId}</td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200 transition-colors duration-300">{request.workingHours}</td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200 transition-colors duration-300">
+                            {new Date(request.claimDate).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200 transition-colors duration-300">
+                            {new Date(request.createAt).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+
+          {getCurrentRequests()?.length > 0 && (
+            <div className="mt-4">
+              <CustomPagination
+                page={currentPage}
+                hasNextPage={hasNextPage}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
