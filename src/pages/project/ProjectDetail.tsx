@@ -170,7 +170,7 @@ const ProjectDetail = () => {
                         >
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>{staff.email}</TableCell>
-                          <TableCell>{staff.username}</TableCell>
+                          <TableCell>{staff.userName}</TableCell>
                           <TableCell>{staff.staffName}</TableCell>
                           <TableCell>{staff.jobRank}</TableCell>
                           <TableCell>
