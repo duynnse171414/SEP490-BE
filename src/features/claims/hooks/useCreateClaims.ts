@@ -1,10 +1,12 @@
-import {  postData } from "@/api/fetchers";
-import useSWR from "swr";
-import { ClaimRequestRequireDTO } from "../type";
+import axiosInstance from "@/api/axiosInstance";
 
-export const useCreateClaims = (payload: ClaimRequestRequireDTO | null) => {
-    return useSWR(
-        payload ? ["/ClaimRequests", payload] : null,
-        payload => postData("/ClaimRequests", payload)
-      );
-  };
+export const useCreateClaims = async (url: string, data: any) => {
+    try {
+        const res = await axiosInstance.post(url, data);
+        return res.data;
+    } catch (error: any) {
+        const message =
+            error.response?.data?.message || "Lỗi hệ thống hoặc dữ liệu không hợp lệ.";
+        throw new Error(message);
+    }
+};

@@ -1,9 +1,12 @@
-import { postData } from "@/api/fetchers";
+import { ToastContainer } from 'react-toastify';
+import { toast } from "react-toastify";
+import { useCreateClaims } from "@/features/claims/hooks/useCreateClaims";
 import { useProject } from "@/features/project/hooks/useProject";
 import { usePmStaff } from "@/features/staff/hooks/usePmStaff";
 import { useStaffProject } from "@/features/staff/hooks/useStaffProject";
 import { useState } from "react";
 import Select from "react-select";
+import 'react-toastify/dist/ReactToastify.css';
 
 const CreateClaimPage: React.FC = () => {
     const [informTo, setInformTo] = useState<{ value: string; label: string }[]>([]);
@@ -92,6 +95,7 @@ const CreateClaimPage: React.FC = () => {
     const isFormValid = () => {
         if (!selectedProject) return false;
         if (!approverId) return false;
+        if (dayForms.length === 0) return false;
         for (let form of dayForms) {
             if (!form.startDate || !form.endDate || !form.workingHours) {
                 return false;
@@ -101,7 +105,7 @@ const CreateClaimPage: React.FC = () => {
         return true;
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const listRequest: { date: string; workingHours: number }[] = [];
 
         dayForms.forEach(form => {
@@ -151,16 +155,22 @@ const CreateClaimPage: React.FC = () => {
 
         console.log("Payload to backend (optional fields handled):", payload);
         try {
-            const response = postData("/ClaimRequests", payload);
-            console.log("success:", response);
+            const response = await useCreateClaims("/ClaimRequests", payload);
+            if (!response.success) {
+                toast.error(response.message);
+                return;
+            }
+            toast.success("Create request successfully");
             setDayForms(invalidForms);
-        } catch (err) {
+        } catch (err : any) {
+            toast.error(err.message || "Lỗi hệ thống.");
             console.error("Error:", err);
         }
     };
 
     return (
         <div className="container mx-auto p-4">
+            <ToastContainer position="top-right" autoClose={3000} />
             <div>
                 <div className="mb-5 flex">
                     <div className="w-4/5">
