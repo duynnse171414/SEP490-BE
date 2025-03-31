@@ -56,7 +56,7 @@ const DashboardPage = () => {
   const { theme } = useTheme();
   const pageSize = 10;
   const [totalClaims, setTotalClaims] = useState(0);
-  const [currentView, setCurrentView] = useState<ViewType>("draft");
+  const [currentView, setCurrentView] = useState<ViewType>("pending");
   const [currentPage, setCurrentPage] = useState(1);
   const [draftRequests, setDraftRequests] = useState<ClaimRequest[]>([]);
   const [pendingRequests, setPendingRequests] = useState<ClaimRequest[]>([]);
@@ -428,7 +428,7 @@ const DashboardPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-3xl font-semibold text-gray-900 dark:text-white">{totalClaims}</h3>
-              <p className="text-gray-600 dark:text-gray-400">Total Requests</p>
+              <p className="text-black-600 dark:text-gray-400">Total Requests</p>
             </div>
             <div className="p-4 bg-blue-100/30 dark:bg-blue-900/30 rounded-lg">
               <LayoutDashboard className="w-8 h-8 text-blue-600 dark:text-blue-400" />
@@ -450,7 +450,7 @@ const DashboardPage = () => {
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {draftTotal}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">Draft Requests</p>
+                <p className="text-black-600 dark:text-gray-400">Draft Requests</p>
               </div>
               <div className="p-3 bg-gray-200/30 dark:bg-gray-900/30 rounded-lg">
                 <FileText className="w-6 h-6 text-gray-600 dark:text-gray-400" />
@@ -470,7 +470,7 @@ const DashboardPage = () => {
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {pendingTotal}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">Pending Approval</p>
+                <p className="text-black-600 dark:text-gray-400">Pending Approval</p>
               </div>
               <div className="p-3 bg-yellow-100/30 dark:bg-yellow-900/30 rounded-lg">
                 <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
@@ -490,7 +490,7 @@ const DashboardPage = () => {
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {approvedTotal}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">Approved Requests</p>
+                <p className="text-black-600 dark:text-gray-400">Approved Requests</p>
               </div>
               <div className="p-3 bg-green-100/30 dark:bg-green-900/30 rounded-lg">
                 <FileText className="w-6 h-6 text-green-600 dark:text-green-400" />
@@ -510,7 +510,7 @@ const DashboardPage = () => {
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {paidTotal}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">Paid Requests</p>
+                <p className="text-black-600 dark:text-gray-400">Paid Requests</p>
               </div>
               <div className="p-3 bg-purple-100/30 dark:bg-purple-900/30 rounded-lg">
                 <Ticket className="w-6 h-6 text-purple-600 dark:text-purple-400" />
@@ -530,7 +530,7 @@ const DashboardPage = () => {
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {rejectedTotal}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">Rejected Requests</p>
+                <p className="text-black-600 dark:text-gray-400">Rejected Requests</p>
               </div>
               <div className="p-3 bg-red-100/30 dark:bg-red-900/30 rounded-lg">
                 <X  className="w-6 h-6 text-red-600 dark:text-red-400" />
@@ -550,7 +550,7 @@ const DashboardPage = () => {
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {cancelledTotal}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">Cancelled Requests</p>
+                <p className="text-black-600 dark:text-gray-400">Cancelled Requests</p>
               </div>
               <div className="p-3 bg-gray-200/30 dark:bg-gray-900/30 rounded-lg">
                 <Ban className="w-6 h-6 text-gray-600 dark:text-gray-400" />
@@ -570,7 +570,7 @@ const DashboardPage = () => {
                 <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {returnedTotal}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">Returned Requests</p>
+                <p className="text-black-600 dark:text-gray-400">Returned Requests</p>
               </div>
               <div className="p-3 bg-orange-100/30 dark:bg-orange-900/30 rounded-lg">
                 <RotateCcw className="w-6 h-6 text-orange-500 dark:text-orange-400" />
@@ -609,13 +609,13 @@ const DashboardPage = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
-                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Staff ID</th>
+                        
                         <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Project ID</th>
                         <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Hours</th>
-                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Amount</th>
+                      
                         <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Claim Date</th>
                         <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Create At</th>
-                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Status</th>
+                        
                       </tr>
                     </thead>
                     <tbody>
@@ -625,19 +625,17 @@ const DashboardPage = () => {
                           onClick={() => handleRowClick(request.claimId)}
                           className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                         >
-                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200">{request.staffId}</td>
+                         
                           <td className="px-4 py-2 text-gray-900 dark:text-gray-200">{request.projectId}</td>
                           <td className="px-4 py-2 text-gray-900 dark:text-gray-200">{request.workingHours}</td>
-                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200">{request.claimAmount}</td>
+                
                           <td className="px-4 py-2 text-gray-900 dark:text-gray-200">
                             {new Date(request.claimDate).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-2 text-gray-900 dark:text-gray-200">
                             {new Date(request.createAt).toLocaleDateString()}
                           </td>
-                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200">
-                            {getStatusText(request.claimStatus)}
-                          </td>
+                     
                         </tr>
                       ))}
                     </tbody>
