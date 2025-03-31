@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import UpdateModal from "@/components/ui/updateModal";
 import DeleteModal from "@/components/ui/deleteModal";
+import { toast } from "@/components/ui/toast";
+
 // import { Staff } from "@/features/admin/types";
 import { Input } from "@/components/ui/input";
 import { postData } from "@/api/fetchers";
@@ -47,7 +49,16 @@ const StaffPage = () => {
   const totalPages = staffResponse?.totalPages;
 
   interface ExcelData {
-    [key: string]: string | number;
+    No?: number;
+    Email: string;
+    UserName: string;
+    StaffName: string;
+    JobRank: string;
+    Salary: number;
+    DepartmentName: string;
+    IsActive: string;
+    CreateAt: string;
+    // [key: string]: any; // Để đảm bảo vẫn có thể xử lý các trường bổ sung
   }
   const BASE_URL = "https://localhost:7100/api";
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -172,26 +183,26 @@ const StaffPage = () => {
   };
 
   const handleDeleteStaff = (staffId: string) => {
-    const numericStaffId = Number(staffId);
-    if (isNaN(numericStaffId)) {
-      console.error("Invalid staff ID:", staffId);
-      return;
-    }
-
-    deleteStaffMutate(numericStaffId, {
+    deleteStaffMutate(staffId, {
       onSuccess: () => {
         setStaffs((prev) =>
-          prev.filter((staff) => Number(staff.staffId) !== numericStaffId)
-        ); // Lọc danh sách với ID là số
-        mutate(); // Đồng bộ dữ liệu với server
+          prev.map((staff) =>
+            staff.staffId === staffId ? { ...staff, isActive: false } : staff
+          )
+        ); // Mark staff as inactive
+        toast.success("Staff deactivated successfully!");
+        mutate(); // Synchronize data with the server if needed
       },
-      onError: (error: any) => {
-        console.error("Error deleting staff:", error.message);
+      onError: (error) => {
+        console.error("Error deactivating staff:", error.message);
+        toast.error("Failed to deactivate staff.");
       },
     });
   };
 
   const handleUpdateStaff = (updatedStaff: any) => {
+    console.log("Sending updated staff data:", updatedStaff);
+
     updateStaffMutate(updatedStaff, {
       onSuccess: () => {
         setStaffs((prev) =>
@@ -199,10 +210,12 @@ const StaffPage = () => {
             staff.staffId === updatedStaff.staffId ? updatedStaff : staff
           )
         );
-        mutate();
+        mutate(); // Cập nhật dữ liệu từ server
+        toast.success("Staff updated successfully!");
       },
       onError: (error: any) => {
         console.error("Error updating staff:", error.message);
+        toast.error("Failed to update staff. Please try again.");
       },
     });
   };
@@ -247,8 +260,8 @@ const StaffPage = () => {
   const handleDeleteModalConfirm = async (reason: string) => {
     if (selectedStaff) {
       try {
-        await fetch(`/api/Staffs/${selectedStaff.staffId}`, {
-          method: "POST",
+        await fetch(`/api/staffs/${selectedStaff.staffId}`, {
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason }),
         });
@@ -280,9 +293,7 @@ const StaffPage = () => {
       const workbook = XLSX.read(binaryStr, { type: "binary" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const jsonData: ExcelData[] = (
-        XLSX.utils.sheet_to_json(sheet) as ExcelData[]
-      ).map(({ __rowNum__, ...rest }) => rest);
+      const jsonData = XLSX.utils.sheet_to_json(sheet) as ExcelData[];
 
       console.log("Dữ liệu từ file Excel:", jsonData);
 
@@ -290,22 +301,25 @@ const StaffPage = () => {
         userName: item.UserName,
         email: item.Email,
         staffName: item.StaffName,
-        jobRank: Number(item.JobRank),
+        jobRank: jobRankMap[item.JobRank],
         salary: item.Salary,
         departmentName: item.DepartmentName,
         isActive: item.IsActive === "Active" ? true : false,
         createAt: item.CreateAt.toLocaleString(),
       }));
+
       console.log("Dữ liệu sau khi format:", formattedData);
-      try {
-        const data = await postData("Staffs/import-files", formattedData); // Gọi hàm importStaffs để lưu dữ liệu
-        console.log(data);
-        console.log("Dữ liệu đã được lưu thành công");
-        alert("Dữ liệu đã được import thành công!"); // Thông báo cho người dùng
-      } catch (error) {
-        console.error("Lỗi khi lưu dữ liệu:", error);
-        alert("Có lỗi xảy ra khi import dữ liệu."); // Thông báo lỗi cho người dùng
-      }
+      const data = await postData("Staffs/import-files", formattedData); // Gọi hàm importStaffs để lưu dữ liệu
+      console.log(data);
+      console.log("Dữ liệu đã được lưu thành công");
+      mutate(); // Cập nhật lại danh sách nhân viên sau khi import thành công
+      // try {
+
+      //   alert("Dữ liệu đã được import thành công!"); // Thông báo cho người dùng
+      // } catch (error) {
+      //   console.error("Lỗi khi lưu dữ liệu:", error);
+      //   alert("Có lỗi xảy ra khi import dữ liệu."); // Thông báo lỗi cho người dùng
+      // }
     };
     reader.readAsBinaryString(file);
   };
@@ -447,6 +461,7 @@ const StaffPage = () => {
                             {staff.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
+
                         <TableCell>{formatDate(staff.createAt)}</TableCell>
                         <TableCell className="flex space-x-2">
                           <Button
