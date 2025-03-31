@@ -23,8 +23,10 @@ const CreateClaimPage: React.FC = () => {
         label: staff.staffName
     })) || [];
     const [expectedDate, setExpectedDate] = useState<string>('');
+    const validForms: typeof dayForms = [];
+    const invalidForms: typeof dayForms = [];
 
-    if (projectsLoading || pmsLoading || staffsLoading) return <p>Loading...</p>;
+    if (projectsLoading) return <p>Loading...</p>;
     if (projectsError) return <p className="text-red-500">Error at project fetching: {projectsError.message}</p>;
     if (pmsError) return <p className="text-red-500">Error at pm fetching: {projectsError.message}</p>;
     if (staffsError) return <p className="text-red-500">Error at staff fetching: {projectsError.message}</p>;
@@ -73,6 +75,12 @@ const CreateClaimPage: React.FC = () => {
 
     const updateDayForm = (index: any, field: any, value: string) => {
         const updatedForms = [...dayForms];
+        if (field === 'workingHours') {
+            const parsed = parseFloat(value);
+            if (isNaN(parsed) || parsed < 0) {
+                return;
+            }
+        }
         updatedForms[index] = { ...updatedForms[index], [field]: value };
         if (field === 'startDate' && updatedForms[index].endDate && value > updatedForms[index].endDate) {
             updatedForms[index].endDate = '';
@@ -98,53 +106,59 @@ const CreateClaimPage: React.FC = () => {
 
         dayForms.forEach(form => {
             const { startDate, endDate, workingHours } = form;
-            if (!startDate || !endDate || !workingHours) return;
-
             const workingHoursFloat = parseFloat(workingHours);
-            if (isNaN(workingHoursFloat)) return;
 
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-
-            const current = new Date(start);
-            while (current <= end) {
-                const dateStr = current.toISOString(); // full ISO for C#
-                listRequest.push({
-                    date: dateStr,
-                    workingHours: workingHoursFloat
-                });
-                current.setDate(current.getDate() + 1);
+            if (startDate && endDate && workingHours && !isNaN(workingHoursFloat) && workingHoursFloat > 0) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const current = new Date(start);
+                while (current <= end) {
+                    listRequest.push({
+                        date: current.toISOString(),
+                        workingHours: workingHoursFloat
+                    });
+                    current.setDate(current.getDate() + 1);
+                }
+                validForms.push(form);
+            } else {
+                invalidForms.push(form);
             }
         });
 
-        // Tạo payload cơ bản
+        if (listRequest.length === 0) {
+            alert("Không có dữ liệu hợp lệ để gửi.");
+            return;
+        }
+
+        if (invalidForms.length > 0) {
+            alert("Một số form bị sai định dạng và đã được giữ lại để chỉnh sửa.");
+        }
+
         const payload: any = {
             projectId: selectedProject!,
             approverId: approverId!,
             listRequest: listRequest
         };
 
-        // Thêm expectedDate nếu có
         if (expectedDate) {
             payload.expectedDate = new Date(expectedDate).toISOString();
         }
 
-        // Thêm inforStaffs nếu có chọn
         const staffIds = informTo.map(item => item.value);
         if (staffIds.length > 0) {
             payload.inforStaffs = staffIds;
         }
 
-        console.log("📤 Payload to backend (optional fields handled):", payload);
+        console.log("Payload to backend (optional fields handled):", payload);
         try {
             const response = postData("/ClaimRequests", payload);
             console.log("success:", response);
-          } catch (err) {
+            setDayForms(invalidForms);
+        } catch (err) {
             console.error("Error:", err);
-          }
-
+        }
     };
-    
+
     return (
         <div className="container mx-auto p-4">
             <div>
@@ -257,7 +271,9 @@ const CreateClaimPage: React.FC = () => {
                                                         <label>Working hours <span className="text-red-700">*</span></label>
                                                         <input
                                                             className="border border-gray-300 rounded-md bg-white p-1"
-                                                            type="text"
+                                                            type="number"
+                                                            min="0"
+                                                            step="0.1"
                                                             value={form.workingHours}
                                                             onChange={(e) => updateDayForm(index, 'workingHours', e.target.value)}
                                                         />
