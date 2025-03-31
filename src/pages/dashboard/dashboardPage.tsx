@@ -7,7 +7,6 @@ import {
   Loader2,
   Ticket,
   LayoutDashboard,
-  Ban,
   RotateCcw,
   Trash2Icon
 } from "lucide-react";
@@ -16,7 +15,6 @@ import { ClaimRequest } from "@/types/claims";
 import { claimApi } from "@/api/claimApi";
 import { useNavigate } from "react-router-dom";
 import "../css/dashboardPage.css";
-import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 
 type ViewType = "draft" | "pending" | "approved" | "paid" | "rejected" | "cancelled" | "returned";
@@ -62,7 +60,6 @@ const CustomPagination = ({ page, hasNextPage, onPageChange }: CustomPaginationP
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const { theme } = useTheme();
   const pageSize = 10;
   const [totalClaims, setTotalClaims] = useState(0);
   const [currentView, setCurrentView] = useState<ViewType>("pending");
@@ -338,32 +335,6 @@ const DashboardPage = () => {
         setReturnedPage(page);
         fetchRequests("7", setReturnedRequests, page);
         break;
-    }
-  };
-
-  // Hàm chuyển đổi status number sang text
-  const getStatusText = (status: string | number) => {
-    // Chuyển status về string để so sánh
-    const statusStr = String(status);
-    
-    switch (statusStr) {
-      case "1":
-        return "Draft";
-      case "2": 
-        return "Pending";
-      case "3":
-        return "Approved";
-      case "4":
-        return "Paid";
-      case "5":
-        return "Rejected";
-      case "6":
-        return "Cancelled";
-      case "7":
-        return "Returned";
-      default:
-        console.log("Unknown status:", status); // Log giá trị không khớp
-        return "Unknown";
     }
   };
 

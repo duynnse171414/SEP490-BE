@@ -1,5 +1,5 @@
 import { ViewClaimRqCard } from "@/components/common/ViewClaimRqCard";
-import { ClaimStatus, ClaimRequestDTO } from "@/features/claims/types";
+import { ClaimRequestDTO } from "@/features/claims/types";
 import { useApproveClaims, useClaimsByPM } from "@/features/claims/hooks/useClaims";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,16 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const ClaimsPage = () => {
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
-  const { data, isLoading, mutate } = useClaimsByPM({ status: 2 });
+  const { data, isLoading } = useClaimsByPM({ status: 2 });
   const claims = data?.data;
   const [selectedClaim, setSelectedClaim] = useState<string[]>([]);
   const { approveSelectedClaims, isApproving } = useApproveClaims();
-
-  const handleSelect = (claimId: string, checked: boolean) => {
-    setSelectedClaim((prevSelected) =>
-      checked ? [...prevSelected, claimId] : prevSelected.filter((id) => id !== claimId)
-    );
-  };
 
   const handleApproveSelected = () => {
     approveSelectedClaims(selectedClaim);
