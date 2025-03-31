@@ -7,9 +7,8 @@ export interface FilterRequest {
   ProjectId?: number | null;
   StaffId?: string | null;
   ApprovedBy?: string | null;
-  FromDate?: string | null;
-  ToDate?: string | null;
   SearchTerm?: string | null;
+  CreateAt?: string | null;
 }
 
 export interface ClaimStats {
@@ -29,7 +28,7 @@ interface ApiResponse<T> {
 
 export const claimApi = {
   filterClaims: async (
-    claimStatus: string,
+    filterParams: string | FilterRequest,
     sortBy: string = "createAt",
     sortOrder: "asc" | "desc" = "desc",
     pageIndex: number = 1,
@@ -37,11 +36,17 @@ export const claimApi = {
   ): Promise<ApiResponse<ClaimRequest[]>> => {
     try {
       const url = `ClaimRequests/filter?sortBy=${sortBy}&sortOrder=${sortOrder}&pageIndex=${pageIndex}&pageSize=${pageSize}`;
+      
+      // Nếu filterParams là string (trường hợp không chọn tháng)
+      const requestBody = typeof filterParams === 'string' ? {
+        ClaimStatus: filterParams
+      } : filterParams;  // Nếu là object thì gửi trực tiếp
+
+      console.log('Request body:', requestBody); // Log để debug
+
       const response = await postData(
         url,
-        JSON.stringify({
-          ClaimStatus: claimStatus,
-        })
+        JSON.stringify(requestBody)
       );
       return response;
     } catch (error: any) {

@@ -76,6 +76,7 @@ const DashboardPage = () => {
   const [rejectedTotal, setRejectedTotal] = useState(0);
   const [cancelledTotal, setCancelledTotal] = useState(0);
   const [returnedTotal, setReturnedTotal] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
 
   const fetchRequests = async (
     status: string,
@@ -83,13 +84,30 @@ const DashboardPage = () => {
     page: number
   ) => {
     try {
+      const formattedMonth = selectedMonth ? selectedMonth.split('-')[1] + '/' + selectedMonth.split('-')[0] : '';
+      
       const response = await claimApi.filterClaims(
-        status,
+        selectedMonth ? {
+          "ClaimStatus": status,
+          "CreateAt": formattedMonth
+        } : status,
         "createAt",
         "desc",
         page,
         pageSize
       );
+      
+      console.log('API Parameters:', {
+        filterParams: selectedMonth ? {
+          "ClaimStatus": status,
+          "CreateAt": formattedMonth
+        } : status,
+        sortField: "createAt",
+        sortOrder: "desc",
+        page,
+        pageSize
+      });
+
       if (response?.success) {
         setData(response.data || []);
         await checkNextPage(page);
@@ -186,6 +204,22 @@ const DashboardPage = () => {
         break;
     }
   }, [currentView]);
+
+  // Thêm useEffect để theo dõi selectedMonth
+  useEffect(() => {
+    if (currentView) {
+      fetchRequests(
+        currentView === "draft" ? "1" :
+        currentView === "pending" ? "2" :
+        currentView === "approved" ? "3" :
+        currentView === "paid" ? "4" :
+        currentView === "rejected" ? "5" :
+        currentView === "cancelled" ? "6" : "7",
+        getCurrentSetterFunction(),
+        1
+      );
+    }
+  }, [selectedMonth]); // Thêm selectedMonth vào dependencies
 
   const handleViewChange = (view: ViewType) => {
     setCurrentView(view);
@@ -322,13 +356,23 @@ const DashboardPage = () => {
   // Thêm hàm kiểm tra trang tiếp theo
   const checkNextPage = async (pageNumber: number) => {
     try {
+      const formattedMonth = selectedMonth ? selectedMonth.split('-')[1] + '/' + selectedMonth.split('-')[0] : '';
+      
       const response = await claimApi.filterClaims(
-        currentView === "draft" ? "1" :
-        currentView === "pending" ? "2" :
-        currentView === "approved" ? "3" :
-        currentView === "paid" ? "4" :
-        currentView === "rejected" ? "5" :
-        currentView === "cancelled" ? "6" : "7" ,
+        selectedMonth ? {
+          "ClaimStatus": currentView === "draft" ? "1" :
+            currentView === "pending" ? "2" :
+            currentView === "approved" ? "3" :
+            currentView === "paid" ? "4" :
+            currentView === "rejected" ? "5" :
+            currentView === "cancelled" ? "6" : "7",
+          "CreateAt": formattedMonth
+        } : (currentView === "draft" ? "1" :
+            currentView === "pending" ? "2" :
+            currentView === "approved" ? "3" :
+            currentView === "paid" ? "4" :
+            currentView === "rejected" ? "5" :
+            currentView === "cancelled" ? "6" : "7"),
         "createAt",
         "desc",
         pageNumber + 1,
@@ -339,6 +383,24 @@ const DashboardPage = () => {
       setHasNextPage(hasData);
     } catch (err) {
       setHasNextPage(false);
+    }
+  };
+
+  // Sửa lại handleMonthChange để chỉ cập nhật state
+  const handleMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedMonth(event.target.value);
+    setCurrentPage(1); // Reset về trang 1
+  };
+
+  const getCurrentSetterFunction = () => {
+    switch (currentView) {
+      case "draft": return setDraftRequests;
+      case "pending": return setPendingRequests;
+      case "approved": return setApprovedRequests;
+      case "paid": return setPaidRequests;
+      case "rejected": return setRejectedRequests;
+      case "cancelled": return setCancelledRequests;
+      case "returned": return setReturnedRequests;
     }
   };
 
@@ -517,6 +579,14 @@ const DashboardPage = () => {
         <div className="bg-gray-800 rounded-lg shadow p-4 mt-8 claims-table-container">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-white">{getViewTitle()}</h2>
+            <div className="flex items-center gap-4">
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={handleMonthChange}
+                className="bg-gray-700 text-white rounded px-3 py-2"
+              />
+            </div>
           </div>
 
           {loading ? (
@@ -539,6 +609,7 @@ const DashboardPage = () => {
                         <th>Hours</th>
                         <th>Amount</th>
                         <th>Claim Date</th>
+                        <th>Create Date</th>
                         <th>Status</th>
                       </tr>
                     </thead>
@@ -553,6 +624,7 @@ const DashboardPage = () => {
                           <td>{request.workingHours}</td>
                           <td>{request.claimAmount}</td>
                           <td>{new Date(request.claimDate).toLocaleDateString()}</td>
+                          <td>{new Date(request.createAt).toLocaleDateString()}</td>
                           <td>{getStatusText(request.claimStatus)}</td>
                         </tr>
                       ))}

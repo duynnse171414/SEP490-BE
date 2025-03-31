@@ -1,17 +1,22 @@
 export interface ClaimRequest {
   claimId: string;
+  projectId: number;
   staffId: string;
-  staffName: string;
-  projectName: string | null;
+  approvedBy: string | null;
+  rejectBy: string | null;
   workingHours: number;
-  claimAmount: number;
   claimStatus: number;
+  claimAmount: number;
   claimDate: string;
   createAt: string;
   updateAt: string | null;
   approvedAt: string | null;
-  approvedBy: string | null;
-  projectId: number;
+  rejectAt: string | null;
+  rejectionReason: string | null;
+  deleteAt: string | null;
+  isDelete: boolean;
+  approver: string | null;
+  rejecter: string | null;
 }
 
 export interface ApiResponse<T> {
