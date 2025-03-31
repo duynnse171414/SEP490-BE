@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useContext } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,7 +8,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, EyeOff } from "lucide-react";
 import { LoginUserDTO } from "../types";
 import { EvervaultCard } from "@/components/ui/evervault-card";
-import { AuthContext } from "../contexts/AuthContext";
 import { useAuthContext } from "../hooks/useAuthContext";
 
 type LoginFormProps = {
@@ -20,6 +19,7 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isEmailValid, setIsEmailValid] = useState(true);
   const passwordRef = useRef<HTMLInputElement>(null);
   const [loginMessage, setErrorMessage] = useState("");
   const AuthContext = useAuthContext();
@@ -34,8 +34,25 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
     setErrorMessage(AuthContext.loginMessage || "");
   }, [AuthContext.loginMessage]);
 
+  const validateEmail = (email: string) => {
+    return email.includes('@') && email.includes('.');
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    if (!isEmailValid)
+      setIsEmailValid(newEmail === '' || validateEmail(newEmail));
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!validateEmail(email)) {
+      setIsEmailValid(false);
+      return;
+    }
+
     setErrorMessage("");
     onSubmit({ email, password });
     setErrorMessage(AuthContext.loginMessage || "");
@@ -65,7 +82,8 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
                   placeholder="m@example.com"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
+                  className={!isEmailValid ? "border-red-500" : ""}
                   onKeyDown={(e) => {
                     if (e.key === "Tab" && !e.shiftKey) {
                       e.preventDefault();

@@ -114,6 +114,9 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
 
   useEffect(() => {
     setIsAuthenticated(user !== null);
+    if (onDrawerStateChange) {
+      if (isLoginDrawerOpen) onDrawerStateChange(user === null);
+    }
   }, [user]);
 
   const handleLoginSubmit = ({ email, password }: LoginUserDTO) => {
