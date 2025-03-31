@@ -21,7 +21,6 @@ import {
 
 const ClaimsPage = () => {
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<number | null>(null);
   const { data, isLoading, mutate } = useClaimsByPM({ status: 2 });
   const claims = data?.data;
   const [selectedClaim, setSelectedClaim] = useState<string[]>([]);
@@ -61,10 +60,10 @@ const ClaimsPage = () => {
     claims?.find((claim) => claim.project.projectId === projectId)?.project
   );
 
+  // Filter claims by project only
   const filteredClaims = claims?.filter(claim => {
     const matchesProject = selectedProject ? claim.project.projectId === selectedProject : true;
-    const matchesStatus = selectedStatus !== null ? claim.claimStatus === selectedStatus : true;
-    return matchesProject && matchesStatus;
+    return matchesProject;
   });
 
   const areAllSelected = filteredClaims && filteredClaims.length > 0 &&
@@ -173,24 +172,6 @@ const ClaimsPage = () => {
                 {project?.projectName}
               </SelectItem>
             ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          onValueChange={(value) => setSelectedStatus(value === "all" ? null : Number(value))}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            {Object.entries(ClaimStatus)
-              .filter(([key]) => !isNaN(Number(key)))
-              .map(([key, value]) => (
-                <SelectItem key={key} value={key}>
-                  {value}
-                </SelectItem>
-              ))}
           </SelectContent>
         </Select>
       </div>
