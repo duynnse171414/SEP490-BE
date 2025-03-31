@@ -19,6 +19,7 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const [loginMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (isFocused && passwordRef.current) {
@@ -28,11 +29,18 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrorMessage("");
     onSubmit({ email, password });
   };
 
   return (
-    <div className={cn("animated-background mx-auto w-full items-center justify-center py-4", className)} {...props}>
+    <div
+      className={cn(
+        "animated-background mx-auto w-full items-center justify-center py-4",
+        className
+      )}
+      {...props}
+    >
       <div className="absolute inset-0 -z-10">
         <EvervaultCard text="hover" />
       </div>
@@ -63,7 +71,10 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
               <div className="grid gap-2 relative">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
-                  <a href="#" className="ml-auto inline-block text-sm underline-offset-4 hover:underline">
+                  <a
+                    href="#"
+                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                  >
                     Forgot your password?
                   </a>
                 </div>
@@ -100,6 +111,9 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
                 )}
               </div>
 
+              {loginMessage && (
+                <p className="text-red-500 text-sm">{loginMessage}</p>
+              )}
               <Button type="submit" className="w-full">
                 Login
               </Button>

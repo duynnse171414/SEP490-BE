@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 
 // Tạo một instance của QueryClient
 const queryClient = new QueryClient();
+import "./App.css";
 
 function App() {
   return (

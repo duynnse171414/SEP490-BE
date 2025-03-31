@@ -96,7 +96,7 @@ const ProjectPage: React.FC = () => {
                         {/* ... other table cells */}
                         <TableCell className="flex space-x-2">
                           <Link
-                            to={`/projects/${project.projectId}`} // Đường dẫn đến trang chi tiết nhân viên của dự án
+                            to={`/admin/projects/${project.projectId}`} // Đường dẫn đến trang chi tiết nhân viên của dự án
                             className="text-blue-400 hover:underline"
                           >
                             View Staff
