@@ -1,10 +1,12 @@
 export interface Staff {
   staffId: string;
   email: string;
+  userName: string;
   staffName: string;
   jobRank: string;
   salary: number;
   departmentName: string;
+  roleInProject: string;
   isActive: boolean;
   createAt: string;
 }

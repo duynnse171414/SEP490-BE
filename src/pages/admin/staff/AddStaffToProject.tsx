@@ -18,47 +18,46 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox } from "@/components/ui/combobox";
 
-interface Staff {
-  staffId: string;
-  staffName: string;
-  email: string;
-  departmentName: string;
-}
+import {
+  useProjects,
+  useStaffNotInProject,
+  useRoleInProject,
+  useAddStaffToProject,
+} from "@/features/project/hooks/useProject";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { StaffNotInProject } from "@/features/staff/types";
+// import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 
-interface Project {
-  id: string;
-  name: string;
-}
-
-export function AddStaffToProjectDialog() {
-  const [selectedProject, setSelectedProject] = useState<string>("");
+export function AddStaffToProjectDialog(projectId?: string, open?: boolean) {
+  const [selectedProject, setSelectedProject] = useState<string>(
+    projectId || ""
+  );
   const [selectedStaffs, setSelectedStaffs] = useState<string[]>([]);
+  const [staffRoles, setStaffRoles] = useState<Record<string, string>>({});
 
-  // Mock data - thay thế bằng API call thực tế
-  const projects: Project[] = [
-    { id: "1", name: "Project A" },
-    { id: "2", name: "Project B" },
-  ];
+  const { data: projects, isLoading: isLoadingProjects } = useProjects();
+  const { data: availableStaffs, isLoading: isLoadingStaffs } =
+    useStaffNotInProject(selectedProject);
 
-  const availableStaffs: Staff[] = [
-    {
-      staffId: "1",
-      staffName: "John Doe",
-      email: "john@example.com",
-      departmentName: "IT",
-    },
-    {
-      staffId: "2",
-      staffName: "Jane Smith",
-      email: "jane@example.com",
-      departmentName: "HR",
-    },
-  ];
+  const { data: roles, isLoading: isLoadingRoles } = useRoleInProject();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // const { id } = useParams();
+  // const navigate = useNavigate();
 
   const handleProjectChange = (projectId: string) => {
     setSelectedProject(projectId);
     setSelectedStaffs([]);
-    // Thêm API call để lấy danh sách staff chưa được thêm vào project
+    setStaffRoles({});
   };
 
   const handleStaffSelection = (staffId: string) => {
@@ -69,69 +68,180 @@ export function AddStaffToProjectDialog() {
     );
   };
 
-  const handleAddStaffs = () => {
-    // Xử lý thêm staff vào project
-    console.log(
-      "Adding staffs:",
-      selectedStaffs,
-      "to project:",
-      selectedProject
+  const handleRoleChange = (staffId: string, roleId: string) => {
+    setStaffRoles((prev) => ({
+      ...prev,
+      [staffId]: roleId,
+    }));
+  };
+
+  const handleAddStaffs = async () => {
+    if (selectedStaffs.length === 0) return;
+
+    setIsSubmitting(true);
+
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 1); // Thêm 1 ngày
+    const formattedEndDate = endDate.toISOString();
+
+    // Chuẩn bị dữ liệu cho API
+    const staffsWithRoles: StaffNotInProject[] = selectedStaffs.map(
+      (staffId) => ({
+        staffId,
+        roleInProjectId: Number(staffRoles[staffId]),
+        startDate: new Date().toISOString(),
+        endDate: formattedEndDate,
+        createAt: new Date().toISOString(),
+        createBy: "admin",
+      })
     );
+
+    console.log(staffsWithRoles, selectedProject);
+
+    try {
+      // Gọi API để thêm staffs vào project
+      await useAddStaffToProject(staffsWithRoles, Number(selectedProject));
+
+      // Reset form và hiển thị thông báo thành công
+      setSelectedStaffs([]);
+      setStaffRoles({});
+      toast.success("Staff(s) added to project successfully!", {
+        description: "The project has been updated with the new staff members.",
+        duration: 3000,
+      });
+
+      setIsOpen(false);
+
+      if (projectId) {
+        // If we're on a project detail page, refresh the current page
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Failed to add staffs to project:", error);
+      toast.error("Failed to add staff(s) to project", {
+        description:
+          "Please try again or contact support if the problem persists.",
+        duration: 5000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="default">Add Staff to Project</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-5xl">
+      <DialogContent className="sm:max-w-xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl w-[95vw]">
         <DialogHeader>
           <DialogTitle>Add Staff to Project</DialogTitle>
         </DialogHeader>
         <div className="space-y-5">
           <div className="w-full h-16 text-lg">
-            <Combobox
-              options={projects.map((project) => ({
-                value: project.id,
-                label: project.name,
-              }))}
-              value={selectedProject}
-              onValueChange={handleProjectChange}
-              placeholder="Select a project"
-            />
+            {isLoadingProjects ? (
+              <div className="w-full h-10 bg-muted animate-pulse rounded-md" />
+            ) : (
+              <Combobox
+                options={
+                  projects?.map((project) => ({
+                    value: project.projectId.toString(),
+                    label: project.projectName,
+                  })) ?? []
+                }
+                value={selectedProject}
+                onValueChange={handleProjectChange}
+                placeholder="Select a project"
+              />
+            )}
           </div>
 
           {selectedProject && (
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12"></TableHead>
-                    <TableHead>Staff Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>In Project</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {availableStaffs.map((staff) => (
-                    <TableRow key={staff.staffId}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedStaffs.includes(staff.staffId)}
-                          onCheckedChange={() =>
-                            handleStaffSelection(staff.staffId)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>{staff.staffName}</TableCell>
-                      <TableCell>{staff.email}</TableCell>
-                      <TableCell>{staff.departmentName}</TableCell>
-                      <TableCell>{1}</TableCell>
+            <div className="border rounded-md overflow-hidden">
+              <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background z-10">
+                    <TableRow>
+                      <TableHead className="w-[5%]"></TableHead>
+                      <TableHead className="w-[20%]">Staff Name</TableHead>
+                      <TableHead className="w-[25%]">Email</TableHead>
+                      <TableHead className="w-[20%]">Department</TableHead>
+                      <TableHead className="w-[10%] text-center">
+                        In Project
+                      </TableHead>
+                      <TableHead className="w-[20%]">Role</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingStaffs ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center">
+                          Loading...
+                        </TableCell>
+                      </TableRow>
+                    ) : availableStaffs?.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-4">
+                          No staff available to add to this project
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      availableStaffs?.map((staff) => (
+                        <TableRow key={staff.staffId}>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={selectedStaffs.includes(staff.staffId)}
+                              onCheckedChange={() =>
+                                handleStaffSelection(staff.staffId)
+                              }
+                            />
+                          </TableCell>
+                          <TableCell className="truncate max-w-[150px]">
+                            {staff.staffName}
+                          </TableCell>
+                          <TableCell className="truncate max-w-[200px]">
+                            {staff.email}
+                          </TableCell>
+                          <TableCell className="truncate max-w-[150px]">
+                            {staff.departmentName}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {staff.countProject}
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={staffRoles[staff.staffId]}
+                              onValueChange={(value) =>
+                                handleRoleChange(staff.staffId, value)
+                              }
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {isLoadingRoles ? (
+                                  <SelectItem value="" disabled>
+                                    Loading roles...
+                                  </SelectItem>
+                                ) : (
+                                  roles?.map((role) => (
+                                    <SelectItem
+                                      key={role.roleProjectId}
+                                      value={role.roleProjectId.toString()}
+                                    >
+                                      {role.name}
+                                    </SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
 
@@ -139,9 +249,9 @@ export function AddStaffToProjectDialog() {
             <div className="flex justify-end">
               <Button
                 onClick={handleAddStaffs}
-                disabled={selectedStaffs.length === 0}
+                disabled={selectedStaffs.length === 0 || isSubmitting}
               >
-                Add Selected Staff
+                {isSubmitting ? "Adding..." : "Add Selected Staff"}
               </Button>
             </div>
           )}
@@ -149,4 +259,5 @@ export function AddStaffToProjectDialog() {
       </DialogContent>
     </Dialog>
   );
+  // );
 }
