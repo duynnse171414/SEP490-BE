@@ -47,7 +47,16 @@ const StaffPage = () => {
   const totalPages = staffResponse?.totalPages;
 
   interface ExcelData {
-    [key: string]: string | number;
+    No?: number;
+    Email: string;
+    UserName: string;
+    StaffName: string;
+    JobRank: string;
+    Salary: number;
+    DepartmentName: string;
+    IsActive: string;
+    CreateAt: string;
+    // [key: string]: any; // Để đảm bảo vẫn có thể xử lý các trường bổ sung
   }
   const BASE_URL = "https://localhost:7100/api";
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -280,9 +289,7 @@ const StaffPage = () => {
       const workbook = XLSX.read(binaryStr, { type: "binary" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
-      const jsonData: ExcelData[] = (
-        XLSX.utils.sheet_to_json(sheet) as ExcelData[]
-      ).map(({ __rowNum__, ...rest }) => rest);
+      const jsonData = XLSX.utils.sheet_to_json(sheet) as ExcelData[];
 
       console.log("Dữ liệu từ file Excel:", jsonData);
 
@@ -290,22 +297,24 @@ const StaffPage = () => {
         userName: item.UserName,
         email: item.Email,
         staffName: item.StaffName,
-        jobRank: Number(item.JobRank),
+        jobRank: jobRankMap[item.JobRank],
         salary: item.Salary,
         departmentName: item.DepartmentName,
         isActive: item.IsActive === "Active" ? true : false,
         createAt: item.CreateAt.toLocaleString(),
       }));
+
       console.log("Dữ liệu sau khi format:", formattedData);
-      try {
-        const data = await postData("Staffs/import-files", formattedData); // Gọi hàm importStaffs để lưu dữ liệu
-        console.log(data);
-        console.log("Dữ liệu đã được lưu thành công");
-        alert("Dữ liệu đã được import thành công!"); // Thông báo cho người dùng
-      } catch (error) {
-        console.error("Lỗi khi lưu dữ liệu:", error);
-        alert("Có lỗi xảy ra khi import dữ liệu."); // Thông báo lỗi cho người dùng
-      }
+      const data = await postData("Staffs/import-files", formattedData); // Gọi hàm importStaffs để lưu dữ liệu
+      console.log(data);
+      console.log("Dữ liệu đã được lưu thành công");
+      // try {
+
+      //   alert("Dữ liệu đã được import thành công!"); // Thông báo cho người dùng
+      // } catch (error) {
+      //   console.error("Lỗi khi lưu dữ liệu:", error);
+      //   alert("Có lỗi xảy ra khi import dữ liệu."); // Thông báo lỗi cho người dùng
+      // }
     };
     reader.readAsBinaryString(file);
   };
