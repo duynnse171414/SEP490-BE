@@ -51,7 +51,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const loggedUser: User = {
           email:
             decodedToken[
-            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+              "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
             ],
           role: decodedToken[
             "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
@@ -65,8 +65,6 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSuccess(true);
         if (loggedUser.role === "admin") {
           navigate("/admin/dashboard");
-        } else {
-          navigate("/");
         }
         return { success: true };
       } else {
@@ -121,7 +119,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 const updatedUser: User = {
                   email:
                     newDecodedToken[
-                    "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+                      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
                     ],
                   role: newDecodedToken[
                     "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"

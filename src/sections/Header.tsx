@@ -41,7 +41,7 @@ import {
   Keyboard,
   Users2,
   UserPlus,
-  Github
+  Github,
 } from "lucide-react";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 import { LoginUserDTO } from "@/features/auth/types";
@@ -57,17 +57,47 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const jsonPlaceholderItems = [
-  { title: "Posts", description: "View and manage blog posts", href: "/posts", icon: <ClipboardList className="h-5 w-5 text-primary" /> },
-  { title: "Comments", description: "View all comments", href: "/comments", icon: <MessageSquare className="h-5 w-5 text-primary" /> },
-  { title: "Albums", description: "Browse photo albums", href: "/albums", icon: <Image className="h-5 w-5 text-primary" /> },
-  { title: "Photos", description: "Browse all photos", href: "/photos", icon: <Camera className="h-5 w-5 text-primary" /> },
-  { title: "Todos", description: "Manage your todo list", href: "/todos", icon: <CheckSquare className="h-5 w-5 text-primary" /> },
-  { title: "Users", description: "View user profiles", href: "/users", icon: <Users className="h-5 w-5 text-primary" /> },
+  {
+    title: "Posts",
+    description: "View and manage blog posts",
+    href: "/posts",
+    icon: <ClipboardList className="h-5 w-5 text-primary" />,
+  },
+  {
+    title: "Comments",
+    description: "View all comments",
+    href: "/comments",
+    icon: <MessageSquare className="h-5 w-5 text-primary" />,
+  },
+  {
+    title: "Albums",
+    description: "Browse photo albums",
+    href: "/albums",
+    icon: <Image className="h-5 w-5 text-primary" />,
+  },
+  {
+    title: "Photos",
+    description: "Browse all photos",
+    href: "/photos",
+    icon: <Camera className="h-5 w-5 text-primary" />,
+  },
+  {
+    title: "Todos",
+    description: "Manage your todo list",
+    href: "/todos",
+    icon: <CheckSquare className="h-5 w-5 text-primary" />,
+  },
+  {
+    title: "Users",
+    description: "View user profiles",
+    href: "/users",
+    icon: <Users className="h-5 w-5 text-primary" />,
+  },
 ];
 
 interface HeaderProps {
@@ -83,19 +113,13 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!user);
 
   useEffect(() => {
-    setIsAuthenticated(!!user);
+    setIsAuthenticated(user !== null);
   }, [user]);
 
   const handleLoginSubmit = ({ email, password }: LoginUserDTO) => {
-    console.log("Logging in with email and password");
     login({ email, password });
     if (isSuccess) {
       setIsLoginDrawerOpen(false);
-    } else {
-      setIsLoginDrawerOpen(true);
-    }
-    if (onDrawerStateChange) {
-      onDrawerStateChange(false);
     }
   };
 
@@ -104,7 +128,10 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
       <div className="container mx-auto py-3">
         <div className="flex flex-wrap items-center justify-between px-4">
           <div className="flex items-center gap-2 w-full md:w-auto justify-between">
-            <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary transition-colors hover:text-primary/80">
+            <Link
+              to="/"
+              className="flex items-center gap-2 text-xl font-bold text-primary transition-colors hover:text-primary/80"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -146,7 +173,10 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="bg-transparent hover:bg-accent flex gap-1 items-center">
-                    <CheckSquare size={16} className="text-muted-foreground group-hover:text-foreground" />
+                    <CheckSquare
+                      size={16}
+                      className="text-muted-foreground group-hover:text-foreground"
+                    />
                     <span>Services</span>
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
@@ -203,13 +233,18 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
               />
               <Moon className="h-4 w-4 text-blue-500" />
             </div>
-
-            {isAuthenticated ? (
+            {isAuthenticated && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-9 w-9 rounded-full"
+                  >
                     <Avatar className="h-9 w-9 border-2 border-primary/20">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} alt={user?.email} />
+                      <AvatarImage
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`}
+                        alt={user?.email}
+                      />
                       <AvatarFallback className="bg-primary/10 text-primary">
                         {user?.email.charAt(0)}
                       </AvatarFallback>
@@ -219,7 +254,9 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user?.email}</p>
+                      <p className="text-sm font-medium leading-none">
+                        {user?.email}
+                      </p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.email}
                       </p>
@@ -296,23 +333,28 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                     <span>API</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-500 focus:text-red-500">
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="text-red-500 focus:text-red-500"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                     <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              <Drawer
-                open={isLoginDrawerOpen}
-                onOpenChange={(open) => {
-                  setIsLoginDrawerOpen(open);
-                  if (onDrawerStateChange) {
-                    onDrawerStateChange(open);
-                  }
-                }}
-              >
+            )}
+
+            <Drawer
+              open={isLoginDrawerOpen && !isAuthenticated}
+              onOpenChange={(open) => {
+                setIsLoginDrawerOpen(open);
+                if (onDrawerStateChange) {
+                  onDrawerStateChange(open);
+                }
+              }}
+            >
+              {!isAuthenticated && (
                 <DrawerTrigger asChild>
                   <Button
                     variant="default"
@@ -322,19 +364,22 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                     <span>Login</span>
                   </Button>
                 </DrawerTrigger>
-                <DrawerContent>
-                  <div className="mx-auto w-full max-w-sm">
-                    <DrawerHeader>
-                      <DrawerTitle className="text-center text-2xl font-bold">Welcome Back</DrawerTitle>
-                      <DrawerDescription className="text-center">
-                        Enter your credentials below to access your account
-                      </DrawerDescription>
-                    </DrawerHeader>
-                    <LoginForm onSubmit={handleLoginSubmit} />
-                  </div>
-                </DrawerContent>
-              </Drawer>
-            )}
+              )}
+
+              <DrawerContent>
+                <div className="mx-auto w-full max-w-sm">
+                  <DrawerHeader>
+                    <DrawerTitle className="text-center text-2xl font-bold">
+                      Welcome Back
+                    </DrawerTitle>
+                    <DrawerDescription className="text-center">
+                      Enter your credentials below to access your account
+                    </DrawerDescription>
+                  </DrawerHeader>
+                  <LoginForm onSubmit={handleLoginSubmit} />
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
         </div>
       </div>

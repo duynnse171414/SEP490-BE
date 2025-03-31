@@ -20,7 +20,9 @@ export const MainLayout = () => {
         </header>
         <main className="relative flex-grow">
           <div
-            className={`transition-transform duration-300 ${isDrawerOpen ? "scale-90 opacity-75" : "scale-100 opacity-100"}`}
+            className={`transition-transform duration-300 ${
+              isDrawerOpen ? "scale-90 opacity-75" : "scale-100 opacity-100"
+            }`}
           >
             <Outlet />
           </div>
