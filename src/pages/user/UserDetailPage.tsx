@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MapPin, Mail, Phone, Globe, Briefcase, CheckCircle, Clock } from "lucide-react";
@@ -42,7 +42,7 @@ export const UserDetailPage = () => {
         <img src="https://via.placeholder.com/1920x300" alt="Cover Photo" className="w-full h-full object-cover" />
         <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center p-4">
           <Avatar className="h-24 w-24 -mb-12 bg-white">
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{user.email.charAt(0)}</AvatarFallback>
           </Avatar>
         </div>
       </div>
@@ -50,8 +50,8 @@ export const UserDetailPage = () => {
       {/* Profile Information */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex flex-col items-center">
-          <CardTitle className="text-3xl font-bold">{user.name}</CardTitle>
-          <p className="text-gray-500">@{user.username}</p>
+          <CardTitle className="text-3xl font-bold">{user.email}</CardTitle>
+          <p className="text-gray-500">@{user.email}</p>
         </div>
         <Link to="/users">
           <Button variant="outline">Back to Users</Button>
@@ -66,16 +66,16 @@ export const UserDetailPage = () => {
               <Mail className="h-4 w-4" /> {user.email}
             </p>
             <p className="flex items-center gap-2 text-sm">
-              <Phone className="h-4 w-4" /> {user.phone}
+              <Phone className="h-4 w-4" /> {user.email}
             </p>
             <p className="flex items-center gap-2 text-sm">
-              <Globe className="h-4 w-4" /> {user.website}
+              <Globe className="h-4 w-4" /> {user.email}
             </p>
             <p className="flex items-center gap-2 text-sm">
-              <Briefcase className="h-4 w-4" /> {user.company?.name}
+              <Briefcase className="h-4 w-4" /> {user.email}
             </p>
             <p className="flex items-center gap-2 text-sm">
-              <MapPin className="h-4 w-4" /> {user.address?.city}
+              <MapPin className="h-4 w-4" /> {user.email}
             </p>
           </CardContent>
         </Card>

@@ -1,14 +1,9 @@
-import axios, {
-  AxiosInstance,
-  AxiosResponse,
-  AxiosError,
-  AxiosRequestHeaders,
-} from "axios";
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import { AxiosInstance } from "axios";
 import { handleApiError } from "./errorHandler";
-import { Backend_URL } from "@/config.global";
 
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: Backend_URL,
+  baseURL: import.meta.env.VITE_Backend_URL,
   withCredentials: true,
   timeout: 60000,
   headers: {
@@ -18,7 +13,7 @@ const axiosInstance: AxiosInstance = axios.create({
 //const defaultHeaders = { ...axiosInstance.defaults.headers.common };
 
 axiosInstance.interceptors.request.use(
-  async (config) => {
+  async (config: InternalAxiosRequestConfig) => {
     const storedUser = localStorage.getItem("loggedUser");
 
     if (storedUser) {

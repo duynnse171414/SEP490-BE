@@ -64,8 +64,8 @@ export const PostsPage = () => {
           <SelectContent>
             <SelectItem value="all">All Users</SelectItem>
             {users?.map((user: User) => (
-              <SelectItem key={user.id} value={user.id.toString()}>
-                {user.name}
+              <SelectItem key={user.email} value={user.email}>
+                {user.email}
               </SelectItem>
             ))}
           </SelectContent>

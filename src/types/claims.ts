@@ -11,12 +11,11 @@ export interface ClaimRequest {
   updateAt: string | null;
   approvedAt: string | null;
   approvedBy: string | null;
-  pprojectId: number;
+  projectId: number;
 }
 
 export interface ApiResponse<T> {
   success: boolean;
-  message: String;
-  data?: T;
-  error?: string[];
+  message: string;
+  data: T;
 }
