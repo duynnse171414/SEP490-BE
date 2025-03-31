@@ -18,7 +18,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { LoginForm } from "@/features/auth/components/login-form";
 import {
@@ -60,7 +59,6 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 
 const jsonPlaceholderItems = [
   { title: "Posts", description: "View and manage blog posts", href: "/posts", icon: <ClipboardList className="h-5 w-5 text-primary" /> },
@@ -80,7 +78,6 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { user, logout, login } = useAuthContext();
-
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!user);
 
   useEffect(() => {
@@ -90,7 +87,11 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const handleLoginSubmit = ({ email, password }: LoginUserDTO) => {
     console.log("Logging in with email and password");
     login({ email, password });
+    if(isLoginDrawerOpen) {
     setIsLoginDrawerOpen(false);
+    } else {
+      setIsLoginDrawerOpen(true);
+    }
     if (onDrawerStateChange) {
       onDrawerStateChange(false);
     }
@@ -202,13 +203,13 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
             </div>
 
             {isAuthenticated ? (
-              <DropdownMenu>
+              <DropdownMenu>  
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                     <Avatar className="h-9 w-9 border-2 border-primary/20">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} alt={user?.name} />
+                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} alt={user?.email} />
                       <AvatarFallback className="bg-primary/10 text-primary">
-                        {user?.name.charAt(0)}
+                        {user?.email.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -216,7 +217,7 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user?.name}</p>
+                      <p className="text-sm font-medium leading-none">{user?.email}</p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.email}
                       </p>
@@ -228,6 +229,11 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                       <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <User className="mr-2 h-4 w-4" />
+                      <Link to="/dashboard">My Claims</Link>
+                      <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <CreditCard className="mr-2 h-4 w-4" />
