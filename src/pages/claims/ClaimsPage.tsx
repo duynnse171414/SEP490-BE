@@ -111,88 +111,7 @@ const ClaimsPage = () => {
         <h1 className="text-2xl font-bold mb-6 text-center">
           Claims Dashboard
         </h1>
-        <div className="flex justify-end mb-4 space-x-2">
-          <Dialog
-            open={isRejectDialogOpen}
-            onOpenChange={setIsRejectDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button
-                variant="destructive"
-                disabled={selectedClaim.length === 0 || isRejecting}
-                className="gap-2"
-              >
-                {isRejecting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-4 w-4" />
-                    Reject Selected ({selectedClaim.length})
-                  </>
-                )}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Reject Claims</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-2">
-                <label
-                  htmlFor="rejectionReason"
-                  className="text-sm font-medium"
-                >
-                  Rejection Reason
-                </label>
-                <Input
-                  id="rejectionReason"
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Enter reason for rejection..."
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsRejectDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    handleRejectSelected();
-                    setIsRejectDialogOpen(false);
-                  }}
-                  disabled={!rejectionReason}
-                >
-                  Confirm Reject
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Button
-            onClick={handleApproveSelected}
-            disabled={selectedClaim.length === 0 || isApproving}
-            className="gap-2"
-          >
-            {isApproving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-4 w-4" />
-                Approve Selected ({selectedClaim.length})
-              </>
-            )}
-          </Button>
-        </div>
-        <div className="mb-4 flex gap-4">
+        <div className="flex justify-between items-center mb-4">
           <Select
             onValueChange={(value) =>
               setSelectedProject(value === "all" ? null : Number(value))
@@ -213,6 +132,88 @@ const ClaimsPage = () => {
               ))}
             </SelectContent>
           </Select>
+
+          <div className="flex space-x-2">
+            <Dialog
+              open={isRejectDialogOpen}
+              onOpenChange={setIsRejectDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  disabled={selectedClaim.length === 0 || isRejecting}
+                  className="gap-2 h-full"
+                >
+                  {isRejecting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-4 w-4" />
+                      Reject Selected ({selectedClaim.length})
+                    </>
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Reject Claims</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="rejectionReason"
+                    className="text-sm font-medium"
+                  >
+                    Rejection Reason
+                  </label>
+                  <Input
+                    id="rejectionReason"
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="Enter reason for rejection..."
+                  />
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsRejectDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      handleRejectSelected();
+                      setIsRejectDialogOpen(false);
+                    }}
+                    disabled={!rejectionReason}
+                  >
+                    Confirm Reject
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Button
+              onClick={handleApproveSelected}
+              disabled={selectedClaim.length === 0 || isApproving}
+              className="gap-2 h-full"
+            >
+              {isApproving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Approve Selected ({selectedClaim.length})
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         <div className="rounded-md border">
@@ -260,13 +261,12 @@ const ClaimsPage = () => {
                     <TableCell>{claim.workingHours} hrs</TableCell>
                     <TableCell>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          claim.claimStatus === ClaimStatus.Approved
-                            ? "bg-green-500 text-white"
-                            : claim.claimStatus === ClaimStatus.Rejected
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${claim.claimStatus === ClaimStatus.Approved
+                          ? "bg-green-500 text-white"
+                          : claim.claimStatus === ClaimStatus.Rejected
                             ? "bg-red-500 text-white"
                             : "bg-yellow-500 text-white"
-                        }`}
+                          }`}
                       >
                         {ClaimStatus[claim.claimStatus]}
                       </span>

@@ -26,7 +26,6 @@ import {
   Sun,
   Moon,
   Menu,
-  ClipboardList,
   MessageSquare,
   Image,
   Camera,
@@ -61,45 +60,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const jsonPlaceholderItems = [
-  {
-    title: "Posts",
-    description: "View and manage blog posts",
-    href: "/posts",
-    icon: <ClipboardList className="h-5 w-5 text-primary" />,
-  },
-  {
-    title: "Comments",
-    description: "View all comments",
-    href: "/comments",
-    icon: <MessageSquare className="h-5 w-5 text-primary" />,
-  },
-  {
-    title: "Albums",
-    description: "Browse photo albums",
-    href: "/albums",
-    icon: <Image className="h-5 w-5 text-primary" />,
-  },
-  {
-    title: "Photos",
-    description: "Browse all photos",
-    href: "/photos",
-    icon: <Camera className="h-5 w-5 text-primary" />,
-  },
-  {
-    title: "Todos",
-    description: "Manage your todo list",
-    href: "/todos",
-    icon: <CheckSquare className="h-5 w-5 text-primary" />,
-  },
-  {
-    title: "Users",
-    description: "View user profiles",
-    href: "/users",
-    icon: <Users className="h-5 w-5 text-primary" />,
-  },
-];
-
 interface HeaderProps {
   onDrawerStateChange?: (open: boolean) => void;
 }
@@ -123,6 +83,9 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
     login({ email, password });
     if (isSuccess) {
       setIsLoginDrawerOpen(false);
+      if (onDrawerStateChange) {
+        onDrawerStateChange(false);
+      }
     }
   };
 
@@ -171,44 +134,6 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                   <NavigationMenuLink>
                     <Link to="/">
                       <span>Home</span>
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent hover:bg-accent flex gap-1 items-center">
-                    <CheckSquare
-                      size={16}
-                      className="text-muted-foreground group-hover:text-foreground"
-                    />
-                    <span>Services</span>
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                      {jsonPlaceholderItems.map((item) => (
-                        <li key={item.href}>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              to={item.href}
-                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                            >
-                              <div className="text-sm font-medium leading-none flex items-center gap-2">
-                                {item.icon}
-                                {item.title}
-                              </div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                                {item.description}
-                              </p>
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink>
-                    <Link to="/claims">
-                      <span>Approve Claim</span>
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
@@ -276,6 +201,12 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                       <CreditCard className="mr-2 h-4 w-4" />
                       <span>Billing</span>
                       <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/approve-claims" className="flex items-center w-full cursor-default">
+                        <CheckSquare className="mr-2 h-4 w-4" />
+                        <span>Approve Claim</span>
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <Settings className="mr-2 h-4 w-4" />
@@ -400,28 +331,8 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 <Home size={18} />
                 <span>Home</span>
               </Link>
-              <div>
-                <p className="text-lg font-medium flex items-center gap-2">
-                  <CheckSquare size={18} />
-                  <span>Services</span>
-                </p>
-                <ul className="mt-2 space-y-3 pl-8">
-                  {jsonPlaceholderItems.map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        to={item.href}
-                        className="text-base hover:text-primary flex items-center gap-2"
-                        onClick={() => setIsNavDrawerOpen(false)}
-                      >
-                        {item.icon}
-                        <span>{item.title}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
               <Link
-                to="/claims"
+                to="/approve-claims"
                 className="flex items-center gap-2 text-lg font-medium hover:text-primary"
                 onClick={() => setIsNavDrawerOpen(false)}
               >
