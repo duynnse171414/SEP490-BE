@@ -90,6 +90,8 @@ const ClaimsPage = () => {
           <ViewClaimRqCard 
           key={claim.claimId} 
           claim={claim}
+          selected={selectedClaim.includes(claim.claimId)}
+          onSelect={(checked) => handleSelect(claim.claimId, checked)}
           />
         ))}
       </div>
