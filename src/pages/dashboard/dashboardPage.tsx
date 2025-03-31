@@ -7,13 +7,15 @@ import {
   Loader2,
   Ticket,
   LayoutDashboard,
-  Ban
+  Ban,
+  RotateCcw
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ClaimRequest } from "@/types/claims";
 import { claimApi } from "@/api/claimApi";
 import { useNavigate } from "react-router-dom";
 import "../css/dashboardPage.css";
+import { useTheme } from "next-themes";
 
 type ViewType = "draft" | "pending" | "approved" | "paid" | "rejected" | "cancelled" | "returned";
 
@@ -30,16 +32,18 @@ const CustomPagination = ({ page, hasNextPage, onPageChange }: CustomPaginationP
         variant="outline"
         onClick={() => onPageChange(page - 1)}
         disabled={page === 1}
+        className="border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white"
       >
         Previous
       </Button>
       <div className="flex items-center gap-2">
-        <span className="text-sm">Page {page}</span>
+        <span className="text-sm text-gray-900 dark:text-white">Page {page}</span>
       </div>
       <Button
         variant="outline"
         onClick={() => onPageChange(page + 1)}
         disabled={!hasNextPage}
+        className="border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white"
       >
         Next
       </Button>
@@ -49,6 +53,7 @@ const CustomPagination = ({ page, hasNextPage, onPageChange }: CustomPaginationP
 
 const DashboardPage = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const pageSize = 10;
   const [totalClaims, setTotalClaims] = useState(0);
   const [currentView, setCurrentView] = useState<ViewType>("draft");
@@ -406,28 +411,27 @@ const DashboardPage = () => {
 
   return (
     <div className="flex">
-      {/* Sidebar sẽ được thêm vào bởi layout */}
-      <div className="flex-1 p-6 bg-gray-900">
+      <div className="flex-1 p-6 bg-white dark:bg-gray-900">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Dashboard</h1>
           <Button
             className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
             Create claim Request
-            </Button>
+          </Button>
         </div>
 
         {/* Total Claims Card */}
-        <div className="bg-gray-800 rounded-lg p-6 shadow border border-gray-700 mb-8">
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-3xl font-semibold text-white">{totalClaims}</h3>
-              <p className="text-gray-400">Total Requests</p>
+              <h3 className="text-3xl font-semibold text-gray-900 dark:text-white">{totalClaims}</h3>
+              <p className="text-gray-600 dark:text-gray-400">Total Requests</p>
             </div>
-            <div className="p-4 bg-blue-900/30 rounded-lg">
-              <LayoutDashboard className="w-8 h-8 text-blue-400" />
+            <div className="p-4 bg-blue-100/30 dark:bg-blue-900/30 rounded-lg">
+              <LayoutDashboard className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
         </div>
@@ -436,181 +440,182 @@ const DashboardPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-6 mb-8">
           {/* Draft Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
-              currentView === "draft" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 
+              cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors 
+              ${currentView === "draft" ? "ring-2 ring-blue-500" : ""}`}
             onClick={() => handleViewChange("draft")}
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-2xl font-semibold text-white">
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {draftTotal}
                 </h3>
-                <p className="text-gray-400">Draft Requests</p>
+                <p className="text-gray-600 dark:text-gray-400">Draft Requests</p>
               </div>
-              <div className="p-3 bg-gray-900/30 rounded-lg">
-                <FileText className="w-6 h-6 text-gray-400" />
+              <div className="p-3 bg-gray-200/30 dark:bg-gray-900/30 rounded-lg">
+                <FileText className="w-6 h-6 text-gray-600 dark:text-gray-400" />
               </div>
             </div>
           </div>
 
           {/* Pending Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
               currentView === "pending" ? "ring-2 ring-blue-500" : ""
             }`}
             onClick={() => handleViewChange("pending")}
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-2xl font-semibold text-white">
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {pendingTotal}
                 </h3>
-                <p className="text-gray-400">Pending Approval</p>
+                <p className="text-gray-600 dark:text-gray-400">Pending Approval</p>
               </div>
-              <div className="p-3 bg-yellow-900/30 rounded-lg">
-                <Clock className="w-6 h-6 text-yellow-400" />
+              <div className="p-3 bg-yellow-100/30 dark:bg-yellow-900/30 rounded-lg">
+                <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
           </div>
 
           {/* Approved Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
               currentView === "approved" ? "ring-2 ring-blue-500" : ""
             }`}
             onClick={() => handleViewChange("approved")}
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-2xl font-semibold text-white">
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {approvedTotal}
                 </h3>
-                <p className="text-gray-400">Approved Requests</p>
+                <p className="text-gray-600 dark:text-gray-400">Approved Requests</p>
               </div>
-              <div className="p-3 bg-green-900/30 rounded-lg">
-                <FileText className="w-6 h-6 text-green-400" />
+              <div className="p-3 bg-green-100/30 dark:bg-green-900/30 rounded-lg">
+                <FileText className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>
 
           {/* Paid Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
               currentView === "paid" ? "ring-2 ring-blue-500" : ""
             }`}
             onClick={() => handleViewChange("paid")}
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-2xl font-semibold text-white">
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {paidTotal}
                 </h3>
-                <p className="text-gray-400">Paid Requests</p>
+                <p className="text-gray-600 dark:text-gray-400">Paid Requests</p>
               </div>
-              <div className="p-3 bg-purple-900/30 rounded-lg">
-                <Ticket className="w-6 h-6 text-purple-400" />
+              <div className="p-3 bg-purple-100/30 dark:bg-purple-900/30 rounded-lg">
+                <Ticket className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
 
           {/* Rejected Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
               currentView === "rejected" ? "ring-2 ring-blue-500" : ""
             }`}
             onClick={() => handleViewChange("rejected")}
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-2xl font-semibold text-white">
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {rejectedTotal}
                 </h3>
-                <p className="text-gray-400">Rejected Requests</p>
+                <p className="text-gray-600 dark:text-gray-400">Rejected Requests</p>
               </div>
-              <div className="p-3 bg-red-900/30 rounded-lg">
-                <X className="w-6 h-6 text-red-400" />
+              <div className="p-3 bg-red-100/30 dark:bg-red-900/30 rounded-lg">
+                <X  className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
             </div>
           </div>
 
           {/* Cancelled Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${
               currentView === "cancelled" ? "ring-2 ring-blue-500" : ""
             }`}
             onClick={() => handleViewChange("cancelled")}
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-2xl font-semibold text-white">
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {cancelledTotal}
                 </h3>
-                <p className="text-gray-400">Cancelled Requests</p>
+                <p className="text-gray-600 dark:text-gray-400">Cancelled Requests</p>
               </div>
-              <div className="p-3 bg-gray-900/30 rounded-lg">
-                <Ban className="w-6 h-6 text-gray-400" />
+              <div className="p-3 bg-gray-200/30 dark:bg-gray-900/30 rounded-lg">
+                <Ban className="w-6 h-6 text-gray-600 dark:text-gray-400" />
               </div>
             </div>
           </div>
 
           {/* Returned Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
-              currentView === "returned" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 
+              cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors 
+              ${currentView === "returned" ? "ring-2 ring-blue-500" : ""}`}
             onClick={() => handleViewChange("returned")}
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-2xl font-semibold text-white">
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
                   {returnedTotal}
                 </h3>
-                <p className="text-gray-400">Returned Requests</p>
+                <p className="text-gray-600 dark:text-gray-400">Returned Requests</p>
               </div>
-              <div className="p-3 bg-gray-900/30 rounded-lg">
-                <FileText className="w-6 h-6 text-gray-400" />
+              <div className="p-3 bg-orange-100/30 dark:bg-orange-900/30 rounded-lg">
+                <RotateCcw className="w-6 h-6 text-orange-500 dark:text-orange-400" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Claims Table */}
-        <div className="bg-gray-800 rounded-lg shadow p-4 mt-8 claims-table-container">
+        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow p-4 mt-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-white">{getViewTitle()}</h2>
-            <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{getViewTitle()}</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400"> Create At:</span>
               <input
                 type="month"
                 value={selectedMonth}
                 onChange={handleMonthChange}
-                className="bg-gray-700 text-white rounded px-3 py-2"
+                className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-3 py-2 border border-gray-200 dark:border-gray-600"
               />
             </div>
           </div>
 
           {loading ? (
-            <div className="claims-loading-state">
-              <Loader2 className="h-6 w-6 animate-spin text-white" />
+            <div className="flex justify-center p-4">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-600 dark:text-white" />
             </div>
           ) : (
             <>
               {(getCurrentRequests()?.length || 0) === 0 ? (
-                <div className="claims-empty-state">
+                <div className="text-center py-8 text-gray-600 dark:text-gray-400">
                   No requests found
                 </div>
               ) : (
-                <div className="claims-table-wrapper">
-                  <table className="claims-table">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
                     <thead>
-                      <tr>
-                        <th>Staff ID</th>
-                        <th>Project ID</th>
-                        <th>Hours</th>
-                        <th>Amount</th>
-                        <th>Claim Date</th>
-                        <th>Create Date</th>
-                        <th>Status</th>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Staff ID</th>
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Project ID</th>
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Hours</th>
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Amount</th>
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Claim Date</th>
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Create At</th>
+                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white">Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -618,14 +623,21 @@ const DashboardPage = () => {
                         <tr
                           key={request.claimId}
                           onClick={() => handleRowClick(request.claimId)}
+                          className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                         >
-                          <td>{request.staffId}</td>
-                          <td>{request.projectId}</td>
-                          <td>{request.workingHours}</td>
-                          <td>{request.claimAmount}</td>
-                          <td>{new Date(request.claimDate).toLocaleDateString()}</td>
-                          <td>{new Date(request.createAt).toLocaleDateString()}</td>
-                          <td>{getStatusText(request.claimStatus)}</td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200">{request.staffId}</td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200">{request.projectId}</td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200">{request.workingHours}</td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200">{request.claimAmount}</td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200">
+                            {new Date(request.claimDate).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200">
+                            {new Date(request.createAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200">
+                            {getStatusText(request.claimStatus)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -633,18 +645,17 @@ const DashboardPage = () => {
                 </div>
               )}
               {getCurrentRequests()?.length > 0 && (
-                <div className="claims-pagination">
+                <div className="mt-4">
                   <CustomPagination
                     page={currentPage}
                     hasNextPage={hasNextPage}
-                    onPageChange={(page) => handlePageChange(page)}
+                    onPageChange={handlePageChange}
                   />
                 </div>
               )}
             </>
           )}
         </div>
-
       </div>
     </div>
   );
