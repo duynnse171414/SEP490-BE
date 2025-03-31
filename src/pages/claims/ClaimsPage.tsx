@@ -1,11 +1,15 @@
 import { ClaimStatus, ClaimRequestDTO } from "@/features/claims/types";
-import { useApproveClaims, useClaimsByPM } from "@/features/claims/hooks/useClaims";
+import { useApproveClaims, useClaimsByPM, useRejectClaims } from "@/features/claims/hooks/useClaims";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
+import { XCircle } from "lucide-react";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+
 import {
   Table,
   TableBody,
@@ -22,6 +26,9 @@ const ClaimsPage = () => {
   const claims = data?.data;
   const [selectedClaim, setSelectedClaim] = useState<string[]>([]);
   const { approveSelectedClaims, isApproving } = useApproveClaims();
+  const { rejectSelectedClaims, isRejecting } = useRejectClaims();
+  const [rejectionReason, setRejectionReason] = useState<string>("");
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
 
   const handleSelect = (claimId: string, checked: boolean) => {
     setSelectedClaim((prevSelected) =>
@@ -42,20 +49,25 @@ const ClaimsPage = () => {
     setSelectedClaim([]);
   };
 
+  const handleRejectSelected = () => {
+    rejectSelectedClaims(selectedClaim, rejectionReason);
+    setSelectedClaim([]);
+    setRejectionReason("");
+  }
+
   const projects = Array.from(
     new Set(claims?.map((claim: ClaimRequestDTO) => claim.project.projectId))
   ).map((projectId) =>
     claims?.find((claim) => claim.project.projectId === projectId)?.project
   );
 
-  // Filter claims by project and status
   const filteredClaims = claims?.filter(claim => {
     const matchesProject = selectedProject ? claim.project.projectId === selectedProject : true;
     const matchesStatus = selectedStatus !== null ? claim.claimStatus === selectedStatus : true;
     return matchesProject && matchesStatus;
   });
 
-  const areAllSelected = filteredClaims && filteredClaims.length > 0 && 
+  const areAllSelected = filteredClaims && filteredClaims.length > 0 &&
     filteredClaims.every(claim => selectedClaim.includes(claim.claimId));
 
   if (isLoading) {
@@ -72,7 +84,63 @@ const ClaimsPage = () => {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-6 text-center">Claims Dashboard</h1>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-4 space-x-2">
+      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="destructive"
+              disabled={selectedClaim.length === 0 || isRejecting}
+              className="gap-2"
+            >
+              {isRejecting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4" />
+                  Reject Selected ({selectedClaim.length})
+                </>
+              )}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reject Claims</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2">
+              <label htmlFor="rejectionReason" className="text-sm font-medium">
+                Rejection Reason
+              </label>
+              <Input
+                id="rejectionReason"
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Enter reason for rejection..."
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                onClick={() => setIsRejectDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  handleRejectSelected();
+                  setIsRejectDialogOpen(false);
+                }}
+                disabled={!rejectionReason}
+              >
+                Confirm Reject
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <Button
           onClick={handleApproveSelected}
           disabled={selectedClaim.length === 0 || isApproving}
@@ -132,7 +200,7 @@ const ClaimsPage = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">
-                <Checkbox 
+                <Checkbox
                   checked={areAllSelected}
                   onCheckedChange={handleSelectAll}
                   disabled={!filteredClaims || filteredClaims.length === 0}
@@ -157,8 +225,8 @@ const ClaimsPage = () => {
               filteredClaims.map((claim) => (
                 <TableRow key={claim.claimId}>
                   <TableCell>
-                    <Checkbox 
-                      checked={selectedClaim.includes(claim.claimId)} 
+                    <Checkbox
+                      checked={selectedClaim.includes(claim.claimId)}
                       onCheckedChange={(checked) => handleSelect(claim.claimId, !!checked)}
                     />
                   </TableCell>
@@ -167,13 +235,12 @@ const ClaimsPage = () => {
                   <TableCell>{format(new Date(claim.claimDate), "PPP")}</TableCell>
                   <TableCell>{claim.workingHours} hrs</TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      claim.claimStatus === ClaimStatus.Approved 
-                        ? "bg-green-500 text-white" 
-                        : claim.claimStatus === ClaimStatus.Rejected 
-                          ? "bg-red-500 text-white" 
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${claim.claimStatus === ClaimStatus.Approved
+                        ? "bg-green-500 text-white"
+                        : claim.claimStatus === ClaimStatus.Rejected
+                          ? "bg-red-500 text-white"
                           : "bg-yellow-500 text-white"
-                    }`}>
+                      }`}>
                       {ClaimStatus[claim.claimStatus]}
                     </span>
                   </TableCell>
