@@ -24,7 +24,9 @@ const StaffPage = lazy(() => import("../pages/admin/StaffPage"));
 const ProjectPage = lazy(() => import("../pages/project/ProjectPage"));
 const ProjectDetailPage = lazy(() => import("../pages/project/ProjectDetail"));
 const DashboardAdmin = lazy(() => import("../pages/dashboard/dashboardAdmin"));
-const ProjectDashboard = lazy(() => import("../features/dashboard/components/ProjectDashboard"));
+const ProjectDashboard = lazy(
+  () => import("../features/dashboard/components/ProjectDashboard")
+);
 const ClaimsPage = lazy(() => import("../pages/claims/ClaimsPage"));
 
 const router = createBrowserRouter([
@@ -44,8 +46,9 @@ const router = createBrowserRouter([
       { path: "dashboard", element: <DashboardPage /> },
       { path: "report", element: <ReportPage /> },
       { path: "todos", element: <TodosPage /> },
-      // { path: "projects", element: <ProjectPage /> }, // Add Project List Page
-      { path: "projects", element: <ProjectDashboard /> },
+      // { path: "projects", element: <ProjectDashboard /> }, // Add Project List Page
+      // { path: "projects/:id", element: <ProjectDetailPage /> }, // Add Project Detail Page
+      // { path: "staffs", element: <StaffPage /> },
       { path: "claims", element: <ClaimsPage /> },
     ],
   },
@@ -54,12 +57,10 @@ const router = createBrowserRouter([
     element: <AdminLayout />,
     children: [
       { path: "dashboard", element: <DashboardAdmin /> },
-      { path: "projects", element: <ProjectDashboard /> },
+      { path: "projects", element: <ProjectPage /> },
       { path: "staffs", element: <StaffPage /> },
       { path: "projects/:id", element: <ProjectDetailPage /> }, // Add Project Detail Page
-
     ],
-
   },
   {
     path: "*",
