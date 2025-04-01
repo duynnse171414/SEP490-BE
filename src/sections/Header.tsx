@@ -41,7 +41,8 @@ import {
   Keyboard,
   Users2,
   UserPlus,
-  Github
+  Github,
+  Ticket
 } from "lucide-react";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 import { LoginUserDTO } from "@/features/auth/types";
@@ -231,6 +232,12 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                       <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Ticket className="mr-2 h-4 w-4" />
+                      <Link to="/claim">
+                        <span>Create Claim</span>
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <CreditCard className="mr-2 h-4 w-4" />

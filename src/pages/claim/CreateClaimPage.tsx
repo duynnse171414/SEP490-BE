@@ -245,7 +245,7 @@ const CreateClaimPage: React.FC = () => {
                                 <div>
                                     <h4 className="text-lg ml-5 mt-2 mb-3">{dayForms.length} day(s)</h4>
                                 </div>
-                                <div className="max-h-[300px] overflow-y-auto">
+                                <div className="max-h-[200px] overflow-y-auto">
                                     {/* Danh sách các form ngày */}
                                     {dayForms.map((form, index) => {
                                         const hasConflict = conflictIndexes.includes(index);
