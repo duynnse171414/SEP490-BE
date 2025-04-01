@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useParams } from "react-router-dom";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { AddStaffToProjectDialog } from "../admin/staff/AddStaffToProject";
+import { UpdateStaffToProjectDialog } from "@/pages/project/UpdateStaffPage";
 const BASE_URL = "https://localhost:7100/api";
 
 const ProjectDetail = () => {
@@ -17,6 +18,7 @@ const ProjectDetail = () => {
   const { data: project, isLoading, error } = useProject(projectId);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
+  const [roles, setRoles] = useState<string[]>([]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -25,6 +27,27 @@ const ProjectDetail = () => {
       return dateString;
     }
   };
+
+  const fetchRoles = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/Project/role-in-project`, {
+        method: "GET",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRoles(data || []); // Assuming the API returns an array of roles
+      } else {
+        console.error("Failed to fetch roles:", response.status);
+      }
+    } catch (error) {
+      console.error("Error while fetching roles:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoles();
+  }, []);
 
   const handleExport = async () => {
     if (!project) return;
@@ -65,6 +88,40 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleUpdateStaff = async (updatedStaff) => {
+    try {
+      // Prepare the payload for the API
+      const staffUpdatePayload = {
+        staffId: updatedStaff.staffId,
+        roleInProject: updatedStaff.roleInProject,
+        projectId: projectId,
+        updateAt: new Date().toISOString(),
+      };
+  
+      // Make the API call
+      const response = await fetch(`${BASE_URL}/project/update-staff-in-project?projectId=${projectId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([staffUpdatePayload]), // Send as an array
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        alert(data.message || "Staff updated successfully.");
+        setIsUpdateModalOpen(false); // Close the modal
+        refetch(); // Refresh project data
+      } else {
+        console.error("Failed to update staff:", response.status, data.message);
+        alert(data.message || "Failed to update staff.");
+      }
+    } catch (error) {
+      console.error("Error while updating staff:", error);
+      alert("Error occurred while updating staff.");
+    }
+  };
 
   const handleDeleteStaff = async (staffId) => {
     try {
@@ -190,6 +247,29 @@ const ProjectDetail = () => {
                           
                           <TableCell className="flex space-x-2">
                             
+                          {/* <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2 text-blue-500 hover:bg-blue-100"
+                              onClick={() => {
+                                setSelectedStaff(staff.staffId);
+                                //setUpdatedStaffDetails(staff); // Pre-fill the modal with current details
+                                setIsUpdateModalOpen(true);
+                              }}
+                            >
+                              Update
+                          </Button> */}
+
+                        <UpdateStaffToProjectDialog
+                            projectId={projectId.toString()}
+                            staff={{
+                              staffId: staff.staffId,
+                              staffName: staff.staffName,
+                              roleInProjectId: staff.roleInProject,
+                            }}
+                            onUpdate={fetch} // Refresh project data after update
+                          />
+
                           <Button
                               variant="outline"
                               size="sm"
@@ -218,6 +298,10 @@ const ProjectDetail = () => {
                       </TableRow>
                     )}
                   </TableBody>
+
+                  
+
+
                 </Table>
               </div>
             </>

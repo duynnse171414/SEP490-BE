@@ -1,109 +1,119 @@
-import React, { useState } from 'react';
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { useRoleInProject, useUpdateStaffInProject } from "@/features/project/hooks/useProject";
+import { useProjects } from "@/features/project/hooks/userProject";
 
-export function UpdateStaffProjectModal({ projectId, staff, availableRoles, onUpdateStaff }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState(staff.roleInProject);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+export function UpdateStaffToProjectDialog({
+  projectId,
+  staff,
+  onUpdate,
+}: {
+  projectId: string;
+  staff: { staffId: string; staffName: string; roleInProjectId: number };
+  onUpdate: () => void;
+}) {
+  const [selectedRole, setSelectedRole] = useState<string>(
+    staff.roleInProjectId?.toString() || ""
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const { data: roles, isLoading: isLoadingRoles } = useRoleInProject();
+  const { mutate } = useProjects();
 
-  const handleUpdate = async () => {
+  const openModal = () => setIsOpen(true);
+  const closeModal = () => setIsOpen(false);
+
+  const handleUpdateStaff = async () => {
     if (!selectedRole) {
-      alert('Please select a role.');
+      toast.error("Please select a role.");
       return;
     }
 
-    // Prepare the staff update payload
-    const staffProjectUpdate = {
-      staffId: staff.id,
-      roleInProject: selectedRole,
-      projectId: projectId,
-      updateAt: new Date().toISOString(),
-    };
+    const staffUpdatePayload = [
+      {
+        staffId: staff.staffId,
+        roleInProjectId: Number(selectedRole),
+      },
+    ];
 
     try {
-      setLoading(true);
-      const response = await fetch(`/api/project/update-staff-in-project?projectId=${projectId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify([staffProjectUpdate]), // Send as an array
-      });
+      setIsSubmitting(true);
 
-      const data = await response.json();
+      // Call the API using the hook
+      await useUpdateStaffInProject(staffUpdatePayload, Number(projectId), mutate);
 
-      if (response.ok) {
-        onUpdateStaff(staffProjectUpdate); // Update the staff data in the parent component
-        closeModal();
-        alert("Staff updated successfully!");
-      } else {
-        setError(data.message || "Failed to update staff");
-      }
-    } catch (err) {
-      setError("An error occurred while updating staff.");
+      toast.success("Staff updated successfully!");
+      onUpdate(); // Trigger parent component's update logic
+      closeModal();
+    } catch (error) {
+      console.error("Error updating staff:", error);
+      toast.error("Failed to update staff. Please try again.");
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <>
-      <button
-        onClick={openModal}
-        className="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600"
-      >
-        Update
-      </button>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h2 className="text-xl font-semibold mb-4">Update Staff in Project</h2>
-
-            {/* Show Error Message */}
-            {error && <div className="text-red-500 mb-4">{error}</div>}
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Staff Name:</label>
-              <p>{staff.name}</p>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Role:</label>
-              <select
-                className="w-full p-2 mt-1 border border-gray-300 rounded-md"
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-              >
-                {availableRoles.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={closeModal}
-                className="bg-gray-300 text-gray-800 p-2 rounded-md hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdate}
-                disabled={loading}
-                className={`bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 ${loading && 'opacity-50 cursor-not-allowed'}`}
-              >
-                {loading ? 'Updating...' : 'Update Staff'}
-              </button>
-            </div>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="flex items-center gap-2 text-blue-500 hover:bg-blue-100">
+          Update
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Update Staff Role</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Staff Name:</label>
+            <p>{staff.staffName}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Role:</label>
+            <Select
+              value={selectedRole}
+              onValueChange={(value) => setSelectedRole(value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                {isLoadingRoles ? (
+                  <SelectItem value="" disabled>
+                    Loading roles...
+                  </SelectItem>
+                ) : (
+                  roles?.map((role) => (
+                    <SelectItem key={role.roleProjectId} value={role.roleProjectId.toString()}>
+                      {role.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              onClick={handleUpdateStaff}
+              disabled={isSubmitting}
+              className="bg-blue-500 text-white hover:bg-blue-600"
+            >
+              {isSubmitting ? "Updating..." : "Update Staff"}
+            </Button>
           </div>
         </div>
-      )}
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }
