@@ -1,106 +1,109 @@
-"use client";
+import React, { useState } from 'react';
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useParams } from "react-router-dom";
-
-const BASE_URL = "https://localhost:7100/api";
-
-interface UpdateStaffPageProps {
-  isOpen: boolean;
-  onClose: () => void;
-  staffId: number;
-  onSubmit: (updatedStaff: any) => void;
-}
-
-const UpdateStaffPage = ({ isOpen, onClose, staffId, onSubmit }: UpdateStaffPageProps) => {
-  const [staff, setStaff] = useState<any>(null);
+export function UpdateStaffProjectModal({ projectId, staff, availableRoles, onUpdateStaff }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(staff.roleInProject);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (staffId) {
-      setLoading(true);
-      fetch(`${BASE_URL}/Staffs/${staffId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setStaff(data.data); 
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching staff:", error);
-          setLoading(false);
-        });
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  const handleUpdate = async () => {
+    if (!selectedRole) {
+      alert('Please select a role.');
+      return;
     }
-  }, [staffId]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setStaff({
-      ...staff,
-      [e.target.name]: e.target.value,
-    });
-  };
+    // Prepare the staff update payload
+    const staffProjectUpdate = {
+      staffId: staff.id,
+      roleInProject: selectedRole,
+      projectId: projectId,
+      updateAt: new Date().toISOString(),
+    };
 
-  const handleSubmit = () => {
-    setLoading(true);
-    fetch(`${BASE_URL}/Staffs/${staffId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(staff), 
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Staff updated:", data);
-        onSubmit(staff); 
-        setLoading(false);
-        onClose(); 
-      })
-      .catch((error) => {
-        console.error('Error updating staff:', error);
-        setLoading(false);
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/project/update-staff-in-project?projectId=${projectId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([staffProjectUpdate]), // Send as an array
       });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        onUpdateStaff(staffProjectUpdate); // Update the staff data in the parent component
+        closeModal();
+        alert("Staff updated successfully!");
+      } else {
+        setError(data.message || "Failed to update staff");
+      }
+    } catch (err) {
+      setError("An error occurred while updating staff.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Update Staff Details</DialogTitle>
-        </DialogHeader>
-        {loading ? (
-          <div>Loading...</div>
-        ) : staff ? (
-          <div className="space-y-4">
-            <div>
-              <label>Staff Name</label>
-              <Input
-                value={staff.staffName}
-                name="staffName"
-                onChange={handleChange}
-              />
+    <>
+      <button
+        onClick={openModal}
+        className="bg-yellow-500 text-white p-2 rounded-md hover:bg-yellow-600"
+      >
+        Update
+      </button>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h2 className="text-xl font-semibold mb-4">Update Staff in Project</h2>
+
+            {/* Show Error Message */}
+            {error && <div className="text-red-500 mb-4">{error}</div>}
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Staff Name:</label>
+              <p>{staff.name}</p>
             </div>
-            <div>
-              <label>Email</label>
-              <Input
-                value={staff.email}
-                name="email"
-                onChange={handleChange}
-              />
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Role:</label>
+              <select
+                className="w-full p-2 mt-1 border border-gray-300 rounded-md"
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+              >
+                {availableRoles.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button onClick={handleSubmit}>Save Changes</Button>
-              <Button variant="outline" onClick={onClose}>Cancel</Button>
+
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={closeModal}
+                className="bg-gray-300 text-gray-800 p-2 rounded-md hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdate}
+                disabled={loading}
+                className={`bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 ${loading && 'opacity-50 cursor-not-allowed'}`}
+              >
+                {loading ? 'Updating...' : 'Update Staff'}
+              </button>
             </div>
           </div>
-        ) : (
-          <div>No staff data found.</div>
-        )}
-      </DialogContent>
-    </Dialog>
+        </div>
+      )}
+    </>
   );
-};
-
-export default UpdateStaffPage;
+}

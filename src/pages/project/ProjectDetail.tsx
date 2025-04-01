@@ -65,11 +65,10 @@ const ProjectDetail = () => {
     }
   };
 
-  
 
   const handleDeleteStaff = async (staffId) => {
     try {
-      const response = await fetch(`${BASE_URL}/Project/DeleteStaffFromProject?staffId=${staffId}&projectId=${projectId}`, {
+      const response = await fetch(`${BASE_URL}/Project/${projectId}/staff/${staffId}/delete`, {
         method: "DELETE",
       });
 
@@ -83,6 +82,25 @@ const ProjectDetail = () => {
     } catch (error) {
       console.error("Error while deleting staff:", error);
       alert("Error occurred while deleting staff.");
+    }
+  };
+
+  const handleRestoreStaff = async (staffId) => {
+    try {
+      const response = await fetch(`${BASE_URL}/Project/${projectId}/staff/${staffId}/restore`, {
+        method: "PUT", 
+      });
+
+      if (response.ok) {
+        alert("Staff restored successfully.");
+      } else {
+        const errorMessage = await response.text();
+        console.error("Failed to restore staff:", response.status, errorMessage);
+        alert("Failed to restore staff.");
+      }
+    } catch (error) {
+      console.error("Error while restoring staff:", error);
+      alert("Error occurred while restoring staff.");
     }
   };
 
@@ -162,15 +180,25 @@ const ProjectDetail = () => {
                           <TableCell>{staff.jobRank}</TableCell>
                           <TableCell>${staff.salary?.toLocaleString()}</TableCell>
                           <TableCell>{staff.departmentName}</TableCell>
-                          <TableCell>{staff.roleInProject}</TableCell>
+                          <TableCell>{staff.roleInProject}</TableCell>                         
                           <TableCell>
                             <Badge className={staff.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
                               {staff.isActive ? "Active" : "Inactive"}
                             </Badge>
                           </TableCell>
                           <TableCell>{formatDate(staff.createAt)}</TableCell>
+                          
                           <TableCell className="flex space-x-2">
                             
+                          <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2 text-blue-500 hover:bg-red-100"
+                              onClick={() => handleRestoreStaff(staff.staffId)}
+                            >
+                              Restore
+                            </Button>
+
                             <Button
                               variant="outline"
                               size="sm"
