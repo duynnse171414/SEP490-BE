@@ -7,50 +7,75 @@ import {
   DialogClose,
   DialogFooter,
 } from "@/components/ui/dialog";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
-// Hàm gọi API tạo nhân viên
-const createStaff = async (staffData: any) => {
-  const response = await fetch("https://localhost:7100/api/Staffs", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(staffData),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Error: ${response.statusText}`);
-  }
-
+// API calls
+const fetchJobRanks = async () => {
+  const response = await fetch("https://localhost:7100/api/Staffs/job-ranks");
+  if (!response.ok) throw new Error("Failed to fetch job ranks");
   return await response.json();
 };
 
-// Props cho component
+const fetchDepartments = async () => {
+  const response = await fetch("https://localhost:7100/api/Staffs/departments");
+  if (!response.ok) throw new Error("Failed to fetch departments");
+  return await response.json();
+};
+
+const createStaff = async (staffData: any) => {
+  const response = await fetch("https://localhost:7100/api/Staffs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(staffData),
+  });
+  if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+  return await response.json();
+};
+
 interface CreateStaffButtonProps {
-  onSuccess: (newStaff: any) => void; // Callback khi tạo thành công
+  onSuccess: (newStaff: any) => void;
 }
 
 const CreateStaffButton: React.FC<CreateStaffButtonProps> = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
     staffName: "",
-    jobRank: 0,
+    jobRank: "", // Store job rank ID as a string
     salary: 0,
     userId: "",
-    departmentId: 0,
+    departmentId: "", // Store department ID as a string
   });
+
+  const [jobRanks, setJobRanks] = useState<{ id: number; name: string }[]>([]);
+  const [departments, setDepartments] = useState<
+    { id: number; name: string }[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [jobRanksData, departmentsData] = await Promise.all([
+          fetchJobRanks(),
+          fetchDepartments(),
+        ]);
+        setJobRanks(jobRanksData);
+        setDepartments(departmentsData);
+      } catch (err) {
+        setError("Failed to load job ranks or departments.");
+      }
+    };
+    loadData();
+  }, []);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]:
-        name === "jobRank" || name === "salary" || name === "departmentId"
-          ? Number(value)
-          : value,
+      [name]: name === "salary" ? Number(value) : value,
     });
   };
 
@@ -59,9 +84,43 @@ const CreateStaffButton: React.FC<CreateStaffButtonProps> = ({ onSuccess }) => {
     setLoading(true);
     setError(null);
 
+    // Validate Job Rank and Department selection
+    if (!formData.jobRank || !formData.departmentId) {
+      setError("Please select a valid Job Rank and Department.");
+      setLoading(false);
+      return;
+    }
+
+    const jobRankId = jobRanks.find(
+      (rank) => rank.id === Number(formData.jobRank)
+    )?.id;
+    const departmentId = departments.find(
+      (dept) => dept.id === Number(formData.departmentId)
+    )?.id;
+
+    // Ensure Job Rank ID starts from 0 and Department ID starts from 1
+    if (jobRankId === undefined || jobRankId < 0) {
+      setError("Invalid Job Rank selected.");
+      setLoading(false);
+      return;
+    }
+
+    if (departmentId === undefined || departmentId < 1) {
+      setError("Invalid Department selected.");
+      setLoading(false);
+      return;
+    }
+
+    // Prepare payload with valid IDs
+    const payload = {
+      ...formData,
+      jobRank: jobRankId,
+      departmentId: departmentId,
+    };
+
     try {
-      const newStaff = await createStaff(formData); // Gọi API tạo nhân viên
-      onSuccess(newStaff); // Gọi callback cập nhật danh sách
+      const newStaff = await createStaff(payload);
+      onSuccess(newStaff);
     } catch (err) {
       setError((err as Error).message || "Something went wrong.");
     } finally {
@@ -72,10 +131,7 @@ const CreateStaffButton: React.FC<CreateStaffButtonProps> = ({ onSuccess }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          variant="default"
-          className="px-4 py-2 cursor-pointer"
-        >
+        <Button variant="default" className="px-4 py-2 cursor-pointer">
           Add Staff
         </Button>
       </DialogTrigger>
@@ -86,6 +142,7 @@ const CreateStaffButton: React.FC<CreateStaffButtonProps> = ({ onSuccess }) => {
         </DialogHeader>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit}>
+          {/* Staff Name */}
           <div className="mb-4">
             <label htmlFor="staffName" className="block font-medium mb-1">
               Staff Name
@@ -100,20 +157,30 @@ const CreateStaffButton: React.FC<CreateStaffButtonProps> = ({ onSuccess }) => {
               required
             />
           </div>
+
+          {/* Job Rank (Dropdown) */}
           <div className="mb-4">
             <label htmlFor="jobRank" className="block font-medium mb-1">
               Job Rank
             </label>
-            <input
-              type="number"
+            <select
               id="jobRank"
               name="jobRank"
               value={formData.jobRank}
               onChange={handleChange}
               className="w-full border rounded px-2 py-1"
               required
-            />
+            >
+              <option value="">Select Job Rank</option>
+              {jobRanks.map((rank) => (
+                <option key={rank.id} value={rank.id}>
+                  {rank.name}
+                </option>
+              ))}
+            </select>
           </div>
+
+          {/* Salary */}
           <div className="mb-4">
             <label htmlFor="salary" className="block font-medium mb-1">
               Salary
@@ -128,6 +195,8 @@ const CreateStaffButton: React.FC<CreateStaffButtonProps> = ({ onSuccess }) => {
               required
             />
           </div>
+
+          {/* User ID */}
           <div className="mb-4">
             <label htmlFor="userId" className="block font-medium mb-1">
               User ID
@@ -142,20 +211,30 @@ const CreateStaffButton: React.FC<CreateStaffButtonProps> = ({ onSuccess }) => {
               required
             />
           </div>
+
+          {/* Department (Dropdown) */}
           <div className="mb-4">
             <label htmlFor="departmentId" className="block font-medium mb-1">
-              Department ID
+              Department
             </label>
-            <input
-              type="number"
+            <select
               id="departmentId"
               name="departmentId"
               value={formData.departmentId}
               onChange={handleChange}
               className="w-full border rounded px-2 py-1"
               required
-            />
+            >
+              <option value="">Select Department</option>
+              {departments.map((dept) => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.name}
+                </option>
+              ))}
+            </select>
           </div>
+
+          {/* Form Buttons */}
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="secondary" className="mr-2">
