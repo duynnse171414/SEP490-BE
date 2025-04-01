@@ -42,7 +42,7 @@ const router = createBrowserRouter([
       { path: "report", element: <ReportPage /> },
       { path: "create-claim", element: <CreateClaimPage/>},
       { path: "projects", element: <ProjectDashboard /> },
-      { path: "claims", element: <ClaimsPage /> },
+      { path: "approve-claims", element: <ClaimsPage /> },
     ],
   },
   {

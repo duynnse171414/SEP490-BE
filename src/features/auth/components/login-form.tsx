@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, EyeOff } from "lucide-react";
 import { LoginUserDTO } from "../types";
 import { EvervaultCard } from "@/components/ui/evervault-card";
+import { useAuthContext } from "../hooks/useAuthContext";
 
 type LoginFormProps = {
   onSubmit: (data: LoginUserDTO) => void;
@@ -18,17 +19,40 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isEmailValid, setIsEmailValid] = useState(true);
   const passwordRef = useRef<HTMLInputElement>(null);
   const [loginMessage, setErrorMessage] = useState("");
-
+  const AuthContext = useAuthContext();
+  
   useEffect(() => {
     if (isFocused && passwordRef.current) {
       passwordRef.current.focus();
     }
   }, [isFocused]);
 
+  useEffect(() => {
+    setErrorMessage(AuthContext.loginMessage || "");
+  }, [AuthContext.loginMessage]);
+
+  const validateEmail = (email: string) => {
+    return email.includes('@') && email.includes('.');
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    if (!isEmailValid)
+      setIsEmailValid(newEmail === '' || validateEmail(newEmail));
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!validateEmail(email)) {
+      setIsEmailValid(false);
+      return;
+    }
+
     setErrorMessage("");
     onSubmit({ email, password });
   };
@@ -57,7 +81,8 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
                   placeholder="m@example.com"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
+                  className={!isEmailValid ? "border-red-500" : ""}
                   onKeyDown={(e) => {
                     if (e.key === "Tab" && !e.shiftKey) {
                       e.preventDefault();

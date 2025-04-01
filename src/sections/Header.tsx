@@ -14,11 +14,9 @@ import {
 } from "@/components/ui/drawer";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { LoginForm } from "@/features/auth/components/login-form";
 import {
@@ -26,10 +24,7 @@ import {
   Sun,
   Moon,
   Menu,
-  ClipboardList,
   MessageSquare,
-  Image,
-  Camera,
   CheckSquare,
   Users,
   Home,
@@ -42,7 +37,6 @@ import {
   Users2,
   UserPlus,
   Github,
-  Ticket
 } from "lucide-react";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 import { LoginUserDTO } from "@/features/auth/types";
@@ -58,18 +52,9 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const jsonPlaceholderItems = [
-  { title: "Posts", description: "View and manage blog posts", href: "/posts", icon: <ClipboardList className="h-5 w-5 text-primary" /> },
-  { title: "Comments", description: "View all comments", href: "/comments", icon: <MessageSquare className="h-5 w-5 text-primary" /> },
-  { title: "Albums", description: "Browse photo albums", href: "/albums", icon: <Image className="h-5 w-5 text-primary" /> },
-  { title: "Photos", description: "Browse all photos", href: "/photos", icon: <Camera className="h-5 w-5 text-primary" /> },
-  { title: "Todos", description: "Manage your todo list", href: "/todos", icon: <CheckSquare className="h-5 w-5 text-primary" /> },
-  { title: "Users", description: "View user profiles", href: "/users", icon: <Users className="h-5 w-5 text-primary" /> },
-];
 
 interface HeaderProps {
   onDrawerStateChange?: (open: boolean) => void;
@@ -84,24 +69,20 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!user);
 
   useEffect(() => {
-    setIsAuthenticated(!!user);
+    setIsAuthenticated(user !== null);
+    if (onDrawerStateChange) {
+      if (isLoginDrawerOpen) onDrawerStateChange(user === null);
+    }
   }, [user]);
 
   const handleLoginSubmit = ({ email, password }: LoginUserDTO) => {
-    console.log("Logging in with email and password");
     login({ email, password });
 
     if (isSuccess) {
       setIsLoginDrawerOpen(false);
-    }
-    if (isLoginDrawerOpen) {
-      setIsLoginDrawerOpen(false);
-
-    } else {
-      setIsLoginDrawerOpen(true);
-    }
-    if (onDrawerStateChange) {
-      onDrawerStateChange(false);
+      if (onDrawerStateChange) {
+        onDrawerStateChange(false);
+      }
     }
   };
 
@@ -110,7 +91,10 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
       <div className="container mx-auto py-3">
         <div className="flex flex-wrap items-center justify-between px-4">
           <div className="flex items-center gap-2 w-full md:w-auto justify-between">
-            <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary transition-colors hover:text-primary/80">
+            <Link
+              to="/"
+              className="flex items-center gap-2 text-xl font-bold text-primary transition-colors hover:text-primary/80"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="24"
@@ -151,41 +135,6 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                   </NavigationMenuLink>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent hover:bg-accent flex gap-1 items-center">
-                    <CheckSquare size={16} className="text-muted-foreground group-hover:text-foreground" />
-                    <span>Services</span>
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                      {jsonPlaceholderItems.map((item) => (
-                        <li key={item.href}>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              to={item.href}
-                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                            >
-                              <div className="text-sm font-medium leading-none flex items-center gap-2">
-                                {item.icon}
-                                {item.title}
-                              </div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                                {item.description}
-                              </p>
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink>
-                    <Link to="/claims">
-                      <span>Approve Claim</span>
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
                   <NavigationMenuLink>
                     <Link to="/contact">
                       <span>Contact</span>
@@ -209,13 +158,18 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
               />
               <Moon className="h-4 w-4 text-blue-500" />
             </div>
-
-            {isAuthenticated ? (
+            {isAuthenticated && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-9 w-9 rounded-full"
+                  >
                     <Avatar className="h-9 w-9 border-2 border-primary/20">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} alt={user?.email} />
+                      <AvatarImage
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`}
+                        alt={user?.email}
+                      />
                       <AvatarFallback className="bg-primary/10 text-primary">
                         {user?.email.charAt(0)}
                       </AvatarFallback>
@@ -225,7 +179,9 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user?.email}</p>
+                      <p className="text-sm font-medium leading-none">
+                        {user?.email}
+                      </p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.email}
                       </p>
@@ -247,6 +203,15 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                       <CreditCard className="mr-2 h-4 w-4" />
                       <span>Billing</span>
                       <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/approve-claims"
+                        className="flex items-center w-full cursor-default"
+                      >
+                        <CheckSquare className="mr-2 h-4 w-4" />
+                        <span>Approve Claim</span>
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <Settings className="mr-2 h-4 w-4" />
@@ -307,23 +272,28 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                     <span>API</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-500 focus:text-red-500">
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="text-red-500 focus:text-red-500"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                     <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              <Drawer
-                open={isLoginDrawerOpen}
-                onOpenChange={(open) => {
-                  setIsLoginDrawerOpen(open);
-                  if (onDrawerStateChange) {
-                    onDrawerStateChange(open);
-                  }
-                }}
-              >
+            )}
+
+            <Drawer
+              open={isLoginDrawerOpen && !isAuthenticated}
+              onOpenChange={(open) => {
+                setIsLoginDrawerOpen(open);
+                if (onDrawerStateChange) {
+                  onDrawerStateChange(open);
+                }
+              }}
+            >
+              {!isAuthenticated && (
                 <DrawerTrigger asChild>
                   <Button
                     variant="default"
@@ -333,19 +303,22 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                     <span>Login</span>
                   </Button>
                 </DrawerTrigger>
-                <DrawerContent>
-                  <div className="mx-auto w-full max-w-sm">
-                    <DrawerHeader>
-                      <DrawerTitle className="text-center text-2xl font-bold">Welcome Back</DrawerTitle>
-                      <DrawerDescription className="text-center">
-                        Enter your credentials below to access your account
-                      </DrawerDescription>
-                    </DrawerHeader>
-                    <LoginForm onSubmit={handleLoginSubmit} />
-                  </div>
-                </DrawerContent>
-              </Drawer>
-            )}
+              )}
+
+              <DrawerContent>
+                <div className="mx-auto w-full max-w-sm">
+                  <DrawerHeader>
+                    <DrawerTitle className="text-center text-2xl font-bold">
+                      Welcome Back
+                    </DrawerTitle>
+                    <DrawerDescription className="text-center">
+                      Enter your credentials below to access your account
+                    </DrawerDescription>
+                  </DrawerHeader>
+                  <LoginForm onSubmit={handleLoginSubmit} />
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
         </div>
       </div>
@@ -363,28 +336,8 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 <Home size={18} />
                 <span>Home</span>
               </Link>
-              <div>
-                <p className="text-lg font-medium flex items-center gap-2">
-                  <CheckSquare size={18} />
-                  <span>Services</span>
-                </p>
-                <ul className="mt-2 space-y-3 pl-8">
-                  {jsonPlaceholderItems.map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        to={item.href}
-                        className="text-base hover:text-primary flex items-center gap-2"
-                        onClick={() => setIsNavDrawerOpen(false)}
-                      >
-                        {item.icon}
-                        <span>{item.title}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
               <Link
-                to="/claims"
+                to="/approve-claims"
                 className="flex items-center gap-2 text-lg font-medium hover:text-primary"
                 onClick={() => setIsNavDrawerOpen(false)}
               >
