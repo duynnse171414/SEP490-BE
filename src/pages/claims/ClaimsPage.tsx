@@ -1,6 +1,6 @@
 import { ClaimStatus, ClaimRequestDTO } from "@/features/claims/types";
 import { ViewClaimRqCard } from "@/components/common/ViewClaimRqCard";
-import { useApproveClaims, useClaimsByPM } from "@/features/claims/hooks/useClaims";
+import { useApproveClaims, useClaimsByPM, useRejectClaims } from "@/features/claims/hooks/useClaims";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2 } from "lucide-react";

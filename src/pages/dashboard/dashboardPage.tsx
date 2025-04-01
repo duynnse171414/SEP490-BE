@@ -389,6 +389,10 @@ const DashboardPage = () => {
     }
   };
 
+  const handleClickCreate = () => {
+    navigate('/create-claim')
+  }
+
   return (
     <div className="flex">
       <div className="flex-1 p-6 bg-white dark:bg-gray-900 transition-colors duration-300 ease-in-out">
@@ -402,6 +406,7 @@ const DashboardPage = () => {
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">Dashboard</h1>
           <Button
             className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 transition-all duration-300 hover:scale-105"
+            onClick={handleClickCreate}
           >
             <Plus className="w-4 h-4" />
             Create claim Request

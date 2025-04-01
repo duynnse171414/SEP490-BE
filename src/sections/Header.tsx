@@ -93,9 +93,9 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
 
     if (isSuccess) {
       setIsLoginDrawerOpen(false);
-
-    if(isLoginDrawerOpen) {
-    setIsLoginDrawerOpen(false);
+    }
+    if (isLoginDrawerOpen) {
+      setIsLoginDrawerOpen(false);
 
     } else {
       setIsLoginDrawerOpen(true);
