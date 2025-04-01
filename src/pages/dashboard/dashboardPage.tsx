@@ -1,5 +1,21 @@
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import {
   Plus,
   Clock,
   FileText,
@@ -7,13 +23,14 @@ import {
   Loader2,
   Ticket,
   LayoutDashboard,
-  Ban
+  RotateCcw,
+  Trash2Icon
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ClaimRequest } from "@/types/claims";
 import { claimApi } from "@/api/claimApi";
 import { useNavigate } from "react-router-dom";
-import "../css/dashboardPage.css";
+import { motion } from "framer-motion";
 
 type ViewType = "draft" | "pending" | "approved" | "paid" | "rejected" | "cancelled" | "returned";
 
@@ -25,25 +42,34 @@ interface CustomPaginationProps {
 
 const CustomPagination = ({ page, hasNextPage, onPageChange }: CustomPaginationProps) => {
   return (
-    <div className="flex justify-center gap-2">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="flex justify-center gap-2"
+    >
       <Button
         variant="outline"
         onClick={() => onPageChange(page - 1)}
         disabled={page === 1}
+        className="border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white
+          transition-all duration-300 hover:scale-105"
       >
         Previous
       </Button>
       <div className="flex items-center gap-2">
-        <span className="text-sm">Page {page}</span>
+        <span className="text-sm text-gray-900 dark:text-white">Page {page}</span>
       </div>
       <Button
         variant="outline"
         onClick={() => onPageChange(page + 1)}
         disabled={!hasNextPage}
+        className="border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white
+          transition-all duration-300 hover:scale-105"
       >
         Next
       </Button>
-    </div>
+    </motion.div>
   );
 };
 
@@ -51,7 +77,7 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const pageSize = 10;
   const [totalClaims, setTotalClaims] = useState(0);
-  const [currentView, setCurrentView] = useState<ViewType>("draft");
+  const [currentView, setCurrentView] = useState<ViewType>("pending");
   const [currentPage, setCurrentPage] = useState(1);
   const [draftRequests, setDraftRequests] = useState<ClaimRequest[]>([]);
   const [pendingRequests, setPendingRequests] = useState<ClaimRequest[]>([]);
@@ -76,6 +102,7 @@ const DashboardPage = () => {
   const [rejectedTotal, setRejectedTotal] = useState(0);
   const [cancelledTotal, setCancelledTotal] = useState(0);
   const [returnedTotal, setReturnedTotal] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
 
   const fetchRequests = async (
     status: string,
@@ -83,13 +110,19 @@ const DashboardPage = () => {
     page: number
   ) => {
     try {
+      const formattedMonth = selectedMonth ? selectedMonth.split('-')[1] + '/' + selectedMonth.split('-')[0] : '';
+
       const response = await claimApi.filterClaims(
-        status,
+        selectedMonth ? {
+          "ClaimStatus": status,
+          "CreateAt": formattedMonth
+        } : status,
         "createAt",
         "desc",
         page,
         pageSize
       );
+
       if (response?.success) {
         setData(response.data || []);
         await checkNextPage(page);
@@ -107,7 +140,6 @@ const DashboardPage = () => {
   const fetchTotalClaims = async () => {
     try {
       const response = await claimApi.getNumberAllClaims();
-      console.log('Total claims response:', response); // Thêm log để debug
       if (response?.success) {
         setTotalClaims(response.data?.totalClaims || 0);
       }
@@ -155,12 +187,10 @@ const DashboardPage = () => {
     }
   };
 
-  // Load tất cả dữ liệu khi component mount
   useEffect(() => {
     fetchAllRequests();
   }, []);
 
-  // Fetch lại dữ liệu cho tab hiện tại khi chuyển tab
   useEffect(() => {
     switch (currentView) {
       case "draft":
@@ -186,6 +216,21 @@ const DashboardPage = () => {
         break;
     }
   }, [currentView]);
+
+  useEffect(() => {
+    if (currentView) {
+      fetchRequests(
+        currentView === "draft" ? "1" :
+          currentView === "pending" ? "2" :
+            currentView === "approved" ? "3" :
+              currentView === "paid" ? "4" :
+                currentView === "rejected" ? "5" :
+                  currentView === "cancelled" ? "6" : "7",
+        getCurrentSetterFunction(),
+        1
+      );
+    }
+  }, [selectedMonth]);
 
   const handleViewChange = (view: ViewType) => {
     setCurrentView(view);
@@ -293,48 +338,31 @@ const DashboardPage = () => {
     }
   };
 
-  // Hàm chuyển đổi status number sang text
-  const getStatusText = (status: string | number) => {
-    // Chuyển status về string để so sánh
-    const statusStr = String(status);
-    
-    switch (statusStr) {
-      case "1":
-        return "Draft";
-      case "2": 
-        return "Pending";
-      case "3":
-        return "Approved";
-      case "4":
-        return "Paid";
-      case "5":
-        return "Rejected";
-      case "6":
-        return "Cancelled";
-      case "7":
-        return "Returned";
-      default:
-        console.log("Unknown status:", status); // Log giá trị không khớp
-        return "Unknown";
-    }
-  };
-
-  // Thêm hàm kiểm tra trang tiếp theo
   const checkNextPage = async (pageNumber: number) => {
     try {
+      const formattedMonth = selectedMonth ? selectedMonth.split('-')[1] + '/' + selectedMonth.split('-')[0] : '';
+
       const response = await claimApi.filterClaims(
-        currentView === "draft" ? "1" :
-        currentView === "pending" ? "2" :
-        currentView === "approved" ? "3" :
-        currentView === "paid" ? "4" :
-        currentView === "rejected" ? "5" :
-        currentView === "cancelled" ? "6" : "7" ,
+        selectedMonth ? {
+          "ClaimStatus": currentView === "draft" ? "1" :
+            currentView === "pending" ? "2" :
+              currentView === "approved" ? "3" :
+                currentView === "paid" ? "4" :
+                  currentView === "rejected" ? "5" :
+                    currentView === "cancelled" ? "6" : "7",
+          "CreateAt": formattedMonth
+        } : (currentView === "draft" ? "1" :
+          currentView === "pending" ? "2" :
+            currentView === "approved" ? "3" :
+              currentView === "paid" ? "4" :
+                currentView === "rejected" ? "5" :
+                  currentView === "cancelled" ? "6" : "7"),
         "createAt",
         "desc",
         pageNumber + 1,
         pageSize
       );
-      
+
       const hasData = response?.success && Array.isArray(response.data) && response.data.length > 0;
       setHasNextPage(hasData);
     } catch (err) {
@@ -342,237 +370,249 @@ const DashboardPage = () => {
     }
   };
 
+  const handleMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedMonth(event.target.value);
+    setCurrentPage(1);
+    const status = currentView === "draft" ? "1" :
+      currentView === "pending" ? "2" :
+        currentView === "approved" ? "3" :
+          currentView === "paid" ? "4" :
+            currentView === "rejected" ? "5" :
+              currentView === "cancelled" ? "6" : "7";
+    fetchRequests(status, getCurrentSetterFunction(), 1);
+  };
+
+  const getCurrentSetterFunction = () => {
+    switch (currentView) {
+      case "draft": return setDraftRequests;
+      case "pending": return setPendingRequests;
+      case "approved": return setApprovedRequests;
+      case "paid": return setPaidRequests;
+      case "rejected": return setRejectedRequests;
+      case "cancelled": return setCancelledRequests;
+      case "returned": return setReturnedRequests;
+    }
+  };
+
+  const handleClickCreate = () => {
+    navigate('/create-claim')
+  }
+
   return (
     <div className="flex">
-      {/* Sidebar sẽ được thêm vào bởi layout */}
-      <div className="flex-1 p-6 bg-gray-900">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-white">Dashboard</h1>
+      <div className="flex-1 p-6 bg-background text-foreground transition-colors duration-300 ease-in-out">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex justify-between items-center mb-6"
+        >
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
           <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+            className="flex items-center gap-2 transition-all duration-300 hover:scale-105"
+            onClick={handleClickCreate}
           >
             <Plus className="w-4 h-4" />
             Create claim Request
-            </Button>
-        </div>
+          </Button>
+        </motion.div>
 
-        {/* Total Claims Card */}
-        <div className="bg-gray-800 rounded-lg p-6 shadow border border-gray-700 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-3xl font-semibold text-white">{totalClaims}</h3>
-              <p className="text-gray-400">Total Requests</p>
-            </div>
-            <div className="p-4 bg-blue-900/30 rounded-lg">
-              <LayoutDashboard className="w-8 h-8 text-blue-400" />
-            </div>
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <Card className="transform transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+              <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalClaims}</div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-6 mb-8">
-          {/* Draft Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
-              currentView === "draft" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "draft" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("draft")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-white">
-                  {draftTotal}
-                </h3>
-                <p className="text-gray-400">Draft Requests</p>
-              </div>
-              <div className="p-3 bg-gray-900/30 rounded-lg">
-                <FileText className="w-6 h-6 text-gray-400" />
-              </div>
-            </div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Draft Requests</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{draftTotal}</div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Pending Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
-              currentView === "pending" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "pending" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("pending")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-white">
-                  {pendingTotal}
-                </h3>
-                <p className="text-gray-400">Pending Approval</p>
-              </div>
-              <div className="p-3 bg-yellow-900/30 rounded-lg">
-                <Clock className="w-6 h-6 text-yellow-400" />
-              </div>
-            </div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
+                <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{pendingTotal}</div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Approved Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
-              currentView === "approved" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "approved" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("approved")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-white">
-                  {approvedTotal}
-                </h3>
-                <p className="text-gray-400">Approved Requests</p>
-              </div>
-              <div className="p-3 bg-green-900/30 rounded-lg">
-                <FileText className="w-6 h-6 text-green-400" />
-              </div>
-            </div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Approved Requests</CardTitle>
+                <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{approvedTotal}</div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Paid Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
-              currentView === "paid" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "paid" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("paid")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-white">
-                  {paidTotal}
-                </h3>
-                <p className="text-gray-400">Paid Requests</p>
-              </div>
-              <div className="p-3 bg-purple-900/30 rounded-lg">
-                <Ticket className="w-6 h-6 text-purple-400" />
-              </div>
-            </div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Paid Requests</CardTitle>
+                <Ticket className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{paidTotal}</div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Rejected Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
-              currentView === "rejected" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "rejected" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("rejected")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-white">
-                  {rejectedTotal}
-                </h3>
-                <p className="text-gray-400">Rejected Requests</p>
-              </div>
-              <div className="p-3 bg-red-900/30 rounded-lg">
-                <X className="w-6 h-6 text-red-400" />
-              </div>
-            </div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Rejected Requests</CardTitle>
+                <X className="h-4 w-4 text-red-600 dark:text-red-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{rejectedTotal}</div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Cancelled Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
-              currentView === "cancelled" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "cancelled" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("cancelled")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-white">
-                  {cancelledTotal}
-                </h3>
-                <p className="text-gray-400">Cancelled Requests</p>
-              </div>
-              <div className="p-3 bg-gray-900/30 rounded-lg">
-                <Ban className="w-6 h-6 text-gray-400" />
-              </div>
-            </div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Cancelled Requests</CardTitle>
+                <Trash2Icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{cancelledTotal}</div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Returned Card */}
           <div
-            className={`bg-gray-800 rounded-lg p-6 shadow border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors ${
-              currentView === "returned" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "returned" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("returned")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-white">
-                  {returnedTotal}
-                </h3>
-                <p className="text-gray-400">Returned Requests</p>
-              </div>
-              <div className="p-3 bg-gray-900/30 rounded-lg">
-                <FileText className="w-6 h-6 text-gray-400" />
-              </div>
-            </div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Returned Requests</CardTitle>
+                <RotateCcw className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{returnedTotal}</div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
-        {/* Claims Table */}
-        <div className="bg-gray-800 rounded-lg shadow p-4 mt-8 claims-table-container">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-white">{getViewTitle()}</h2>
-          </div>
-
-          {loading ? (
-            <div className="claims-loading-state">
-              <Loader2 className="h-6 w-6 animate-spin text-white" />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="text-xl">{getViewTitle()}</CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Filter by Create At:</span>
+              <Input
+                type="month"
+                value={selectedMonth}
+                onChange={handleMonthChange}
+                className="w-auto"
+              />
             </div>
-          ) : (
-            <>
-              {(getCurrentRequests()?.length || 0) === 0 ? (
-                <div className="claims-empty-state">
-                  No requests found
-                </div>
-              ) : (
-                <div className="claims-table-wrapper">
-                  <table className="claims-table">
-                    <thead>
-                      <tr>
-                        <th>Staff ID</th>
-                        <th>Project ID</th>
-                        <th>Hours</th>
-                        <th>Amount</th>
-                        <th>Claim Date</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getCurrentRequests()?.map((request) => (
-                        <tr
-                          key={request.claimId}
-                          onClick={() => handleRowClick(request.claimId)}
-                        >
-                          <td>{request.staffId}</td>
-                          <td>{request.projectId}</td>
-                          <td>{request.workingHours}</td>
-                          <td>{request.claimAmount}</td>
-                          <td>{new Date(request.claimDate).toLocaleDateString()}</td>
-                          <td>{getStatusText(request.claimStatus)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              {getCurrentRequests()?.length > 0 && (
-                <div className="claims-pagination">
-                  <CustomPagination
-                    page={currentPage}
-                    hasNextPage={hasNextPage}
-                    onPageChange={(page) => handlePageChange(page)}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center p-4">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <>
+                {(getCurrentRequests()?.length || 0) === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No requests found
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Staff ID</TableHead>
+                          <TableHead>Project ID</TableHead>
+                          <TableHead>Hours</TableHead>
+                          <TableHead>Claim Date</TableHead>
+                          <TableHead>Create At</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {getCurrentRequests()?.map((request) => (
+                          <TableRow
+                            key={request.claimId}
+                            onClick={() => handleRowClick(request.claimId)}
+                            className="cursor-pointer"
+                          >
+                            <TableCell>{request.staffId}</TableCell>
+                            <TableCell>{request.projectId}</TableCell>
+                            <TableCell>{request.workingHours}</TableCell>
+                            <TableCell>
+                              {new Date(request.claimDate).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(request.createAt).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </>
+            )}
 
+            {getCurrentRequests()?.length > 0 && !loading && (
+              <div className="mt-4">
+                <CustomPagination
+                  page={currentPage}
+                  hasNextPage={hasNextPage}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

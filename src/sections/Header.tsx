@@ -1,8 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+
 import {
   Drawer,
   DrawerContent,
@@ -11,63 +20,31 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
 import { LoginForm } from "@/features/auth/components/login-form";
 import {
   User,
   Sun,
   Moon,
   Menu,
-  ClipboardList,
-  MessageSquare,
-  Image,
-  Camera,
   CheckSquare,
-  Users,
   Home,
   Info,
   Mail,
   LogOut,
-  Settings,
-  CreditCard,
-  Keyboard,
-  Users2,
   UserPlus,
-  Github
 } from "lucide-react";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 import { LoginUserDTO } from "@/features/auth/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const jsonPlaceholderItems = [
-  { title: "Posts", description: "View and manage blog posts", href: "/posts", icon: <ClipboardList className="h-5 w-5 text-primary" /> },
-  { title: "Comments", description: "View all comments", href: "/comments", icon: <MessageSquare className="h-5 w-5 text-primary" /> },
-  { title: "Albums", description: "Browse photo albums", href: "/albums", icon: <Image className="h-5 w-5 text-primary" /> },
-  { title: "Photos", description: "Browse all photos", href: "/photos", icon: <Camera className="h-5 w-5 text-primary" /> },
-  { title: "Todos", description: "Manage your todo list", href: "/todos", icon: <CheckSquare className="h-5 w-5 text-primary" /> },
-  { title: "Users", description: "View user profiles", href: "/users", icon: <Users className="h-5 w-5 text-primary" /> },
-];
+import { toast } from "sonner";
 
 interface HeaderProps {
   onDrawerStateChange?: (open: boolean) => void;
@@ -78,22 +55,62 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { user, logout, login } = useAuthContext();
+  const [isSuccess] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!user);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    setIsAuthenticated(!!user);
+    setIsAuthenticated(user !== null);
+    if (onDrawerStateChange) {
+      if (isLoginDrawerOpen) onDrawerStateChange(user === null);
+    }
   }, [user]);
 
-  const handleLoginSubmit = ({ email, password }: LoginUserDTO) => {
-    console.log("Logging in with email and password");
-    login({ email, password });
-    if(isLoginDrawerOpen) {
-    setIsLoginDrawerOpen(false);
-    } else {
-      setIsLoginDrawerOpen(true);
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setIsCommandOpen((open) => !open);
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
+
+  useEffect(() => {
+    if (loginAttempted) {
+      if (user) {
+        toast.success("Login successful!", {
+          description: "Welcome back to ClaimRequest",
+        });
+        
+        setIsLoginDrawerOpen(false);
+        if (onDrawerStateChange) {
+          onDrawerStateChange(false);
+        }
+      } else {
+        toast.error("Login failed", {
+          description: "Invalid credentials. Please try again.",
+        });
+      }
+      setLoginAttempted(false);
+      setIsLoggingIn(false);
     }
-    if (onDrawerStateChange) {
-      onDrawerStateChange(false);
+  }, [user, loginAttempted]);
+
+  const handleLoginSubmit = async ({ email, password }: LoginUserDTO) => {
+    setIsLoggingIn(true);
+    try {
+      await login({ email, password });
+      setLoginAttempted(true);
+    } catch (error) {
+      toast.error("Login failed", {
+        description: error instanceof Error ? error.message : "Please check your credentials and try again",
+      });
+      setIsLoggingIn(false);
     }
   };
 
@@ -102,21 +119,10 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
       <div className="container mx-auto py-3">
         <div className="flex flex-wrap items-center justify-between px-4">
           <div className="flex items-center gap-2 w-full md:w-auto justify-between">
-            <Link to="/" className="flex items-center gap-2 text-xl font-bold text-primary transition-colors hover:text-primary/80">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6"
-              >
-                <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"></path>
-              </svg>
+            <Link
+              to="/"
+              className="flex items-center gap-2 text-xl font-bold text-primary transition-colors hover:text-primary/80"
+            >
               <span className="font-bold tracking-tight">ClaimRequest</span>
             </Link>
             <div className="md:hidden">
@@ -131,62 +137,22 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex flex-grow justify-center">
-            <NavigationMenu>
-              <NavigationMenuList className="flex">
-                <NavigationMenuItem>
-                  <NavigationMenuLink>
-                    <Link to="/">
-                      <span>Home</span>
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent hover:bg-accent flex gap-1 items-center">
-                    <CheckSquare size={16} className="text-muted-foreground group-hover:text-foreground" />
-                    <span>Services</span>
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                      {jsonPlaceholderItems.map((item) => (
-                        <li key={item.href}>
-                          <NavigationMenuLink asChild>
-                            <Link
-                              to={item.href}
-                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                            >
-                              <div className="text-sm font-medium leading-none flex items-center gap-2">
-                                {item.icon}
-                                {item.title}
-                              </div>
-                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground mt-1">
-                                {item.description}
-                              </p>
-                            </Link>
-                          </NavigationMenuLink>
-                        </li>
-                      ))}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink>
-                    <Link to="/about">
-                      <span>About</span>
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink>
-                    <Link to="/contact">
-                      <span>Contact</span>
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-          </div>
+          {/* Desktop Navigation with Search */}
+          {isAuthenticated && (
+            <div className="hidden md:flex flex-grow justify-center">
+              <Button
+                variant="outline"
+                className="relative w-full max-w-sm justify-start text-sm text-muted-foreground"
+                onClick={() => setIsCommandOpen(true)}
+              >
+                <span className="hidden lg:inline-flex">Search for pages...</span>
+                <span className="inline-flex lg:hidden">Search...</span>
+                <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
+              </Button>
+            </div>
+          )}
 
           {/* Right Side: Theme Switcher & Login */}
           <div className="flex items-center gap-4 w-full md:w-auto justify-end mt-2 md:mt-0">
@@ -201,13 +167,18 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
               />
               <Moon className="h-4 w-4 text-blue-500" />
             </div>
-
-            {isAuthenticated ? (
-              <DropdownMenu>  
+            {isAuthenticated && (
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-9 w-9 rounded-full"
+                  >
                     <Avatar className="h-9 w-9 border-2 border-primary/20">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} alt={user?.email} />
+                      <AvatarImage
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`}
+                        alt={user?.email}
+                      />
                       <AvatarFallback className="bg-primary/10 text-primary">
                         {user?.email.charAt(0)}
                       </AvatarFallback>
@@ -217,105 +188,49 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user?.email}</p>
+                      <p className="text-sm font-medium leading-none">
+                        {user?.email}
+                      </p>
                       <p className="text-xs leading-none text-muted-foreground">
                         {user?.email}
                       </p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="flex items-center w-full">
                       <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                      <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      <Link to="/dashboard">My Claims</Link>
-                      <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      <span>Billing</span>
-                      <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                      <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Keyboard className="mr-2 h-4 w-4" />
-                      <span>Keyboard shortcuts</span>
-                      <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem>
-                      <Users2 className="mr-2 h-4 w-4" />
-                      <span>Team</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        <span>Invite users</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuItem>
-                            <Mail className="mr-2 h-4 w-4" />
-                            <span>Email</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            <span>Message</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <span>More...</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenuSub>
-                    <DropdownMenuItem>
-                      <Users className="mr-2 h-4 w-4" />
-                      <span>New Team</span>
-                      <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Github className="mr-2 h-4 w-4" />
-                    <span>GitHub</span>
+                      <span>My Claims</span>
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    <span>Support</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem disabled>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>API</span>
+                  <DropdownMenuItem asChild>
+                    <Link to="/approve-claims" className="flex items-center w-full">
+                      <CheckSquare className="mr-2 h-4 w-4" />
+                      <span>Approve Claims</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-500 focus:text-red-500">
+                  <DropdownMenuItem
+                    onClick={logout}
+                    className="text-red-500 focus:text-red-500"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
-                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
-              <Drawer
-                open={isLoginDrawerOpen}
-                onOpenChange={(open) => {
-                  setIsLoginDrawerOpen(open);
-                  if (onDrawerStateChange) {
-                    onDrawerStateChange(open);
-                  }
-                }}
-              >
+            )}
+
+            <Drawer
+              open={isLoginDrawerOpen && !isAuthenticated}
+              onOpenChange={(open) => {
+                setIsLoginDrawerOpen(open);
+                if (onDrawerStateChange) {
+                  onDrawerStateChange(open);
+                }
+              }}
+            >
+              {!isAuthenticated && (
                 <DrawerTrigger asChild>
                   <Button
                     variant="default"
@@ -325,22 +240,57 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                     <span>Login</span>
                   </Button>
                 </DrawerTrigger>
-                <DrawerContent>
-                  <div className="mx-auto w-full max-w-sm">
-                    <DrawerHeader>
-                      <DrawerTitle className="text-center text-2xl font-bold">Welcome Back</DrawerTitle>
-                      <DrawerDescription className="text-center">
-                        Enter your credentials below to access your account
-                      </DrawerDescription>
-                    </DrawerHeader>
-                    <LoginForm onSubmit={handleLoginSubmit} />
-                  </div>
-                </DrawerContent>
-              </Drawer>
-            )}
+              )}
+
+              <DrawerContent>
+                <div className="mx-auto w-full max-w-sm">
+                  <DrawerHeader>
+                    <DrawerTitle className="text-center text-2xl font-bold">
+                      Welcome Back
+                    </DrawerTitle>
+                    <DrawerDescription className="text-center">
+                      Enter your credentials below to access your account
+                    </DrawerDescription>
+                  </DrawerHeader>
+                  <LoginForm onSubmit={handleLoginSubmit} isLoading={isLoggingIn} />
+                </div>
+              </DrawerContent>
+            </Drawer>
           </div>
         </div>
       </div>
+
+      {/* Command Dialog */}
+      <CommandDialog open={isCommandOpen} onOpenChange={setIsCommandOpen}>
+        <CommandInput placeholder="Type a command or search..." />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandGroup heading="Pages">
+            <CommandItem onSelect={() => {
+              navigate("/dashboard");
+              setIsCommandOpen(false);
+            }}>
+              <User className="mr-2 h-4 w-4" />
+              <span>My Claims</span>
+            </CommandItem>
+            <CommandItem onSelect={() => {
+              navigate("/create-claim");
+              setIsCommandOpen(false);
+            }}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              <span>Create Claim</span>
+            </CommandItem>
+            <CommandItem onSelect={() => {
+              navigate("/approve-claims");
+              setIsCommandOpen(false);
+            }}>
+              <CheckSquare className="mr-2 h-4 w-4" />
+              <span>Approve Claims</span>
+            </CommandItem>
+
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
 
       {/* Mobile Navigation Drawer */}
       <Drawer open={isNavDrawerOpen} onOpenChange={setIsNavDrawerOpen}>
@@ -355,33 +305,13 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                 <Home size={18} />
                 <span>Home</span>
               </Link>
-              <div>
-                <p className="text-lg font-medium flex items-center gap-2">
-                  <CheckSquare size={18} />
-                  <span>Services</span>
-                </p>
-                <ul className="mt-2 space-y-3 pl-8">
-                  {jsonPlaceholderItems.map((item) => (
-                    <li key={item.href}>
-                      <Link
-                        to={item.href}
-                        className="text-base hover:text-primary flex items-center gap-2"
-                        onClick={() => setIsNavDrawerOpen(false)}
-                      >
-                        {item.icon}
-                        <span>{item.title}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
               <Link
-                to="/about"
+                to="/approve-claims"
                 className="flex items-center gap-2 text-lg font-medium hover:text-primary"
                 onClick={() => setIsNavDrawerOpen(false)}
               >
                 <Info size={18} />
-                <span>About</span>
+                <span>Approve Claim</span>
               </Link>
               <Link
                 to="/contact"

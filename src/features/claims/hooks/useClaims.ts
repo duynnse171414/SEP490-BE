@@ -49,3 +49,34 @@ export const useApproveClaims = () => {
       isApproving,
     };
   };
+
+  
+export const useRejectClaims = () => {
+  const { mutate } = useClaimsByPM({ status: 2 });
+  const [isRejecting, setIsRejecting] = useState(false);
+
+  const rejectSelectedClaims = async (selectedClaims: string[], rejectionReason: string) => {
+    if (selectedClaims.length === 0) return;
+    setIsRejecting(true);
+
+    console.log("Rejecting claims:", selectedClaims, "Reason:", rejectionReason);
+
+    try {
+      const response = await putData("/ClaimRequests/reject", {
+        claimIds: selectedClaims,
+        rejectionReason,
+      });
+      console.log("API response:", response);
+    } catch (error: any) {
+      console.error("Error rejecting claims:", error.response?.data || error.message);
+    } finally {
+      setIsRejecting(false);
+      await mutate();
+    }
+  };
+
+  return {
+    rejectSelectedClaims,
+    isRejecting,
+  };
+};

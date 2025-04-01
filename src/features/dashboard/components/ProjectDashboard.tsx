@@ -1,4 +1,7 @@
 import { Button } from "@/components/ui/button";
+import { useEffect, useState, useRef } from "react";
+import { fetcher, postData, putData, deleteData } from "@/api/fetchers";
+import axiosInstance from "@/api/axiosInstance";
 import {
   Eye,
   MoreHorizontal,
@@ -8,9 +11,6 @@ import {
   Download,
   Upload,
 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
-import { fetcher, postData, putData, deleteData } from "@/api/fetchers";
-import axiosInstance from "@/api/axiosInstance";
 import {
   Table,
   TableBody,
@@ -39,6 +39,14 @@ import {
   notifyError,
   ToastNotification,
 } from "@/components/ui/notification";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -53,13 +61,15 @@ const ProjectDashboard = () => {
     isActive: "",
     sortBy: [] as { field: string; direction: "asc" | "desc" }[],
   });
-  const [filterValue, setFilterValue] = useState("");
+  const [filter, setFilter] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [selectedProject, setSelectedProject] =
     useState<GetAllProjectDTO | null>(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(false);
+  const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
 
   const currentProjects = projects || [];
   const initialFetchDone = useRef(false);
@@ -78,8 +88,10 @@ const ProjectDashboard = () => {
         pageNumber: currentPage.toString(),
         pageSize: ITEMS_PER_PAGE.toString(),
       });
+      queryParams.append("isActive", "");
+      queryParams.append("sortBy", "");
+      const url = `/Project/sort?${queryParams.toString()}`;
 
-      const url = `/Project/with-staff-manager?${queryParams.toString()}`;
       const response = await fetcher(url);
       if (response.success && Array.isArray(response.data)) {
         setProjects(response.data);
@@ -95,23 +107,23 @@ const ProjectDashboard = () => {
     }
   };
 
-  const handleSortChange = async (field: string, value: string) => {
-    if (field === "isActive") {
-      setCurrentPage(1);
-      setFilterValue(value);
+  // const handleSortChange = async (field: string, value: string) => {
+  //   if (field === "isActive") {
+  //     setCurrentPage(1);
+  //     setFilter(value);
 
-      if (isSearchMode && searchTerm) {
-        handleSearch(value);
-      } else {
-        const newConfig = {
-          isActive: value,
-          sortBy: sortConfig.sortBy,
-        };
-        setSortConfig(newConfig);
-        await handleSortWithConfig(newConfig, true);
-      }
-    }
-  };
+  //     if (isSearchMode && searchTerm) {
+  //       handleSearch(value);
+  //     } else {
+  //       const newConfig = {
+  //         isActive: value,
+  //         sortBy: sortConfig.sortBy,
+  //       };
+  //       setSortConfig(newConfig);
+  //       await handleSortWithConfig(newConfig, true);
+  //     }
+  //   }
+  // };
 
   const handleSortWithConfig = async (
     config: typeof sortConfig,
@@ -124,12 +136,8 @@ const ProjectDashboard = () => {
         .join(",");
 
       const queryParams = new URLSearchParams();
-
-      if (config.isActive && config.isActive !== "") {
-        queryParams.append("isActive", config.isActive);
-      }
-
-      queryParams.append("sortBy", sortByString || "");
+      queryParams.append("isActive", config.isActive || "");
+      queryParams.append("sortBy", sortByString);
       const pageToUse = forcePageOne ? 1 : currentPage;
       queryParams.append("pageNumber", pageToUse.toString());
       queryParams.append("pageSize", ITEMS_PER_PAGE.toString());
@@ -201,7 +209,7 @@ const ProjectDashboard = () => {
 
       if (!searchTerm.trim()) {
         setIsSearchMode(false);
-        setFilterValue("");
+        setFilter("");
         setSortConfig({
           isActive: "",
           sortBy: [],
@@ -211,7 +219,7 @@ const ProjectDashboard = () => {
       }
 
       if (activeFilter) {
-        setFilterValue(activeFilter);
+        setFilter(activeFilter);
       }
 
       setSortConfig((prev) => ({
@@ -221,7 +229,7 @@ const ProjectDashboard = () => {
       setCurrentPage(1);
 
       const queryParams = new URLSearchParams();
-      const filterToUse = activeFilter || filterValue;
+      const filterToUse = activeFilter || filter;
 
       if (filterToUse === "true" || filterToUse === "false") {
         queryParams.append("isActive", filterToUse);
@@ -282,27 +290,18 @@ const ProjectDashboard = () => {
 
       let url = "";
       if (isSearchMode && searchTerm.trim()) {
-        if (filterValue === "true" || filterValue === "false") {
-          queryParams.append("isActive", filterValue);
+        if (filter === "true" || filter === "false") {
+          queryParams.append("isActive", filter);
         }
         queryParams.append("projectName", searchTerm);
         url = `/Project/search?${queryParams.toString()}`;
-      } else if (
-        sortConfig.sortBy.length > 0 ||
-        sortConfig.isActive === "true" ||
-        sortConfig.isActive === "false" ||
-        sortConfig.isActive === ""
-      ) {
-        if (sortConfig.isActive === "true" || sortConfig.isActive === "false") {
-          queryParams.append("isActive", sortConfig.isActive);
-        }
+      } else {
+        queryParams.append("isActive", "");
         const sortByString = sortConfig.sortBy
           .map((sort) => `${sort.field}:${sort.direction}`)
           .join(",");
-        queryParams.append("sortBy", sortByString || "");
+        queryParams.append("sortBy", sortByString);
         url = `/Project/sort?${queryParams.toString()}`;
-      } else {
-        url = `/Project/with-staff-manager?${queryParams.toString()}`;
       }
 
       const response = await fetcher(url);
@@ -518,7 +517,14 @@ const ProjectDashboard = () => {
       );
 
       if (response.data?.success) {
-        notifySuccess(response.data.data);
+        if (response.data.message) {
+          notifySuccess(response.data.data);
+          setWarningMessage(response.data.message);
+          setIsWarningDialogOpen(true);
+        } else {
+          notifySuccess(response.data.data);
+        }
+
         if (isSearchMode && searchTerm) {
           await handleSearch();
         } else if (
@@ -585,27 +591,18 @@ const ProjectDashboard = () => {
 
       let url = "";
       if (isSearchMode && searchTerm) {
-        if (filterValue === "true" || filterValue === "false") {
-          queryParams.append("isActive", filterValue);
+        if (filter === "true" || filter === "false") {
+          queryParams.append("isActive", filter);
         }
         queryParams.append("projectName", searchTerm);
         url = `/Project/search?${queryParams.toString()}`;
-      } else if (
-        sortConfig.sortBy.length > 0 ||
-        sortConfig.isActive === "true" ||
-        sortConfig.isActive === "false" ||
-        sortConfig.isActive === ""
-      ) {
-        if (sortConfig.isActive === "true" || sortConfig.isActive === "false") {
-          queryParams.append("isActive", sortConfig.isActive);
-        }
+      } else {
+        queryParams.append("isActive", sortConfig.isActive || "");
         const sortByString = sortConfig.sortBy
           .map((sort) => `${sort.field}:${sort.direction}`)
           .join(",");
-        queryParams.append("sortBy", sortByString || "");
+        queryParams.append("sortBy", sortByString);
         url = `/Project/sort?${queryParams.toString()}`;
-      } else {
-        url = `/Project/with-staff-manager?${queryParams.toString()}`;
       }
 
       const response = await fetcher(url);
@@ -614,6 +611,26 @@ const ProjectDashboard = () => {
     } catch (err) {
       setHasNextPage(false);
     }
+  };
+
+  const handleFilterClick = (value: string) => {
+    const newFilterValue = filter === value ? "" : value;
+    setFilter(newFilterValue);
+
+    setSortConfig((prev) => ({
+      ...prev,
+      isActive: newFilterValue,
+    }));
+
+    setCurrentPage(1);
+
+    handleSortWithConfig(
+      {
+        ...sortConfig,
+        isActive: newFilterValue,
+      },
+      true
+    );
   };
 
   return (
@@ -644,19 +661,14 @@ const ProjectDashboard = () => {
                   <DropdownMenuContent className="w-56">
                     <DropdownMenuLabel>Status Filter</DropdownMenuLabel>
                     <DropdownMenuRadioGroup
-                      value={isSearchMode ? filterValue : sortConfig.isActive}
-                      onValueChange={(value) =>
-                        handleSortChange("isActive", value)
-                      }
+                      value={filter}
+                      onValueChange={(value) => handleFilterClick(value)}
                     >
                       <DropdownMenuRadioItem value="true">
                         Active Projects
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem value="false">
                         Inactive Projects
-                      </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="">
-                        Both Active and Inactive Projects
                       </DropdownMenuRadioItem>
                     </DropdownMenuRadioGroup>
 
@@ -669,7 +681,7 @@ const ProjectDashboard = () => {
                             isActive: "",
                             sortBy: [],
                           });
-                          setFilterValue("");
+                          setFilter("");
                           setSearchTerm("");
                           setIsSearchMode(false);
                           setCurrentPage(1);
@@ -678,7 +690,10 @@ const ProjectDashboard = () => {
                             pageNumber: "1",
                             pageSize: ITEMS_PER_PAGE.toString(),
                           });
-                          const url = `/Project/with-staff-manager?${queryParams.toString()}`;
+                          queryParams.append("isActive", "");
+                          queryParams.append("sortBy", "");
+
+                          const url = `/Project/sort?${queryParams.toString()}`;
                           const response = await fetcher(url);
 
                           if (
@@ -692,7 +707,10 @@ const ProjectDashboard = () => {
                               pageNumber: "2",
                               pageSize: ITEMS_PER_PAGE.toString(),
                             });
-                            const nextPageUrl = `/Project/with-staff-manager?${nextPageQueryParams.toString()}`;
+                            nextPageQueryParams.append("isActive", "");
+                            nextPageQueryParams.append("sortBy", "");
+
+                            const nextPageUrl = `/Project/sort?${nextPageQueryParams.toString()}`;
                             const nextPageResponse = await fetcher(nextPageUrl);
 
                             const hasNextPageData =
@@ -791,6 +809,7 @@ const ProjectDashboard = () => {
             ) : error ? (
               <div className="flex items-center justify-center h-[400px]">
                 <div className="text-red-500 text-center">
+                  <p className="text-xl font-semibold mb-2">ERROR</p>
                   <p className="text-xl font-semibold mb-2">ERROR</p>
                   <p>{error}</p>
                 </div>
@@ -1012,6 +1031,25 @@ const ProjectDashboard = () => {
         initialData={selectedProject || undefined}
         mode={formMode}
       />
+
+      <Dialog open={isWarningDialogOpen} onOpenChange={setIsWarningDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Import Warning</DialogTitle>
+            <DialogDescription>
+              Some rows were skipped during import due to errors.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-red-600 whitespace-pre-wrap">
+              {warningMessage}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsWarningDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Clock, User, Briefcase, Calendar, Check } from "lucide-react";
+import { Clock, User, Briefcase, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import {
     Tooltip,
