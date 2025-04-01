@@ -1,5 +1,21 @@
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import {
   Plus,
   Clock,
   FileText,
@@ -14,7 +30,6 @@ import { useState, useEffect } from "react";
 import { ClaimRequest } from "@/types/claims";
 import { claimApi } from "@/api/claimApi";
 import { useNavigate } from "react-router-dom";
-import "../css/dashboardPage.css";
 import { motion } from "framer-motion";
 
 type ViewType = "draft" | "pending" | "approved" | "paid" | "rejected" | "cancelled" | "returned";
@@ -27,7 +42,7 @@ interface CustomPaginationProps {
 
 const CustomPagination = ({ page, hasNextPage, onPageChange }: CustomPaginationProps) => {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -96,7 +111,7 @@ const DashboardPage = () => {
   ) => {
     try {
       const formattedMonth = selectedMonth ? selectedMonth.split('-')[1] + '/' + selectedMonth.split('-')[0] : '';
-      
+
       const response = await claimApi.filterClaims(
         selectedMonth ? {
           "ClaimStatus": status,
@@ -107,17 +122,6 @@ const DashboardPage = () => {
         page,
         pageSize
       );
-      
-      console.log('API Parameters:', {
-        filterParams: selectedMonth ? {
-          "ClaimStatus": status,
-          "CreateAt": formattedMonth
-        } : status,
-        sortField: "createAt",
-        sortOrder: "desc",
-        page,
-        pageSize
-      });
 
       if (response?.success) {
         setData(response.data || []);
@@ -136,7 +140,6 @@ const DashboardPage = () => {
   const fetchTotalClaims = async () => {
     try {
       const response = await claimApi.getNumberAllClaims();
-      console.log('Total claims response:', response); // Thêm log để debug
       if (response?.success) {
         setTotalClaims(response.data?.totalClaims || 0);
       }
@@ -184,12 +187,10 @@ const DashboardPage = () => {
     }
   };
 
-  // Load tất cả dữ liệu khi component mount
   useEffect(() => {
     fetchAllRequests();
   }, []);
 
-  // Fetch lại dữ liệu cho tab hiện tại khi chuyển tab
   useEffect(() => {
     switch (currentView) {
       case "draft":
@@ -216,21 +217,20 @@ const DashboardPage = () => {
     }
   }, [currentView]);
 
-  // Thêm useEffect để theo dõi selectedMonth
   useEffect(() => {
     if (currentView) {
       fetchRequests(
         currentView === "draft" ? "1" :
-        currentView === "pending" ? "2" :
-        currentView === "approved" ? "3" :
-        currentView === "paid" ? "4" :
-        currentView === "rejected" ? "5" :
-        currentView === "cancelled" ? "6" : "7",
+          currentView === "pending" ? "2" :
+            currentView === "approved" ? "3" :
+              currentView === "paid" ? "4" :
+                currentView === "rejected" ? "5" :
+                  currentView === "cancelled" ? "6" : "7",
         getCurrentSetterFunction(),
         1
       );
     }
-  }, [selectedMonth]); // Thêm selectedMonth vào dependencies
+  }, [selectedMonth]);
 
   const handleViewChange = (view: ViewType) => {
     setCurrentView(view);
@@ -338,32 +338,31 @@ const DashboardPage = () => {
     }
   };
 
-  // Thêm hàm kiểm tra trang tiếp theo
   const checkNextPage = async (pageNumber: number) => {
     try {
       const formattedMonth = selectedMonth ? selectedMonth.split('-')[1] + '/' + selectedMonth.split('-')[0] : '';
-      
+
       const response = await claimApi.filterClaims(
         selectedMonth ? {
           "ClaimStatus": currentView === "draft" ? "1" :
             currentView === "pending" ? "2" :
-            currentView === "approved" ? "3" :
-            currentView === "paid" ? "4" :
-            currentView === "rejected" ? "5" :
-            currentView === "cancelled" ? "6" : "7",
+              currentView === "approved" ? "3" :
+                currentView === "paid" ? "4" :
+                  currentView === "rejected" ? "5" :
+                    currentView === "cancelled" ? "6" : "7",
           "CreateAt": formattedMonth
         } : (currentView === "draft" ? "1" :
-            currentView === "pending" ? "2" :
+          currentView === "pending" ? "2" :
             currentView === "approved" ? "3" :
-            currentView === "paid" ? "4" :
-            currentView === "rejected" ? "5" :
-            currentView === "cancelled" ? "6" : "7"),
+              currentView === "paid" ? "4" :
+                currentView === "rejected" ? "5" :
+                  currentView === "cancelled" ? "6" : "7"),
         "createAt",
         "desc",
         pageNumber + 1,
         pageSize
       );
-      
+
       const hasData = response?.success && Array.isArray(response.data) && response.data.length > 0;
       setHasNextPage(hasData);
     } catch (err) {
@@ -371,10 +370,16 @@ const DashboardPage = () => {
     }
   };
 
-  // Sửa lại handleMonthChange để chỉ cập nhật state
   const handleMonthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedMonth(event.target.value);
-    setCurrentPage(1); // Reset về trang 1
+    setCurrentPage(1);
+    const status = currentView === "draft" ? "1" :
+      currentView === "pending" ? "2" :
+        currentView === "approved" ? "3" :
+          currentView === "paid" ? "4" :
+            currentView === "rejected" ? "5" :
+              currentView === "cancelled" ? "6" : "7";
+    fetchRequests(status, getCurrentSetterFunction(), 1);
   };
 
   const getCurrentSetterFunction = () => {
@@ -395,17 +400,16 @@ const DashboardPage = () => {
 
   return (
     <div className="flex">
-      <div className="flex-1 p-6 bg-white dark:bg-gray-900 transition-colors duration-300 ease-in-out">
-        {/* Header với animation fade in từ trên xuống */}
-        <motion.div 
+      <div className="flex-1 p-6 bg-background text-foreground transition-colors duration-300 ease-in-out">
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="flex justify-between items-center mb-6"
         >
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">Dashboard</h1>
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
           <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 transition-all duration-300 hover:scale-105"
+            className="flex items-center gap-2 transition-all duration-300 hover:scale-105"
             onClick={handleClickCreate}
           >
             <Plus className="w-4 h-4" />
@@ -413,285 +417,202 @@ const DashboardPage = () => {
           </Button>
         </motion.div>
 
-        {/* Total Claims Card với animation scale và hover */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 mb-8 transform transition-all duration-300 hover:shadow-lg"
+          className="mb-8"
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-3xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">{totalClaims}</h3>
-              <p className="text-gray-600 dark:text-gray-400 transition-colors duration-300">Total Requests</p>
-            </div>
-            <div className="p-4 bg-blue-100/30 dark:bg-blue-900/30 rounded-lg transition-colors duration-300">
-              <LayoutDashboard className="w-8 h-8 text-blue-600 dark:text-blue-400 transition-colors duration-300" />
-            </div>
-          </div>
+          <Card className="transform transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+              <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalClaims}</div>
+            </CardContent>
+          </Card>
         </motion.div>
 
-        {/* Status Cards Grid với animation stagger */}
-        <motion.div 
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: {
-                staggerChildren: 0.1
-              }
-            }
-          }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-6 mb-8"
-        >
-          {/* Wrap mỗi card trong motion.div */}
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, x: -20 },
-              visible: { opacity: 1, x: 0 }
-            }}
-            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 
-              cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105
-              ${currentView === "draft" ? "ring-2 ring-blue-500" : ""}`}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-6 mb-8">
+          <div
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "draft" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("draft")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                  {draftTotal}
-                </h3>
-                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Draft Requests</p>
-              </div>
-              <div className="p-3 bg-gray-200/30 dark:bg-gray-900/30 rounded-lg transition-colors duration-300">
-                <FileText className="w-6 h-6 text-gray-600 dark:text-gray-400 transition-colors duration-300" />
-              </div>
-            </div>
-          </motion.div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Draft Requests</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{draftTotal}</div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Pending Card */}
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, x: -20 },
-              visible: { opacity: 1, x: 0 }
-            }}
-            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
-              currentView === "pending" ? "ring-2 ring-blue-500" : ""
-            }`}
+          <div
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "pending" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("pending")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                  {pendingTotal}
-                </h3>
-                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Pending Approval</p>
-              </div>
-              <div className="p-3 bg-yellow-100/30 dark:bg-yellow-900/30 rounded-lg transition-colors duration-300">
-                <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400 transition-colors duration-300" />
-              </div>
-            </div>
-          </motion.div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
+                <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{pendingTotal}</div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Approved Card */}
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, x: -20 },
-              visible: { opacity: 1, x: 0 }
-            }}
-            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
-              currentView === "approved" ? "ring-2 ring-blue-500" : ""
-            }`}
+          <div
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "approved" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("approved")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                  {approvedTotal}
-                </h3>
-                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Approved Requests</p>
-              </div>
-              <div className="p-3 bg-green-100/30 dark:bg-green-900/30 rounded-lg transition-colors duration-300">
-                <FileText className="w-6 h-6 text-green-600 dark:text-green-400 transition-colors duration-300" />
-              </div>
-            </div>
-          </motion.div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Approved Requests</CardTitle>
+                <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{approvedTotal}</div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Paid Card */}
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, x: -20 },
-              visible: { opacity: 1, x: 0 }
-            }}
-            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
-              currentView === "paid" ? "ring-2 ring-blue-500" : ""
-            }`}
+          <div
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "paid" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("paid")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                  {paidTotal}
-                </h3>
-                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Paid Requests</p>
-              </div>
-              <div className="p-3 bg-purple-100/30 dark:bg-purple-900/30 rounded-lg transition-colors duration-300">
-                <Ticket className="w-6 h-6 text-purple-600 dark:text-purple-400 transition-colors duration-300" />
-              </div>
-            </div>
-          </motion.div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Paid Requests</CardTitle>
+                <Ticket className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{paidTotal}</div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Rejected Card */}
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, x: -20 },
-              visible: { opacity: 1, x: 0 }
-            }}
-            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
-              currentView === "rejected" ? "ring-2 ring-blue-500" : ""
-            }`}
+          <div
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "rejected" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("rejected")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                  {rejectedTotal}
-                </h3>
-                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Rejected Requests</p>
-              </div>
-              <div className="p-3 bg-red-100/30 dark:bg-red-900/30 rounded-lg transition-colors duration-300">
-                <X  className="w-6 h-6 text-red-600 dark:text-red-400 transition-colors duration-300" />
-              </div>
-            </div>
-          </motion.div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Rejected Requests</CardTitle>
+                <X className="h-4 w-4 text-red-600 dark:text-red-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{rejectedTotal}</div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Cancelled Card */}
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, x: -20 },
-              visible: { opacity: 1, x: 0 }
-            }}
-            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105 ${
-              currentView === "cancelled" ? "ring-2 ring-blue-500" : ""
-            }`}
+          <div
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "cancelled" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("cancelled")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                  {cancelledTotal}
-                </h3>
-                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Cancelled Requests</p>
-              </div>
-              <div className="p-3 bg-gray-200/30 dark:bg-gray-900/30 rounded-lg transition-colors duration-100">
-                <Trash2Icon className="w-6 h-6 text-blue-600 dark:text-blue-400 transition-colors duration-100" />
-              </div>
-            </div>
-          </motion.div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Cancelled Requests</CardTitle>
+                <Trash2Icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{cancelledTotal}</div>
+              </CardContent>
+            </Card>
+          </div>
 
-          {/* Returned Card */}
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, x: -20 },
-              visible: { opacity: 1, x: 0 }
-            }}
-            className={`bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow border border-gray-200 dark:border-gray-700 
-              cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 hover:scale-105
-              ${currentView === "returned" ? "ring-2 ring-blue-500" : ""}`}
+          <div
+            className={`cursor-pointer transition-all duration-300 rounded-lg ${currentView === "returned" ? "border-b-4 border-primary" : "border-b-4 border-transparent"}`}
             onClick={() => handleViewChange("returned")}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">
-                  {returnedTotal}
-                </h3>
-                <p className="text-black-600 dark:text-gray-400 transition-colors duration-300">Returned Requests</p>
-              </div>
-              <div className="p-3 bg-orange-100/30 dark:bg-orange-900/30 rounded-lg transition-colors duration-300">
-                <RotateCcw className="w-6 h-6 text-orange-500 dark:text-orange-400 transition-colors duration-300" />
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Returned Requests</CardTitle>
+                <RotateCcw className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{returnedTotal}</div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
-        {/* Claims Table - Bỏ motion.div, chỉ giữ div bình thường */}
-        <div className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow p-4 mt-8 transition-colors duration-300">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white transition-colors duration-300">{getViewTitle()}</h2>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="text-xl">{getViewTitle()}</CardTitle>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400 transition-colors duration-300">Filter by Create At:</span>
-              <input
+              <span className="text-sm text-muted-foreground">Filter by Create At:</span>
+              <Input
                 type="month"
                 value={selectedMonth}
                 onChange={handleMonthChange}
-                className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded px-3 py-2 
-                  border border-gray-200 dark:border-gray-600
-                  transition-colors duration-300
-                  hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-auto"
               />
             </div>
-          </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center p-4">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <>
+                {(getCurrentRequests()?.length || 0) === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No requests found
+                  </div>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Staff ID</TableHead>
+                          <TableHead>Project ID</TableHead>
+                          <TableHead>Hours</TableHead>
+                          <TableHead>Claim Date</TableHead>
+                          <TableHead>Create At</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {getCurrentRequests()?.map((request) => (
+                          <TableRow
+                            key={request.claimId}
+                            onClick={() => handleRowClick(request.claimId)}
+                            className="cursor-pointer"
+                          >
+                            <TableCell>{request.staffId}</TableCell>
+                            <TableCell>{request.projectId}</TableCell>
+                            <TableCell>{request.workingHours}</TableCell>
+                            <TableCell>
+                              {new Date(request.claimDate).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(request.createAt).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </>
+            )}
 
-          {loading ? (
-            <div className="flex justify-center p-4">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-600 dark:text-white" />
-            </div>
-          ) : (
-            <>
-              {(getCurrentRequests()?.length || 0) === 0 ? (
-                <div className="text-center py-8 text-gray-600 dark:text-gray-400 transition-colors duration-300">
-                  No requests found
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
-                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white transition-colors duration-300">Staff ID</th>
-                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white transition-colors duration-300">Project ID</th>
-                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white transition-colors duration-300">Hours</th>
-                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white transition-colors duration-300">Claim Date</th>
-                        <th className="px-4 py-2 text-left text-gray-900 dark:text-white transition-colors duration-300">Create At</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getCurrentRequests()?.map((request) => (
-                        <tr
-                          key={request.claimId}
-                          onClick={() => handleRowClick(request.claimId)}
-                          className="border-b border-gray-200 dark:border-gray-700 
-                            hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer 
-                            transition-colors duration-300"
-                        >
-                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200 transition-colors duration-300">{request.staffId}</td>
-                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200 transition-colors duration-300">{request.projectId}</td>
-                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200 transition-colors duration-300">{request.workingHours}</td>
-                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200 transition-colors duration-300">
-                            {new Date(request.claimDate).toLocaleDateString()}
-                          </td>
-                          <td className="px-4 py-2 text-gray-900 dark:text-gray-200 transition-colors duration-300">
-                            {new Date(request.createAt).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </>
-          )}
-
-          {getCurrentRequests()?.length > 0 && (
-            <div className="mt-4">
-              <CustomPagination
-                page={currentPage}
-                hasNextPage={hasNextPage}
-                onPageChange={handlePageChange}
-              />
-            </div>
-          )}
-        </div>
+            {getCurrentRequests()?.length > 0 && !loading && (
+              <div className="mt-4">
+                <CustomPagination
+                  page={currentPage}
+                  hasNextPage={hasNextPage}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

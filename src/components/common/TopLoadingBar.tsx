@@ -35,18 +35,27 @@ const TopLoadingBar = () => {
 
   useEffect(() => {
     setLoading(true);
-    setGradient(getRandomGradient()); // Change gradient on route change
+    setGradient(getRandomGradient());
 
-    const timer = setTimeout(() => setLoading(false), 500); // Adjust duration as needed
+    const timer = setTimeout(() => setLoading(false), 500);
     return () => clearTimeout(timer);
   }, [location]);
 
   return (
     <motion.div
-      initial={{ width: "0%" }}
-      animate={{ width: loading ? "100%" : "0%" }}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
+      initial={{ width: "0%", opacity: 0 }}
+      animate={{
+        width: loading ? "100%" : "0%",
+        opacity: loading ? 1 : 0,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 50,
+        damping: 10,
+        mass: 1,
+      }}
       className={`fixed top-0 left-0 h-1 bg-gradient-to-r ${gradient}`}
+      style={{ zIndex: 9999 }}
     />
   );
 };

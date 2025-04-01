@@ -268,8 +268,8 @@ export function ProjectFormDialog({
             {isSubmitting
               ? "Saving..."
               : mode === "create"
-              ? "Create Project"
-              : "Update Project"}
+                ? "Create Project"
+                : "Update Project"}
           </Button>
         </DialogFooter>
       </DialogContent>

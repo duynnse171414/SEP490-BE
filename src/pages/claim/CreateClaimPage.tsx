@@ -1,15 +1,26 @@
-import { ToastContainer } from 'react-toastify';
-import { toast } from "react-toastify";
+import { useState } from "react";
 import { useCreateClaims } from "@/features/claims/hooks/useCreateClaims";
 import { useProject } from "@/features/project/hooks/useProject";
 import { usePmStaff } from "@/features/staff/hooks/usePmStaff";
 import { useStaffProject } from "@/features/staff/hooks/useStaffProject";
-import { useState } from "react";
-import Select from "react-select";
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "sonner";
+
+// Shadcn UI components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { MultiSelect, Option } from "@/components/ui/multi-select";
 
 const CreateClaimPage: React.FC = () => {
-    const [informTo, setInformTo] = useState<{ value: string; label: string }[]>([]);
+    const [informTo, setInformTo] = useState<Option[]>([]);
     const [selectedProject, setSelectedProject] = useState<number | undefined>();
     const [approverId, setApproverId] = useState<string | undefined>();
     const { data: projects, error: projectsError, isLoading: projectsLoading } = useProject();
@@ -30,12 +41,12 @@ const CreateClaimPage: React.FC = () => {
     const invalidForms: typeof dayForms = [];
 
     if (projectsLoading) return <p>Loading...</p>;
-    if (projectsError) return <p className="text-red-500">Error at project fetching: {projectsError.message}</p>;
-    if (pmsError) return <p className="text-red-500">Error at pm fetching: {projectsError.message}</p>;
-    if (staffsError) return <p className="text-red-500">Error at staff fetching: {projectsError.message}</p>;
+    if (projectsError) return <p className="text-destructive">Error at project fetching: {projectsError.message}</p>;
+    if (pmsError) return <p className="text-destructive">Error at pm fetching: {projectsError.message}</p>;
+    if (staffsError) return <p className="text-destructive">Error at staff fetching: {projectsError.message}</p>;
 
     const addDayForm = () => {
-        const updated = [...dayForms, { startDate: '', endDate: '', workingHours: '' }];
+        const updated = [{ startDate: '', endDate: '', workingHours: '' }, ...dayForms];
         setDayForms(updated);
         detectConflicts(updated);
     };
@@ -162,7 +173,7 @@ const CreateClaimPage: React.FC = () => {
             }
             toast.success("Create request successfully");
             setDayForms(invalidForms);
-        } catch (err : any) {
+        } catch (err: any) {
             toast.error(err.message || "Lỗi hệ thống.");
             console.error("Error:", err);
         }
@@ -170,202 +181,199 @@ const CreateClaimPage: React.FC = () => {
 
     return (
         <div className="container mx-auto p-4">
-            <ToastContainer position="top-right" autoClose={3000} />
-            <div>
-                <div className="mb-5 flex">
-                    <div className="w-4/5">
-                        <h1 className="text-3xl font-bold">CREATE NEW REQUEST</h1>
-                    </div>
-                    <div className="flex justify-end items-center w-1/10">
-                        <button className="p-1.5 px-4 bg-white text-blue-600 hover:bg-gray-200 hover:rounded-md">Close</button>
-                    </div>
-                    <div className="flex justify-center items-center w-1/10">
-                        <button
-                            disabled={!isFormValid()}
-                            onClick={handleSubmit}
-                            className={`border p-1.5 px-4 rounded-md ${!isFormValid()
-                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                : 'bg-gray-200 text-white hover:bg-blue-200 hover:text-blue-600 hover:font-semibold'
-                                }`}>
-                            Submit
-                        </button>
-                    </div>
+            <div className="flex items-center justify-between mb-6">
+                <h1 className="text-3xl font-bold">CREATE NEW REQUEST</h1>
+                <div className="flex gap-2">
+                    <Button variant="outline">Close</Button>
+                    <Button
+                        disabled={!isFormValid()}
+                        onClick={handleSubmit}
+                        variant={!isFormValid() ? "secondary" : "default"}
+                    >
+                        Submit
+                    </Button>
                 </div>
+            </div>
 
-                <div className="flex bg-blue-200 p-5">
-                    <div className="bg-white w-2/3 m-2 rounded-md">
-                        <div className="head-title-detail flex pt-5 pb-5 bg-blue-50 rounded-t-md">
-                            <div className="w-3/4">
-                                <h1 className="m-2 text-xl font-semibold">Request Details</h1>
-                            </div>
-                            <div className="w-1/4">
-                                <h1 className="m-2 text-xl font-medium">Remaining Leave</h1>
-                            </div>
+            <div className="flex gap-4 p-5 rounded-lg">
+                <Card className="w-2/3 shadow-sm">
+                    <CardHeader className="border-b bg-muted/30">
+                        <div className="flex justify-between items-center">
+                            <CardTitle className="text-xl font-semibold">Request Details</CardTitle>
                         </div>
-                        <div className="select-project flex flex-col bg-white pb-5">
-                            <div>
-                                <h4 className="text-lg mt-2 ml-5">Project <span className="text-red-700">*</span></h4>
-                            </div>
-                            <div>
-                                <select className="border border-gray-300 rounded-md p-2 ml-2 bg-white w-7/20"
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        setSelectedProject(value ? Number(value) : undefined);
-                                        setSelectedProject(Number(value))
-                                    }}
-                                >
-                                    <option>--:--</option>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                        <div className="mb-6">
+                            <Label htmlFor="project" className="text-base mb-2 block">
+                                Project <span className="text-destructive">*</span>
+                            </Label>
+                            <Select
+                                onValueChange={(value) => setSelectedProject(Number(value))}
+                            >
+                                <SelectTrigger className="w-[240px]">
+                                    <SelectValue placeholder="Select project" />
+                                </SelectTrigger>
+                                <SelectContent>
                                     {projects?.map((project) => (
-                                        <option key={project.projectId} value={project.projectId}>
+                                        <SelectItem key={project.projectId} value={project.projectId.toString()}>
                                             {project.projectName}
-                                        </option>
+                                        </SelectItem>
                                     ))}
-                                </select>
-                            </div>
+                                </SelectContent>
+                            </Select>
                         </div>
-                        <div className="select-day flex flex-col pb-2 rounded-b-md">
-                            <div className="flex">
-                                <div className="w-5/6">
-                                    <h4 className="text-lg m-5">
-                                        Duration Total: {dayForms.length} day(s)
-                                    </h4>
-                                </div>
-                                <div className="w-1/6">
-                                    <button
-                                        onClick={addDayForm}
-                                        type="button"
-                                        className="border border-white-300 rounded-md p-1.5 px-6 m-5 bg-blue-200 text-blue-600 hover:bg-blue-300 hover:font-semibold"
-                                    >
-                                        Add Day
-                                    </button>
-                                </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-medium">
+                                    Duration Total: {dayForms.length} day(s)
+                                </h3>
+                                <Button
+                                    onClick={() => {
+                                        const updated = [{ startDate: '', endDate: '', workingHours: '' }, ...dayForms];
+                                        setDayForms(updated);
+                                        detectConflicts(updated);
+                                    }}
+                                    variant="secondary"
+                                    size="sm"
+                                >
+                                    Add Day
+                                </Button>
                             </div>
 
-                            <div className="grid bg-gray-100 pb-2 ml-2 mr-2 mb-2 border border-white-300 rounded-md">
-                                <div>
-                                    <h4 className="text-lg ml-5 mt-2 mb-3">{dayForms.length} day(s)</h4>
-                                </div>
-                                <div className="max-h-[200px] overflow-y-auto">
-                                    {/* Danh sách các form ngày */}
-                                    {dayForms.map((form, index) => {
-                                        const hasConflict = conflictIndexes.includes(index);
+                            <div className="border rounded-md">
+                                <table className="w-full">
+                                    <thead className="bg-muted/50">
+                                        <tr>
+                                            <th className="text-left px-4 py-2 font-medium text-sm">Start Date</th>
+                                            <th className="text-left px-4 py-2 font-medium text-sm">End Date</th>
+                                            <th className="text-left px-4 py-2 font-medium text-sm">Working Hours</th>
+                                            <th className="text-right px-4 py-2 font-medium text-sm">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {dayForms.map((form, index) => {
+                                            const hasConflict = conflictIndexes.includes(index);
 
-                                        return (
-                                            <div className={`mb-3 p-2 rounded-md ${hasConflict ? 'border border-red-500 bg-red-100' : 'border border-gray-200'
-                                                }`}
-                                                key={index}>
-                                                <form className="flex items-end">
-                                                    <div className="flex flex-col w-1/3 ml-2">
-                                                        <label>Start Date <span className="text-red-700">*</span></label>
-                                                        <input
-                                                            className="border border-gray-300 rounded-md bg-white p-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500"
-                                                            max={today}
+                                            return (
+                                                <tr
+                                                    key={index}
+                                                    className={`border-t ${hasConflict ? 'bg-destructive/10' : 'even:bg-muted/20'}`}
+                                                >
+                                                    <td className="px-4 py-3">
+                                                        <Input
+                                                            id={`startDate-${index}`}
                                                             type="date"
+                                                            max={today}
                                                             value={form.startDate}
                                                             onChange={(e) => updateDayForm(index, 'startDate', e.target.value)}
+                                                            className={hasConflict ? "border-destructive" : ""}
                                                         />
-                                                    </div>
-                                                    <div className="flex flex-col w-1/3 ml-2 mr-2">
-                                                        <label>End Date <span className="text-red-700">*</span></label>
-                                                        <input
-                                                            className="border border-gray-300 rounded-md bg-white p-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500"
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <Input
+                                                            id={`endDate-${index}`}
+                                                            type="date"
                                                             max={today}
                                                             min={form.startDate || undefined}
-                                                            type="date"
                                                             value={form.endDate}
                                                             onChange={(e) => updateDayForm(index, 'endDate', e.target.value)}
                                                             disabled={!form.startDate}
+                                                            className={hasConflict ? "border-destructive" : ""}
                                                         />
-                                                    </div>
-                                                    <div className="flex flex-col w-1/4 mr-2">
-                                                        <label>Working hours <span className="text-red-700">*</span></label>
-                                                        <input
-                                                            className="border border-gray-300 rounded-md bg-white p-1"
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <Input
+                                                            id={`workingHours-${index}`}
                                                             type="number"
                                                             min="0"
                                                             step="0.1"
                                                             value={form.workingHours}
                                                             onChange={(e) => updateDayForm(index, 'workingHours', e.target.value)}
+                                                            className={hasConflict ? "border-destructive" : ""}
                                                         />
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeDayForm(index)}
-                                                        className="bg-red-200 text-red-600 rounded-md px-3 py-1 mb-1 mr-2 hover:bg-red-300 hover:font-semibold"
-                                                    >
-                                                        Remove
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right">
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => removeDayForm(index)}
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    </div>
+                    </CardContent>
+                </Card>
 
-                    <div className="w-1/3 ml-2 mr-2 mb-2 rounded-md">
-                        <div className="head-title-status mt-2 pt-5 pb-5 bg-white rounded-t-md border-b-2 border-gray-200">
-                            <h1 className="m-2 text-lg font-semibold">Approval Status</h1>
-                        </div>
-                        <div className="flex flex-col bg-white rounded-b-md pb-5">
-                            <div className="flex flex-col m-3 w-19/20">
-                                <label className="mb-2">Approver <span className="text-red-700">*</span></label>
-                                <select className="border border-gray-300 rounded-md p-2 ml-2 bg-white"
-                                    value={approverId}
-                                    onChange={(e) => setApproverId(e.target.value)}
-                                >
-                                    <option value="">--:--</option>
+                <Card className="w-1/3 shadow-sm">
+                    <CardHeader className="border-b bg-muted/30">
+                        <CardTitle className="text-xl font-semibold">Approval</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6 pt-6">
+                        <div>
+                            <Label htmlFor="approver" className="mb-2 block">
+                                Approver <span className="text-destructive">*</span>
+                            </Label>
+                            <Select
+                                onValueChange={(value) => setApproverId(value)}
+                                value={approverId}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select approver" />
+                                </SelectTrigger>
+                                <SelectContent>
                                     {Array.isArray(pms) && pms.map((staff) => (
-                                        <option key={staff.staffId} value={staff.staffId}>
+                                        <SelectItem key={staff.staffId} value={staff.staffId}>
                                             {staff.staffName}
-                                        </option>
+                                        </SelectItem>
                                     ))}
-                                </select>
-                            </div>
-                            <div className="flex flex-col m-3 w-19/20">
-                                <label className="mb-2">Inform to</label>
-                                <div className="ml-2">
-                                    <Select
-                                        options={staffOptions}
-                                        isMulti
-                                        value={informTo}
-                                        onChange={(selectedOptions) => {
-                                            if ((selectedOptions as any[]).length <= 3) {
-                                                setInformTo(selectedOptions as any[]);
-                                            }
-                                        }}
-                                        placeholder="--:--"
-                                        className="basic-multi-select"
-                                        classNamePrefix="select"
-                                        styles={{
-                                            container: (provided) => ({
-                                                ...provided,
-                                                width: '100%',
-                                            }),
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                            <form>
-                                <div className="flex flex-col m-3">
-                                    <label className="mb-2">Expected Approve</label>
-                                    <input
-                                        className="border border-gray-300 rounded-md bg-white p-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-50"
-                                        min={now}
-                                        type="datetime-local"
-                                        value={expectedDate}
-                                        onChange={(e) => setExpectedDate(e.target.value)}
-                                    />
-                                </div>
-                            </form>
+                                </SelectContent>
+                            </Select>
                         </div>
-                    </div>
-                </div>
+
+                        <div>
+                            <Label htmlFor="informTo" className="mb-2 block">
+                                Inform to
+                            </Label>
+                            <MultiSelect
+                                options={staffOptions}
+                                selectedValues={informTo}
+                                onValueChange={(selectedOptions) => {
+                                    if (selectedOptions.length <= 3) {
+                                        setInformTo(selectedOptions);
+                                    }
+                                }}
+                                placeholder="Select staff to inform"
+                                className="w-full"
+                                maxSelectedValues={3}
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="expectedDate" className="mb-2 block">
+                                Expected Approve
+                            </Label>
+                            <Input
+                                id="expectedDate"
+                                type="datetime-local"
+                                min={now}
+                                value={expectedDate}
+                                onChange={(e) => setExpectedDate(e.target.value)}
+                            />
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
-
 }
 
 export default CreateClaimPage;

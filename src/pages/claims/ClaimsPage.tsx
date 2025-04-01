@@ -26,6 +26,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 import {
   Table,
@@ -64,15 +65,34 @@ const ClaimsPage = () => {
     }
   };
   
-  const handleApproveSelected = () => {
-    approveSelectedClaims(selectedClaim);
-    setSelectedClaim([]);
+  const handleApproveSelected = async () => {
+    try {
+      await approveSelectedClaims(selectedClaim);
+      toast.success(
+        `Successfully approved ${selectedClaim.length} claim(s).`
+      );
+      setSelectedClaim([]);
+    } catch (error: any) {
+      toast.error(
+        `Failed to approve claims: ${error.message || "An unknown error occurred"}`
+      );
+    }
   };
 
-  const handleRejectSelected = () => {
-    rejectSelectedClaims(selectedClaim, rejectionReason);
-    setSelectedClaim([]);
-    setRejectionReason("");
+  const handleRejectSelected = async () => {
+    try {
+      await rejectSelectedClaims(selectedClaim, rejectionReason);
+      toast.success(
+        `Successfully rejected ${selectedClaim.length} claim(s).`
+      );
+      setSelectedClaim([]);
+      setRejectionReason("");
+      setIsRejectDialogOpen(false);
+    } catch (error: any) {
+      toast.error(
+        `Failed to reject claims: ${error.message || "An unknown error occurred"}`
+      );
+    }
   };
 
   const projects = Array.from(
@@ -187,11 +207,17 @@ const ClaimsPage = () => {
                     variant="destructive"
                     onClick={() => {
                       handleRejectSelected();
-                      setIsRejectDialogOpen(false);
                     }}
-                    disabled={!rejectionReason}
+                    disabled={!rejectionReason || isRejecting}
                   >
-                    Confirm Reject
+                    {isRejecting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Rejecting...
+                      </>
+                    ) : (
+                      "Confirm Reject"
+                    )}
                   </Button>
                 </DialogFooter>
               </DialogContent>

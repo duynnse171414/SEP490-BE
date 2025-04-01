@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Switch } from "@/components/ui/switch";
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 import {
   Drawer,
@@ -12,49 +20,31 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "@/components/ui/navigation-menu";
 import { LoginForm } from "@/features/auth/components/login-form";
 import {
   User,
   Sun,
   Moon,
   Menu,
-  MessageSquare,
   CheckSquare,
-  Users,
   Home,
   Info,
   Mail,
   LogOut,
-  Settings,
-  CreditCard,
-  Keyboard,
-  Users2,
   UserPlus,
-  Github,
 } from "lucide-react";
 import { useAuthContext } from "@/features/auth/hooks/useAuthContext";
 import { LoginUserDTO } from "@/features/auth/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 interface HeaderProps {
   onDrawerStateChange?: (open: boolean) => void;
@@ -67,6 +57,10 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const { user, logout, login } = useAuthContext();
   const [isSuccess] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!user);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setIsAuthenticated(user !== null);
@@ -75,14 +69,48 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
     }
   }, [user]);
 
-  const handleLoginSubmit = ({ email, password }: LoginUserDTO) => {
-    login({ email, password });
-
-    if (isSuccess) {
-      setIsLoginDrawerOpen(false);
-      if (onDrawerStateChange) {
-        onDrawerStateChange(false);
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setIsCommandOpen((open) => !open);
       }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
+
+  useEffect(() => {
+    if (loginAttempted) {
+      if (user) {
+        toast.success("Login successful!", {
+          description: "Welcome back to ClaimRequest",
+        });
+        
+        setIsLoginDrawerOpen(false);
+        if (onDrawerStateChange) {
+          onDrawerStateChange(false);
+        }
+      } else {
+        toast.error("Login failed", {
+          description: "Invalid credentials. Please try again.",
+        });
+      }
+      setLoginAttempted(false);
+      setIsLoggingIn(false);
+    }
+  }, [user, loginAttempted]);
+
+  const handleLoginSubmit = async ({ email, password }: LoginUserDTO) => {
+    setIsLoggingIn(true);
+    try {
+      await login({ email, password });
+      setLoginAttempted(true);
+    } catch (error) {
+      toast.error("Login failed", {
+        description: error instanceof Error ? error.message : "Please check your credentials and try again",
+      });
+      setIsLoggingIn(false);
     }
   };
 
@@ -95,20 +123,6 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
               to="/"
               className="flex items-center gap-2 text-xl font-bold text-primary transition-colors hover:text-primary/80"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6"
-              >
-                <path d="M20.42 4.58a5.4 5.4 0 0 0-7.65 0l-.77.78-.77-.78a5.4 5.4 0 0 0-7.65 0C1.46 6.7 1.33 10.28 4 13l8 8 8-8c2.67-2.72 2.54-6.3.42-8.42z"></path>
-              </svg>
               <span className="font-bold tracking-tight">ClaimRequest</span>
             </Link>
             <div className="md:hidden">
@@ -123,27 +137,22 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex flex-grow justify-center">
-            <NavigationMenu>
-              <NavigationMenuList className="flex">
-                <NavigationMenuItem>
-                  <NavigationMenuLink>
-                    <Link to="/">
-                      <span>Home</span>
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <NavigationMenuLink>
-                    <Link to="/contact">
-                      <span>Contact</span>
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-          </div>
+          {/* Desktop Navigation with Search */}
+          {isAuthenticated && (
+            <div className="hidden md:flex flex-grow justify-center">
+              <Button
+                variant="outline"
+                className="relative w-full max-w-sm justify-start text-sm text-muted-foreground"
+                onClick={() => setIsCommandOpen(true)}
+              >
+                <span className="hidden lg:inline-flex">Search for pages...</span>
+                <span className="inline-flex lg:hidden">Search...</span>
+                <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
+              </Button>
+            </div>
+          )}
 
           {/* Right Side: Theme Switcher & Login */}
           <div className="flex items-center gap-4 w-full md:w-auto justify-end mt-2 md:mt-0">
@@ -188,88 +197,17 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard" className="flex items-center w-full">
                       <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                      <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
-                      <Link to="/dashboard">My Claims</Link>
-                      <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <CreditCard className="mr-2 h-4 w-4" />
-                      <span>Billing</span>
-                      <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        to="/approve-claims"
-                        className="flex items-center w-full cursor-default"
-                      >
-                        <CheckSquare className="mr-2 h-4 w-4" />
-                        <span>Approve Claim</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                      <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Keyboard className="mr-2 h-4 w-4" />
-                      <span>Keyboard shortcuts</span>
-                      <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem>
-                      <Users2 className="mr-2 h-4 w-4" />
-                      <span>Team</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        <span>Invite users</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                          <DropdownMenuItem>
-                            <Mail className="mr-2 h-4 w-4" />
-                            <span>Email</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            <span>Message</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <span>More...</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                      </DropdownMenuPortal>
-                    </DropdownMenuSub>
-                    <DropdownMenuItem>
-                      <Users className="mr-2 h-4 w-4" />
-                      <span>New Team</span>
-                      <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Github className="mr-2 h-4 w-4" />
-                    <span>GitHub</span>
+                      <span>My Claims</span>
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    <span>Support</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem disabled>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>API</span>
+                  <DropdownMenuItem asChild>
+                    <Link to="/approve-claims" className="flex items-center w-full">
+                      <CheckSquare className="mr-2 h-4 w-4" />
+                      <span>Approve Claims</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -278,7 +216,6 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
-                    <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -315,13 +252,45 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                       Enter your credentials below to access your account
                     </DrawerDescription>
                   </DrawerHeader>
-                  <LoginForm onSubmit={handleLoginSubmit} />
+                  <LoginForm onSubmit={handleLoginSubmit} isLoading={isLoggingIn} />
                 </div>
               </DrawerContent>
             </Drawer>
           </div>
         </div>
       </div>
+
+      {/* Command Dialog */}
+      <CommandDialog open={isCommandOpen} onOpenChange={setIsCommandOpen}>
+        <CommandInput placeholder="Type a command or search..." />
+        <CommandList>
+          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandGroup heading="Pages">
+            <CommandItem onSelect={() => {
+              navigate("/dashboard");
+              setIsCommandOpen(false);
+            }}>
+              <User className="mr-2 h-4 w-4" />
+              <span>My Claims</span>
+            </CommandItem>
+            <CommandItem onSelect={() => {
+              navigate("/create-claim");
+              setIsCommandOpen(false);
+            }}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              <span>Create Claim</span>
+            </CommandItem>
+            <CommandItem onSelect={() => {
+              navigate("/approve-claims");
+              setIsCommandOpen(false);
+            }}>
+              <CheckSquare className="mr-2 h-4 w-4" />
+              <span>Approve Claims</span>
+            </CommandItem>
+
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
 
       {/* Mobile Navigation Drawer */}
       <Drawer open={isNavDrawerOpen} onOpenChange={setIsNavDrawerOpen}>

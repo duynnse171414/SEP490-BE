@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { Header } from "@/sections/Header";
 import TopLoadingBar from "@/components/common/TopLoadingBar";
 import { Footer } from "@/sections/Footer";
 import AuthProvider from "@/features/auth/contexts/AuthProvider";
+import { Toaster } from "sonner";
 
 export const MainLayout = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -20,9 +21,8 @@ export const MainLayout = () => {
         </header>
         <main className="relative flex-grow">
           <div
-            className={`transition-transform duration-300 ${
-              isDrawerOpen ? "scale-90 opacity-75" : "scale-100 opacity-100"
-            }`}
+            className={`transition-transform duration-300 ${isDrawerOpen ? "scale-90 opacity-75" : "scale-100 opacity-100"
+              }`}
           >
             <Outlet />
           </div>
@@ -33,6 +33,7 @@ export const MainLayout = () => {
         <footer>
           <Footer />
         </footer>
+        <Toaster position="bottom-right" />
       </div>
     </AuthProvider>
   );
