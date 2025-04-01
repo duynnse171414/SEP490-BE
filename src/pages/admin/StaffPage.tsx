@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import UpdateModal from "@/components/ui/updateModal";
 import DeleteModal from "@/components/ui/deleteModal";
+import { toast } from "@/components/ui/toast";
+
 // import { Staff } from "@/features/admin/types";
 import { Input } from "@/components/ui/input";
 import { postData } from "@/api/fetchers";
@@ -181,26 +183,26 @@ const StaffPage = () => {
   };
 
   const handleDeleteStaff = (staffId: string) => {
-    const numericStaffId = Number(staffId);
-    if (isNaN(numericStaffId)) {
-      console.error("Invalid staff ID:", staffId);
-      return;
-    }
-
-    deleteStaffMutate(numericStaffId, {
+    deleteStaffMutate(staffId, {
       onSuccess: () => {
         setStaffs((prev) =>
-          prev.filter((staff) => Number(staff.staffId) !== numericStaffId)
-        ); // Lọc danh sách với ID là số
-        mutate(); // Đồng bộ dữ liệu với server
+          prev.map((staff) =>
+            staff.staffId === staffId ? { ...staff, isActive: false } : staff
+          )
+        ); // Mark staff as inactive
+        toast.success("Staff deactivated successfully!");
+        mutate(); // Synchronize data with the server if needed
       },
-      onError: (error: any) => {
-        console.error("Error deleting staff:", error.message);
+      onError: (error) => {
+        console.error("Error deactivating staff:", error.message);
+        toast.error("Failed to deactivate staff.");
       },
     });
   };
 
   const handleUpdateStaff = (updatedStaff: any) => {
+    console.log("Sending updated staff data:", updatedStaff);
+
     updateStaffMutate(updatedStaff, {
       onSuccess: () => {
         setStaffs((prev) =>
@@ -208,10 +210,12 @@ const StaffPage = () => {
             staff.staffId === updatedStaff.staffId ? updatedStaff : staff
           )
         );
-        mutate();
+        mutate(); // Cập nhật dữ liệu từ server
+        toast.success("Staff updated successfully!");
       },
       onError: (error: any) => {
         console.error("Error updating staff:", error.message);
+        toast.error("Failed to update staff. Please try again.");
       },
     });
   };
@@ -256,8 +260,8 @@ const StaffPage = () => {
   const handleDeleteModalConfirm = async (reason: string) => {
     if (selectedStaff) {
       try {
-        await fetch(`/api/Staffs/${selectedStaff.staffId}`, {
-          method: "POST",
+        await fetch(`/api/staffs/${selectedStaff.staffId}`, {
+          method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reason }),
         });
@@ -457,6 +461,7 @@ const StaffPage = () => {
                             {staff.isActive ? "Active" : "Inactive"}
                           </Badge>
                         </TableCell>
+
                         <TableCell>{formatDate(staff.createAt)}</TableCell>
                         <TableCell className="flex space-x-2">
                           <Button
