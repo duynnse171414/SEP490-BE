@@ -11,3 +11,4 @@ export * from './user/UserDetailPage';
 export * from './about/AboutPage';
 export * from './contact/ContactPage';
 export * from './NotFoundPage';
+export * from './Request/Approve/Approve';

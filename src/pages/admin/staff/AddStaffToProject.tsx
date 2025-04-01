@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { StaffNotInProject } from "@/features/staff/types";
-import { useNavigate, useParams } from "react-router-dom";
+// import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 export function AddStaffToProjectDialog(projectId?: string, open?: boolean) {
@@ -51,8 +51,8 @@ export function AddStaffToProjectDialog(projectId?: string, open?: boolean) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const { id } = useParams();
-  const navigate = useNavigate();
+  // const { id } = useParams();
+  // const navigate = useNavigate();
 
   const handleProjectChange = (projectId: string) => {
     setSelectedProject(projectId);
@@ -157,89 +157,91 @@ export function AddStaffToProjectDialog(projectId?: string, open?: boolean) {
           </div>
 
           {selectedProject && (
-            <div className="border rounded-md overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[5%]"></TableHead>
-                    <TableHead className="w-[20%]">Staff Name</TableHead>
-                    <TableHead className="w-[25%]">Email</TableHead>
-                    <TableHead className="w-[20%]">Department</TableHead>
-                    <TableHead className="w-[10%] text-center">
-                      In Project
-                    </TableHead>
-                    <TableHead className="w-[20%]">Role</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoadingStaffs ? (
+            <div className="border rounded-md overflow-hidden">
+              <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-background z-10">
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center">
-                        Loading...
-                      </TableCell>
+                      <TableHead className="w-[5%]"></TableHead>
+                      <TableHead className="w-[20%]">Staff Name</TableHead>
+                      <TableHead className="w-[25%]">Email</TableHead>
+                      <TableHead className="w-[20%]">Department</TableHead>
+                      <TableHead className="w-[10%] text-center">
+                        In Project
+                      </TableHead>
+                      <TableHead className="w-[20%]">Role</TableHead>
                     </TableRow>
-                  ) : availableStaffs?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-4">
-                        No staff available to add to this project
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    availableStaffs?.map((staff) => (
-                      <TableRow key={staff.staffId}>
-                        <TableCell className="text-center">
-                          <Checkbox
-                            checked={selectedStaffs.includes(staff.staffId)}
-                            onCheckedChange={() =>
-                              handleStaffSelection(staff.staffId)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="truncate max-w-[150px]">
-                          {staff.staffName}
-                        </TableCell>
-                        <TableCell className="truncate max-w-[200px]">
-                          {staff.email}
-                        </TableCell>
-                        <TableCell className="truncate max-w-[150px]">
-                          {staff.departmentName}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {staff.countProject}
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={staffRoles[staff.staffId]}
-                            onValueChange={(value) =>
-                              handleRoleChange(staff.staffId, value)
-                            }
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {isLoadingRoles ? (
-                                <SelectItem value="" disabled>
-                                  Loading roles...
-                                </SelectItem>
-                              ) : (
-                                roles?.map((role) => (
-                                  <SelectItem
-                                    key={role.roleProjectId}
-                                    value={role.roleProjectId.toString()}
-                                  >
-                                    {role.name}
-                                  </SelectItem>
-                                ))
-                              )}
-                            </SelectContent>
-                          </Select>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingStaffs ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center">
+                          Loading...
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : availableStaffs?.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-4">
+                          No staff available to add to this project
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      availableStaffs?.map((staff) => (
+                        <TableRow key={staff.staffId}>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={selectedStaffs.includes(staff.staffId)}
+                              onCheckedChange={() =>
+                                handleStaffSelection(staff.staffId)
+                              }
+                            />
+                          </TableCell>
+                          <TableCell className="truncate max-w-[150px]">
+                            {staff.staffName}
+                          </TableCell>
+                          <TableCell className="truncate max-w-[200px]">
+                            {staff.email}
+                          </TableCell>
+                          <TableCell className="truncate max-w-[150px]">
+                            {staff.departmentName}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {staff.countProject}
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={staffRoles[staff.staffId]}
+                              onValueChange={(value) =>
+                                handleRoleChange(staff.staffId, value)
+                              }
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {isLoadingRoles ? (
+                                  <SelectItem value="" disabled>
+                                    Loading roles...
+                                  </SelectItem>
+                                ) : (
+                                  roles?.map((role) => (
+                                    <SelectItem
+                                      key={role.roleProjectId}
+                                      value={role.roleProjectId.toString()}
+                                    >
+                                      {role.name}
+                                    </SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
 
@@ -247,9 +249,9 @@ export function AddStaffToProjectDialog(projectId?: string, open?: boolean) {
             <div className="flex justify-end">
               <Button
                 onClick={handleAddStaffs}
-                disabled={selectedStaffs.length === 0}
+                disabled={selectedStaffs.length === 0 || isSubmitting}
               >
-                Add Selected Staff
+                {isSubmitting ? "Adding..." : "Add Selected Staff"}
               </Button>
             </div>
           )}
@@ -257,4 +259,5 @@ export function AddStaffToProjectDialog(projectId?: string, open?: boolean) {
       </DialogContent>
     </Dialog>
   );
+  // );
 }

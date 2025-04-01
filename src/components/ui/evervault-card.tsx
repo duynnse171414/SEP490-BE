@@ -1,6 +1,6 @@
 "use client";
 import { useMotionValue } from "motion/react";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useMotionTemplate, motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,7 @@ export const EvervaultCard = ({
   const [randomString, setRandomString] = useState("");
 
   useEffect(() => {
-    let str = generateRandomString(1500);
+    let str = generateRandomString(7250);
     setRandomString(str);
   }, []);
 
@@ -26,7 +26,7 @@ export const EvervaultCard = ({
     mouseX.set(clientX - left);
     mouseY.set(clientY - top);
 
-    const str = generateRandomString(1500);
+    const str = generateRandomString(7250);
     setRandomString(str);
   }
 

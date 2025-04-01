@@ -19,7 +19,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
             <h2 className="text-2xl font-bold mb-4">Access Restricted</h2>
             <p className="mb-4">You need to be logged in to view this page.</p>
             <Button asChild>
-              <Link to="/login">Go to Login</Link>
+              <Link to="/">Go back to Home</Link>
             </Button>
           </CardContent>
         </Card>

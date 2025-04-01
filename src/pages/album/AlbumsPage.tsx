@@ -22,10 +22,6 @@ const AlbumsPage: React.FC = () => {
     setPage(1);
   };
 
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
   return (
     <div className="p-6 mx-auto">
       <h1 className="text-3xl font-bold mb-4 text-center">Albums</h1>
