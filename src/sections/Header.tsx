@@ -90,8 +90,13 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
   const handleLoginSubmit = ({ email, password }: LoginUserDTO) => {
     console.log("Logging in with email and password");
     login({ email, password });
+
     if (isSuccess) {
       setIsLoginDrawerOpen(false);
+
+    if(isLoginDrawerOpen) {
+    setIsLoginDrawerOpen(false);
+
     } else {
       setIsLoginDrawerOpen(true);
     }
@@ -234,10 +239,9 @@ export const Header = ({ onDrawerStateChange }: HeaderProps) => {
                       <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
-                      <Ticket className="mr-2 h-4 w-4" />
-                      <Link to="/claim">
-                        <span>Create Claim</span>
-                      </Link>
+                      <User className="mr-2 h-4 w-4" />
+                      <Link to="/dashboard">My Claims</Link>
+                      <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                       <CreditCard className="mr-2 h-4 w-4" />

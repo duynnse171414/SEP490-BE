@@ -1,5 +1,6 @@
 import { ClaimStatus, ClaimRequestDTO } from "@/features/claims/types";
-import { useApproveClaims, useClaimsByPM, useRejectClaims } from "@/features/claims/hooks/useClaims";
+import { ViewClaimRqCard } from "@/components/common/ViewClaimRqCard";
+import { useApproveClaims, useClaimsByPM } from "@/features/claims/hooks/useClaims";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Loader2 } from "lucide-react";
@@ -21,13 +22,14 @@ import {
 
 const ClaimsPage = () => {
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
-  const { data, isLoading, mutate } = useClaimsByPM({ status: 2 });
+  const { data, isLoading } = useClaimsByPM({ status: 2 });
   const claims = data?.data;
   const [selectedClaim, setSelectedClaim] = useState<string[]>([]);
   const { approveSelectedClaims, isApproving } = useApproveClaims();
   const { rejectSelectedClaims, isRejecting } = useRejectClaims();
   const [rejectionReason, setRejectionReason] = useState<string>("");
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+
 
   const handleSelect = (claimId: string, checked: boolean) => {
     setSelectedClaim((prevSelected) =>
@@ -42,7 +44,7 @@ const ClaimsPage = () => {
       setSelectedClaim([]);
     }
   };
-
+  
   const handleApproveSelected = () => {
     approveSelectedClaims(selectedClaim);
     setSelectedClaim([]);

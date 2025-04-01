@@ -21,7 +21,7 @@ const AlbumsGrid: React.FC<AlbumsGridProps> = ({ albums, users }) => {
             <p className="text-sm text-gray-500">Album ID: {album.id}</p>
             {users && (
               <p className="text-sm text-gray-500">
-                By: {users.find((u) => u.id === album.userId)?.name || `User ${album.userId}`}
+                By: {users.find((u) => u.email === String(album.userId))?.email || `User ${album.userId}`}
               </p>
             )}
           </CardContent>

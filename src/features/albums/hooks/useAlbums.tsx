@@ -18,14 +18,16 @@ export const useAlbum = (albumId?: string) => {
 };
 
 export const useAlbumsByUserId = ({ userId }: { userId?: string }) => {
-  const endpoint = userId ? `/albums?userId=${userId}` : "/albums";
-
-  const { data, error, mutate } = useSWR<Album[]>(endpoint, fetcher, {
-    dedupingInterval: 60000,
-    refreshInterval: 0,
-    revalidateOnFocus: false,
-    revalidateOnReconnect: true,
-  });
+  const { data, error, mutate } = useSWR<Album[]>(
+    userId ? `/albums?userId=${userId}` : null,
+    fetcher,
+    {
+      dedupingInterval: 60000,
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+    }
+  );
 
   return { data, error, isLoading: !data && !error, mutate };
 };
@@ -34,21 +36,36 @@ export const useAlbums = ({
   page,
   limit,
   userId,
+  searchTerm,
 }: {
   page: number;
   limit: number;
   userId?: string;
+  searchTerm?: string;
 }) => {
-  const endpoint = userId
-    ? `/albums?userId=${userId}&_page=${page}&_limit=${limit}`
-    : `/albums?_page=${page}&_limit=${limit}`;
-
-  const { data, error, mutate } = useSWR<Album[]>(endpoint, fetcher, {
-    dedupingInterval: 60000,
-    refreshInterval: 0,
-    revalidateOnFocus: false,
-    revalidateOnReconnect: true,
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
   });
+
+  if (userId) {
+    queryParams.append("userId", userId);
+  }
+
+  if (searchTerm) {
+    queryParams.append("searchTerm", searchTerm);
+  }
+
+  const { data, error, mutate } = useSWR<Album[]>(
+    `/albums?${queryParams.toString()}`,
+    fetcher,
+    {
+      dedupingInterval: 60000,
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: true,
+    }
+  );
 
   return { data, error, isLoading: !data && !error, mutate };
 };

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useContext } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,8 +8,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Eye, EyeOff } from "lucide-react";
 import { LoginUserDTO } from "../types";
 import { EvervaultCard } from "@/components/ui/evervault-card";
-import { AuthContext } from "../contexts/AuthContext";
-import { useAuthContext } from "../hooks/useAuthContext";
 
 type LoginFormProps = {
   onSubmit: (data: LoginUserDTO) => void;
@@ -22,7 +20,6 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
   const [loginMessage, setErrorMessage] = useState("");
-  const AuthContext = useAuthContext();
 
   useEffect(() => {
     if (isFocused && passwordRef.current) {
@@ -30,15 +27,10 @@ export function LoginForm({ className, onSubmit, ...props }: LoginFormProps) {
     }
   }, [isFocused]);
 
-  useEffect(() => {
-    setErrorMessage(AuthContext.loginMessage || "");
-  }, [AuthContext.loginMessage]);
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMessage("");
     onSubmit({ email, password });
-    setErrorMessage(AuthContext.loginMessage || "");
   };
 
   return (
