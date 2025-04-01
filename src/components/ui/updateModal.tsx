@@ -1,22 +1,84 @@
 import React, { useState, useEffect } from "react";
+import { useJobRanks } from "@/features/admin/hooks/useJobRanks";
+import { useDepartments } from "@/features/admin/hooks/useDepartments";
 
-const updateModal = ({ isOpen, onClose, onSubmit, staff, jobRanks = [], departments = [] }: any) => {
+const UpdateModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  staff,
+}: any) => {
   const [formData, setFormData] = useState(staff || {});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: jobRanks } = useJobRanks();
+  const { data: departments } = useDepartments();
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(staff || {}); // Reset formData về giá trị ban đầu mỗi khi popup được mở
+      setFormData({
+        staffName: staff?.staffName || "",
+        salary: staff?.salary || 0,
+        jobRank: staff?.jobRank || 0,
+        department: staff?.department || 0,
+        status: staff?.status || "active", // Giá trị mặc định là "active"
+      });
     }
   }, [isOpen, staff]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+
+    setFormData({
+      ...formData,
+      [name]:
+        name === "salary" ||
+        name === "jobRank" ||
+        name === "department"
+          ? parseInt(value) || 0
+          : value,
+    });
   };
 
-  const handleSubmit = () => {
-    onSubmit(formData); // Gửi dữ liệu đã chỉnh sửa
+  
+  const handleSubmit = async () => {
+    const payload = {
+      staffId: staff.staffId,
+      staffName: formData.staffName.trim(),
+      salary: Number(formData.salary),
+      jobRank: Number(formData.jobRank),
+      department: Number(formData.department),
+      status: formData.status, // Trạng thái hiện tại
+    };
+
+    if (!payload.staffName) {
+      alert("Staff Name is required.");
+      return;
+    }
+    if (payload.salary <= 0) {
+      alert("Salary must be greater than 0.");
+      return;
+    }
+    if (payload.jobRank <= 0) {
+      alert("Job Rank must be selected.");
+      return;
+    }
+    if (payload.department <= 0) {
+      alert("Department must be selected.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit(payload);
+    } catch (error) {
+      console.error("Error updating staff:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+  
 
   if (!isOpen) return null;
 
@@ -25,6 +87,7 @@ const updateModal = ({ isOpen, onClose, onSubmit, staff, jobRanks = [], departme
       <div className="bg-white p-6 rounded-md shadow-md w-full max-w-lg">
         <h2 className="text-lg font-semibold mb-4 text-black">Update Staff</h2>
         <form className="space-y-4">
+          {/* Staff Name */}
           <div>
             <label htmlFor="staffName" className="block text-black">
               Staff Name
@@ -34,19 +97,6 @@ const updateModal = ({ isOpen, onClose, onSubmit, staff, jobRanks = [], departme
               id="staffName"
               name="staffName"
               value={formData.staffName || ""}
-              onChange={handleChange}
-              className="w-full border-black border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary text-black"
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block text-black">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email || ""}
               onChange={handleChange}
               className="w-full border-black border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary text-black"
             />
@@ -65,7 +115,7 @@ const updateModal = ({ isOpen, onClose, onSubmit, staff, jobRanks = [], departme
               className="w-full border-black border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary text-black"
             >
               <option value="">Select Job Rank</option>
-              {jobRanks?.map((rank: { id: number, name: string }) => (
+              {jobRanks?.map((rank: { id: number; name: string }) => (
                 <option key={rank.id} value={rank.id}>
                   {rank.name}
                 </option>
@@ -101,7 +151,7 @@ const updateModal = ({ isOpen, onClose, onSubmit, staff, jobRanks = [], departme
               className="w-full border-black border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary text-black"
             >
               <option value="">Select Department</option>
-              {departments?.map((dept: { id: number, name: string }) => (
+              {departments?.map((dept: { id: number; name: string }) => (
                 <option key={dept.id} value={dept.id}>
                   {dept.name}
                 </option>
@@ -109,6 +159,25 @@ const updateModal = ({ isOpen, onClose, onSubmit, staff, jobRanks = [], departme
             </select>
           </div>
 
+          {/* Status */}
+          <div>
+            <label htmlFor="status" className="block text-black">
+              Status
+            </label>
+            <div className="flex items-center">
+              <span
+                className={`px-2 py-1 rounded-md ${
+                  formData.status === "active"
+                    ? "bg-green-500 text-white"
+                    : "bg-red-500 text-white"
+                }`}
+              >
+                {formData.status}
+              </span>
+            </div>
+          </div>
+
+          {/* Buttons */}
           <div className="flex justify-end space-x-4">
             <button
               type="button"
@@ -120,9 +189,10 @@ const updateModal = ({ isOpen, onClose, onSubmit, staff, jobRanks = [], departme
             <button
               type="button"
               onClick={handleSubmit}
-              className="bg-gray-300 text-black px-4 py-2 rounded-md cursor-pointer hover:bg-gray-400"
+              className="bg-blue-500 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-600"
+              disabled={isSubmitting}
             >
-              Save
+              {isSubmitting ? "Saving..." : "Save"}
             </button>
           </div>
         </form>
@@ -131,4 +201,4 @@ const updateModal = ({ isOpen, onClose, onSubmit, staff, jobRanks = [], departme
   );
 };
 
-export default updateModal;
+export default UpdateModal;
