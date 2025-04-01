@@ -8,8 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-import UpdateStaffPage from "./UpdateStaffPage"; ; 
-
+import { AddStaffToProjectDialog } from "../admin/staff/AddStaffToProject";
 const BASE_URL = "https://localhost:7100/api";
 
 const ProjectDetail = () => {
@@ -93,6 +92,8 @@ const ProjectDetail = () => {
         <CardHeader className="bg-primary/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <CardTitle className="text-2xl font-bold text-primary">Project Details</CardTitle>
           <div className="flex items-center space-x-2">
+            {AddStaffToProjectDialog(id, true)}
+
             <Button
               variant="outline"
               size="sm"
@@ -156,7 +157,7 @@ const ProjectDetail = () => {
                         <TableRow key={staff.staffId} className="hover:bg-muted/50">
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>{staff.email}</TableCell>
-                          <TableCell>{staff.username}</TableCell>
+                          <TableCell>{staff.userName}</TableCell>
                           <TableCell>{staff.staffName}</TableCell>
                           <TableCell>{staff.jobRank}</TableCell>
                           <TableCell>${staff.salary?.toLocaleString()}</TableCell>

@@ -10,7 +10,9 @@ interface FooterProps {
   breadcrumbs?: BreadcrumbItem[];
 }
 
-export const Footer: React.FC<FooterProps> = ({ breadcrumbs: propBreadcrumbs }) => {
+export const Footer: React.FC<FooterProps> = ({
+  breadcrumbs: propBreadcrumbs,
+}) => {
   const location = useLocation();
 
   // If no breadcrumbs prop is passed, auto-generate breadcrumbs from the URL path.

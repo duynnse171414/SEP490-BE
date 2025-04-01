@@ -14,22 +14,24 @@ export const MainLayout = () => {
 
   return (
     <AuthProvider>
-      <header className="relative top-0 sticky z-50">
-        <Header onDrawerStateChange={handleDrawerStateChange} />
-      </header>
-      <main className="relative">
-        <div
-          className={`transition-transform duration-300 ${isDrawerOpen ? "scale-90 opacity-75" : "scale-100 opacity-100"}`}
-        >
-          <Outlet />
-        </div>
-        <div className="top-0 sticky" style={{ zIndex: 999 }}>
-          <TopLoadingBar />
-        </div>
-      </main>
-      <footer>
-        <Footer />
-      </footer>
+      <div className="min-h-screen flex flex-col">
+        <header className="relative top-0 sticky z-50">
+          <Header onDrawerStateChange={handleDrawerStateChange} />
+        </header>
+        <main className="relative flex-grow">
+          <div
+            className={`transition-transform duration-300 ${isDrawerOpen ? "scale-90 opacity-75" : "scale-100 opacity-100"}`}
+          >
+            <Outlet />
+          </div>
+          <div className="top-0 sticky" style={{ zIndex: 999 }}>
+            <TopLoadingBar />
+          </div>
+        </main>
+        <footer>
+          <Footer />
+        </footer>
+      </div>
     </AuthProvider>
   );
 };

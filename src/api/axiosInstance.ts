@@ -1,38 +1,37 @@
-import axios, {
-  AxiosInstance,
-  AxiosResponse,
-  AxiosError,
-  AxiosRequestHeaders,
-} from "axios";
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import { AxiosInstance } from "axios";
 import { handleApiError } from "./errorHandler";
-import { Backend_URL } from "@/config.global";
 
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: Backend_URL,
+  baseURL: import.meta.env.VITE_Backend_URL,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     "Content-Type": "application/json",
   },
 });
-
-const defaultHeaders = { ...axiosInstance.defaults.headers.common };
+//const defaultHeaders = { ...axiosInstance.defaults.headers.common };
 
 axiosInstance.interceptors.request.use(
-  async (config) => {
-    config.headers["If-None-Match"] = "your-etag";
+  async (config: InternalAxiosRequestConfig) => {
+    const storedUser = localStorage.getItem("loggedUser");
 
-    config.headers = {
-      ...config.headers,
-      ...defaultHeaders,
-    } as AxiosRequestHeaders;
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      const token = parsedUser.token;
+
+      if (token) {
+        config.headers["Authorization"] = `Bearer ${token}`;
+      }
+    }
 
     return config;
   },
   (error) => {
-    Promise.reject(error);
+    return Promise.reject(error);
   }
 );
+
 
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
