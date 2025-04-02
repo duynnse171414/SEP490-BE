@@ -47,6 +47,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Link } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -975,8 +976,14 @@ const ProjectDashboard = () => {
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View details
+                                  <Link
+                                    to={`/admin/projects/${project.projectId}`}
+                                  >
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View details
+                                  </Link>
+                                  {/* <Eye className="mr-2 h-4 w-4" />
+                                  View  */}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
