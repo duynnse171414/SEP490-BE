@@ -1,6 +1,41 @@
-export type GetAllProject = GetAllProjectItem[];
+import { Staff } from "../admin/types";
+// import { StaffNotInProject, StaffProject } from "../staff/types";
 
-export interface GetAllProjectItem {
-    projectId: number;
-    projectName: string;
+export interface Project {
+  projectId: number;
+  projectName: string;
+  projectCode: string;
+  startDate?: string;
+  endDate?: string;
+  budget: number;
+  isDeleted: boolean;
+  projectDetail?: string;
+  staffs: Staff[];
+  createAt?: string;
+  createBy?: string;
+  updateAt?: string;
+  updateBy?: string;
+  deleteAt?: string;
+  deleteBy?: string;
+}
+
+export interface RoleInProject {
+  roleProjectId: number;
+  name: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  error: string | null;
+  startDate: string;
+  endDate: string;
+  isDeleted: boolean;
+  staffs: Staff[];
+}
+
+export interface ProjectReponse {
+  items: Project[];
+  totalPages: number;
 }
