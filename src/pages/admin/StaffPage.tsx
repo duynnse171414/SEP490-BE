@@ -305,7 +305,6 @@ const StaffPage = () => {
         salary: item.Salary,
         departmentName: item.DepartmentName,
         isActive: item.IsActive === "Active" ? true : false,
-        createAt: item.CreateAt.toLocaleString(),
       }));
 
       console.log("Dữ liệu sau khi format:", formattedData);

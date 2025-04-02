@@ -4,12 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { useProject } from "@/features/project/hooks/useProject";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { AddStaffToProjectDialog } from "../admin/staff/AddStaffToProject";
 import { UpdateStaffToProjectDialog } from "@/pages/project/UpdateStaffPage";
+import { fetcher } from "@/api/fetchers";
 const BASE_URL = "https://localhost:7100/api";
 
 const ProjectDetail = () => {
@@ -78,7 +86,9 @@ const ProjectDetail = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Staffs-In-Project-${new Date().toISOString().split("T")[0]}.xlsx`;
+      a.download = `Staffs-In-Project-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -88,7 +98,7 @@ const ProjectDetail = () => {
     }
   };
 
-  const handleUpdateStaff = async (updatedStaff) => {
+  const handleUpdateStaff = async (updatedStaff: any) => {
     try {
       // Prepare the payload for the API
       const staffUpdatePayload = {
@@ -97,22 +107,25 @@ const ProjectDetail = () => {
         projectId: projectId,
         updateAt: new Date().toISOString(),
       };
-  
+
       // Make the API call
-      const response = await fetch(`${BASE_URL}/project/update-staff-in-project?projectId=${projectId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify([staffUpdatePayload]), // Send as an array
-      });
-  
+      const response = await fetch(
+        `${BASE_URL}/project/update-staff-in-project?projectId=${projectId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify([staffUpdatePayload]), // Send as an array
+        }
+      );
+
       const data = await response.json();
-  
+
       if (response.ok) {
         alert(data.message || "Staff updated successfully.");
         setIsUpdateModalOpen(false); // Close the modal
-        refetch(); // Refresh project data
+        fetcher(`/Project/${projectId}`); // Refresh project data
       } else {
         console.error("Failed to update staff:", response.status, data.message);
         alert(data.message || "Failed to update staff.");
@@ -123,11 +136,14 @@ const ProjectDetail = () => {
     }
   };
 
-  const handleDeleteStaff = async (staffId) => {
+  const handleDeleteStaff = async (staffId: string) => {
     try {
-      const response = await fetch(`${BASE_URL}/Project/${projectId}/staff/${staffId}/delete`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `${BASE_URL}/Project/${projectId}/staff/${staffId}/delete`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         alert("Staff deleted successfully.");
@@ -142,17 +158,24 @@ const ProjectDetail = () => {
     }
   };
 
-  const handleRestoreStaff = async (staffId) => {
+  const handleRestoreStaff = async (staffId: string) => {
     try {
-      const response = await fetch(`${BASE_URL}/Project/${projectId}/staff/${staffId}/restore`, {
-        method: "PUT", 
-      });
+      const response = await fetch(
+        `${BASE_URL}/Project/${projectId}/staff/${staffId}/restore`,
+        {
+          method: "PUT",
+        }
+      );
 
       if (response.ok) {
         alert("Staff restored successfully.");
       } else {
         const errorMessage = await response.text();
-        console.error("Failed to restore staff:", response.status, errorMessage);
+        console.error(
+          "Failed to restore staff:",
+          response.status,
+          errorMessage
+        );
         alert("Failed to restore staff.");
       }
     } catch (error) {
@@ -165,7 +188,9 @@ const ProjectDetail = () => {
     <div className="container mx-auto py-8 px-4">
       <Card className="shadow-lg">
         <CardHeader className="bg-primary/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle className="text-2xl font-bold text-primary">Project Details</CardTitle>
+          <CardTitle className="text-2xl font-bold text-primary">
+            Project Details
+          </CardTitle>
           <div className="flex items-center space-x-2">
             {AddStaffToProjectDialog(id, true)}
 
@@ -185,7 +210,9 @@ const ProjectDetail = () => {
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2 text-lg text-muted-foreground">Loading project data...</span>
+              <span className="ml-2 text-lg text-muted-foreground">
+                Loading project data...
+              </span>
             </div>
           ) : error ? (
             <div className="bg-destructive/10 text-destructive p-4 rounded-md flex items-center justify-center h-32">
@@ -193,7 +220,9 @@ const ProjectDetail = () => {
             </div>
           ) : !project ? (
             <div className="bg-muted p-8 rounded-md flex items-center justify-center h-32">
-              <p className="text-muted-foreground text-lg">No project data found.</p>
+              <p className="text-muted-foreground text-lg">
+                No project data found.
+              </p>
             </div>
           ) : (
             <>
@@ -201,10 +230,20 @@ const ProjectDetail = () => {
               <div className="mb-6">
                 <h2 className="text-xl font-semibold">Project Information</h2>
                 <div className="grid grid-cols-2 gap-4 mt-2 text-muted-foreground">
-                  <p><strong>Project Code:</strong> {project.projectCode}</p>
-                  <p><strong>Project Name:</strong> {project.projectName}</p>
-                  <p><strong>Start Date:</strong> {formatDate(project.startDate)}</p>
-                  <p><strong>End Date:</strong> {formatDate(project.endDate)}</p>
+                  <p>
+                    <strong>Project Code:</strong> {project.projectCode}
+                  </p>
+                  <p>
+                    <strong>Project Name:</strong> {project.projectName}
+                  </p>
+                  <p>
+                    <strong>Start Date:</strong>{" "}
+                    {formatDate(project.startDate || "")}
+                  </p>
+                  <p>
+                    <strong>End Date:</strong>{" "}
+                    {formatDate(project.endDate || "")}
+                  </p>
                 </div>
               </div>
 
@@ -216,38 +255,54 @@ const ProjectDetail = () => {
                       <TableHead className="font-semibold">No.</TableHead>
                       <TableHead className="font-semibold">Email</TableHead>
                       <TableHead className="font-semibold">Username</TableHead>
-                      <TableHead className="font-semibold">Staff Name</TableHead>
+                      <TableHead className="font-semibold">
+                        Staff Name
+                      </TableHead>
                       <TableHead className="font-semibold">Job Rank</TableHead>
                       <TableHead className="font-semibold">Salary</TableHead>
-                      <TableHead className="font-semibold">Department</TableHead>
+                      <TableHead className="font-semibold">
+                        Department
+                      </TableHead>
                       <TableHead className="font-semibold">Role</TableHead>
                       <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Created At</TableHead>
+                      <TableHead className="font-semibold">
+                        Created At
+                      </TableHead>
                       <TableHead className="font-semibold">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {project?.staffs?.length ? (
                       project.staffs.map((staff, index) => (
-                        <TableRow key={staff.staffId} className="hover:bg-muted/50">
+                        <TableRow
+                          key={staff.staffId}
+                          className="hover:bg-muted/50"
+                        >
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>{staff.email}</TableCell>
                           <TableCell>{staff.userName}</TableCell>
                           <TableCell>{staff.staffName}</TableCell>
                           <TableCell>{staff.jobRank}</TableCell>
-                          <TableCell>${staff.salary?.toLocaleString()}</TableCell>
-                          <TableCell>{staff.departmentName}</TableCell>
-                          <TableCell>{staff.roleInProject}</TableCell>                         
                           <TableCell>
-                            <Badge className={staff.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+                            ${staff.salary?.toLocaleString()}
+                          </TableCell>
+                          <TableCell>{staff.departmentName}</TableCell>
+                          <TableCell>{staff.roleInProject}</TableCell>
+                          <TableCell>
+                            <Badge
+                              className={
+                                staff.isActive
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }
+                            >
                               {staff.isActive ? "Active" : "Inactive"}
                             </Badge>
                           </TableCell>
                           <TableCell>{formatDate(staff.createAt)}</TableCell>
-                          
+
                           <TableCell className="flex space-x-2">
-                            
-                          {/* <Button
+                            {/* <Button
                               variant="outline"
                               size="sm"
                               className="flex items-center gap-2 text-blue-500 hover:bg-blue-100"
@@ -260,17 +315,17 @@ const ProjectDetail = () => {
                               Update
                           </Button> */}
 
-                        <UpdateStaffToProjectDialog
-                            projectId={projectId.toString()}
-                            staff={{
-                              staffId: staff.staffId,
-                              staffName: staff.staffName,
-                              roleInProjectId: staff.roleInProject,
-                            }}
-                            onUpdate={fetch} // Refresh project data after update
-                          />
+                            <UpdateStaffToProjectDialog
+                              projectId={projectId.toString()}
+                              staff={{
+                                staffId: staff.staffId,
+                                staffName: staff.staffName,
+                                roleInProjectId: Number(staff.roleInProject),
+                              }}
+                              onUpdate={fetchRoles} // Refresh project data after update
+                            />
 
-                          <Button
+                            <Button
                               variant="outline"
                               size="sm"
                               className="flex items-center gap-2 text-blue-500 hover:bg-red-100"
@@ -292,22 +347,21 @@ const ProjectDetail = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={12} className="text-center py-4 text-muted-foreground">
+                        <TableCell
+                          colSpan={12}
+                          className="text-center py-4 text-muted-foreground"
+                        >
                           No staff data available.
                         </TableCell>
                       </TableRow>
                     )}
                   </TableBody>
-
-                  
-
-
                 </Table>
               </div>
             </>
           )}
         </CardContent>
-      </Card>    
+      </Card>
     </div>
   );
 };
