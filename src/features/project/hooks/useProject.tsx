@@ -1,5 +1,5 @@
 import useSWR from "swr";
-import { fetcher, fetcherWithParams, postData } from "@/api/fetchers";
+import { fetcher, fetcherWithParams, postData, putData } from "@/api/fetchers";
 import { Project, RoleInProject, ApiResponse } from "../types";
 import { Staff, StaffNotInProject } from "@/features/staff/types";
 
@@ -68,6 +68,24 @@ export const useAddStaffToProject = async (
     );
   } catch (error) {
     console.error("Error adding staff to project:", error);
+    throw error;
+  }
+};
+
+export const useUpdateStaffInProject = async (
+  data: { staffId: string; roleInProjectId: number }[],
+  projectId: number, mutate: () => void
+) => {
+  try {
+    return await putData(
+      `${BASE_URL}/Project/UpdateStaffInProject?projectId=${projectId}`,
+      data
+    );
+
+    mutate(); 
+
+  } catch (error) {
+    console.error("Error updating staff in project:", error);
     throw error;
   }
 };
