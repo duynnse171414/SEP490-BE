@@ -39,7 +39,7 @@ const router = createBrowserRouter([
     element: <AdminLayout />,
     children: [
       { path: "dashboard", element: <DashboardAdmin /> },
-      { path: "projects", element: <ProjectPage /> },
+      { path: "projects", element: <ProjectDashboard /> },
       { path: "staffs", element: <StaffPage /> },
       { path: "projects/:id", element: <ProjectDetailPage /> }, // Add Project Detail Page
     ],
