@@ -1,7 +1,7 @@
 export interface ClaimRequest {
   claimId: string;
-  projectId: number;
-  staffId: string;
+  projectName: string;
+  staffName: string;
   approvedBy: string | null;
   rejectBy: string | null;
   workingHours: number;

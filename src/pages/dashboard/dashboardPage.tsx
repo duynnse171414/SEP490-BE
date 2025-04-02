@@ -570,11 +570,11 @@ const DashboardPage = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Staff ID</TableHead>
-                          <TableHead>Project ID</TableHead>
+                          <TableHead>Project Name</TableHead>
                           <TableHead>Hours</TableHead>
                           <TableHead>Claim Date</TableHead>
                           <TableHead>Create At</TableHead>
+                          <TableHead>Update At</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -584,14 +584,17 @@ const DashboardPage = () => {
                             onClick={() => handleRowClick(request.claimId)}
                             className="cursor-pointer"
                           >
-                            <TableCell>{request.staffId}</TableCell>
-                            <TableCell>{request.projectId}</TableCell>
+                            {/* <TableCell>{request.staffId}</TableCell> */}
+                            <TableCell>{request.projectName}</TableCell>
                             <TableCell>{request.workingHours}</TableCell>
                             <TableCell>
                               {new Date(request.claimDate).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
                               {new Date(request.createAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              {request.updateAt? new Date(request.updateAt).toLocaleDateString() : "N/A"}
                             </TableCell>
                           </TableRow>
                         ))}
