@@ -10,6 +10,7 @@ import {
   Trash2,
   Download,
   Upload,
+  Folder,
 } from "lucide-react";
 import {
   Table,
@@ -49,8 +50,6 @@ import {
 } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 
-const ITEMS_PER_PAGE = 8;
-
 const ProjectDashboard = () => {
   const [projects, setProjects] = useState<GetAllProjectDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,6 +70,17 @@ const ProjectDashboard = () => {
   const [hasNextPage, setHasNextPage] = useState(false);
   const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
   const [warningMessage, setWarningMessage] = useState("");
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    const viewportHeight = window.innerHeight;
+    const headerHeight = 64;
+    const footerHeight = 64;
+    const tableHeaderHeight = 56;
+    const tableRowHeight = 73;
+    const availableHeight =
+      viewportHeight - (headerHeight + footerHeight + tableHeaderHeight + 120);
+    const calculatedItems = Math.floor(availableHeight / tableRowHeight);
+    return Math.max(1, calculatedItems);
+  });
 
   const currentProjects = projects || [];
   const initialFetchDone = useRef(false);
@@ -82,12 +92,30 @@ const ProjectDashboard = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const handleResize = () => {
+      const viewportHeight = window.innerHeight;
+      const headerHeight = 64;
+      const footerHeight = 64;
+      const tableHeaderHeight = 56;
+      const tableRowHeight = 73;
+      const availableHeight =
+        viewportHeight -
+        (headerHeight + footerHeight + tableHeaderHeight + 120);
+      const calculatedItems = Math.floor(availableHeight / tableRowHeight);
+      setItemsPerPage(Math.max(1, calculatedItems));
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const fetchProjects = async () => {
     try {
       setIsLoading(true);
       const queryParams = new URLSearchParams({
         pageNumber: currentPage.toString(),
-        pageSize: ITEMS_PER_PAGE.toString(),
+        pageSize: itemsPerPage.toString(),
       });
       queryParams.append("isActive", "");
       queryParams.append("sortBy", "");
@@ -108,85 +136,79 @@ const ProjectDashboard = () => {
     }
   };
 
-  // const handleSortChange = async (field: string, value: string) => {
-  //   if (field === "isActive") {
-  //     setCurrentPage(1);
-  //     setFilter(value);
-
-  //     if (isSearchMode && searchTerm) {
-  //       handleSearch(value);
-  //     } else {
-  //       const newConfig = {
-  //         isActive: value,
-  //         sortBy: sortConfig.sortBy,
-  //       };
-  //       setSortConfig(newConfig);
-  //       await handleSortWithConfig(newConfig, true);
-  //     }
-  //   }
-  // };
-
   const handleSortWithConfig = async (
     config: typeof sortConfig,
     forcePageOne?: boolean
   ) => {
     try {
+      console.log("Starting handleSortWithConfig:", { config, forcePageOne });
       setIsSorting(true);
       const sortByString = config.sortBy
         .map((sort) => `${sort.field}:${sort.direction}`)
         .join(",");
 
+      console.log("Sort string generated:", sortByString);
+
       const queryParams = new URLSearchParams();
       queryParams.append("isActive", config.isActive || "");
       queryParams.append("sortBy", sortByString);
-      const pageToUse = forcePageOne ? 1 : currentPage;
-      queryParams.append("pageNumber", pageToUse.toString());
-      queryParams.append("pageSize", ITEMS_PER_PAGE.toString());
 
+      if (forcePageOne) {
+        console.log("Forcing page one, resetting currentPage");
+        setCurrentPage(1);
+        queryParams.append("pageNumber", "1");
+      } else {
+        console.log("Using current page:", currentPage);
+        queryParams.append("pageNumber", currentPage.toString());
+      }
+
+      queryParams.append("pageSize", itemsPerPage.toString());
       const url = `/Project/sort?${queryParams.toString()}`;
+      console.log("Fetching data with URL:", url);
+
       const result = await fetcher(url);
+      console.log("Fetch result:", {
+        success: result.success,
+        dataLength: result.data?.length,
+      });
 
       if (result.success && Array.isArray(result.data)) {
-        await Promise.all([
-          new Promise<void>((resolve) => {
-            setProjects(result.data);
-            resolve();
-          }),
-          new Promise<void>((resolve) => {
-            setSortConfig(config);
-            resolve();
-          }),
-        ]);
-
+        setProjects(result.data);
+        setSortConfig(config);
         setError(null);
 
-        const nextPageParams = new URLSearchParams({
-          pageNumber: (pageToUse + 1).toString(),
-          pageSize: ITEMS_PER_PAGE.toString(),
-        });
-
-        if (config.isActive && config.isActive !== "") {
-          nextPageParams.append("isActive", config.isActive);
-        }
-
-        const sortByStr = config.sortBy
-          .map((sort) => `${sort.field}:${sort.direction}`)
-          .join(",");
-        nextPageParams.append("sortBy", sortByStr || "");
+        const nextPageParams = new URLSearchParams();
+        nextPageParams.append(
+          "pageNumber",
+          forcePageOne ? "2" : (currentPage + 1).toString()
+        );
+        nextPageParams.append("pageSize", itemsPerPage.toString());
+        nextPageParams.append("isActive", config.isActive || "");
+        nextPageParams.append("sortBy", sortByString);
 
         const nextPageUrl = `/Project/sort?${nextPageParams.toString()}`;
+        console.log("Checking next page with URL:", nextPageUrl);
+
         const nextPageResponse = await fetcher(nextPageUrl);
+        console.log("Next page check result:", {
+          hasData:
+            Array.isArray(nextPageResponse.data) &&
+            nextPageResponse.data.length > 0,
+          dataLength: nextPageResponse.data?.length,
+        });
 
         const hasNextPageData =
           Array.isArray(nextPageResponse.data) &&
           nextPageResponse.data.length > 0;
         setHasNextPage(hasNextPageData);
       } else {
+        console.error("Sort request failed:", result?.error || "Unknown error");
         setError(result?.error?.[0] || "Invalid response format from server");
         setProjects([]);
         setHasNextPage(false);
       }
     } catch (err) {
+      console.error("Sort error:", err);
       setError("Có lỗi xảy ra khi sắp xếp dữ liệu. Vui lòng thử lại sau.");
       setProjects([]);
       setHasNextPage(false);
@@ -237,7 +259,7 @@ const ProjectDashboard = () => {
       }
 
       queryParams.append("projectName", searchTerm);
-      queryParams.append("pageSize", ITEMS_PER_PAGE.toString());
+      queryParams.append("pageSize", itemsPerPage.toString());
       queryParams.append("pageNumber", "1");
 
       const url = `/Project/search?${queryParams.toString()}`;
@@ -249,7 +271,7 @@ const ProjectDashboard = () => {
 
         const nextPageQueryParams = new URLSearchParams({
           pageNumber: "2",
-          pageSize: ITEMS_PER_PAGE.toString(),
+          pageSize: itemsPerPage.toString(),
         });
 
         if (filterToUse === "true" || filterToUse === "false") {
@@ -286,7 +308,7 @@ const ProjectDashboard = () => {
       setIsLoading(true);
       const queryParams = new URLSearchParams({
         pageNumber: page.toString(),
-        pageSize: ITEMS_PER_PAGE.toString(),
+        pageSize: itemsPerPage.toString(),
       });
 
       let url = "";
@@ -297,7 +319,7 @@ const ProjectDashboard = () => {
         queryParams.append("projectName", searchTerm);
         url = `/Project/search?${queryParams.toString()}`;
       } else {
-        queryParams.append("isActive", "");
+        queryParams.append("isActive", sortConfig.isActive || "");
         const sortByString = sortConfig.sortBy
           .map((sort) => `${sort.field}:${sort.direction}`)
           .join(",");
@@ -340,6 +362,7 @@ const ProjectDashboard = () => {
   };
 
   const handleColumnSort = (field: string) => {
+    console.log("handleColumnSort called with field:", field);
     setSearchTerm("");
     setIsSearchMode(false);
 
@@ -352,6 +375,12 @@ const ProjectDashboard = () => {
     const existingIndex = newSortBy.findIndex(
       (sort) => sort.field === sortField
     );
+
+    console.log("Current sort config:", {
+      sortConfig,
+      existingIndex,
+      currentField: sortField,
+    });
 
     if (existingIndex !== -1) {
       if (newSortBy[existingIndex].direction === "asc") {
@@ -369,6 +398,7 @@ const ProjectDashboard = () => {
       sortBy: newSortBy,
     };
 
+    console.log("New sort config:", newConfig);
     setSortConfig(newConfig);
     handleSortWithConfig(newConfig);
   };
@@ -554,8 +584,25 @@ const ProjectDashboard = () => {
 
   const handleExportExcel = async () => {
     try {
+      const queryParams = new URLSearchParams();
+
+      if (sortConfig.isActive === "true" || sortConfig.isActive === "false") {
+        queryParams.append("isActive", sortConfig.isActive);
+      }
+
+      if (isSearchMode && searchTerm) {
+        queryParams.append("searchBy", searchTerm);
+      }
+
+      const sortByString = sortConfig.sortBy
+        .map((sort) => `${sort.field}:${sort.direction}`)
+        .join(",");
+      if (sortByString) {
+        queryParams.append("sortBy", sortByString);
+      }
+
       const response = await axiosInstance.get(
-        "/Project/export-excel-without-staffs",
+        `/Project/export-excel-filtered?${queryParams.toString()}`,
         {
           responseType: "blob",
         }
@@ -568,7 +615,7 @@ const ProjectDashboard = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "projects.xlsx";
+        a.download = "FilteredProjects.xlsx";
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -587,7 +634,7 @@ const ProjectDashboard = () => {
     try {
       const queryParams = new URLSearchParams({
         pageNumber: (pageNumber + 1).toString(),
-        pageSize: ITEMS_PER_PAGE.toString(),
+        pageSize: itemsPerPage.toString(),
       });
 
       let url = "";
@@ -634,6 +681,116 @@ const ProjectDashboard = () => {
     );
   };
 
+  const handleSearchWithPageSize = async (pageSize: number) => {
+    setCurrentPage(1);
+    try {
+      setIsLoading(true);
+      const queryParams = new URLSearchParams();
+
+      if (filter === "true" || filter === "false") {
+        queryParams.append("isActive", filter);
+      }
+
+      queryParams.append("projectName", searchTerm);
+      queryParams.append("pageSize", pageSize.toString());
+      queryParams.append("pageNumber", "1");
+
+      const url = `/Project/search?${queryParams.toString()}`;
+      const result = await fetcher(url);
+
+      if (result.success && Array.isArray(result.data)) {
+        setProjects(result.data);
+        setError(null);
+        await checkNextPageWithPageSize(1, pageSize);
+      } else {
+        notifyError(result?.error?.[0] || "Failed to search projects");
+        setProjects([]);
+        setHasNextPage(false);
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.error?.[0] ||
+        "An error occurred while searching projects";
+      notifyError(errorMessage);
+      setProjects([]);
+      setHasNextPage(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSortWithConfigAndPageSize = async (
+    config: typeof sortConfig,
+    pageSize: number
+  ) => {
+    try {
+      setIsSorting(true);
+      const sortByString = config.sortBy
+        .map((sort) => `${sort.field}:${sort.direction}`)
+        .join(",");
+
+      const queryParams = new URLSearchParams();
+      queryParams.append("isActive", config.isActive || "");
+      queryParams.append("sortBy", sortByString);
+      queryParams.append("pageNumber", "1");
+      queryParams.append("pageSize", pageSize.toString());
+
+      const url = `/Project/sort?${queryParams.toString()}`;
+      const result = await fetcher(url);
+
+      if (result.success && Array.isArray(result.data)) {
+        setProjects(result.data);
+        setSortConfig(config);
+        setError(null);
+        await checkNextPageWithPageSize(1, pageSize);
+      } else {
+        setError(result?.error?.[0] || "Invalid response format from server");
+        setProjects([]);
+        setHasNextPage(false);
+      }
+    } catch (err) {
+      setError("Có lỗi xảy ra khi sắp xếp dữ liệu. Vui lòng thử lại sau.");
+      setProjects([]);
+      setHasNextPage(false);
+    } finally {
+      setIsSorting(false);
+    }
+  };
+
+  const checkNextPageWithPageSize = async (
+    pageNumber: number,
+    pageSize: number
+  ) => {
+    try {
+      const queryParams = new URLSearchParams({
+        pageNumber: (pageNumber + 1).toString(),
+        pageSize: pageSize.toString(),
+      });
+
+      let url = "";
+      if (isSearchMode && searchTerm) {
+        if (filter === "true" || filter === "false") {
+          queryParams.append("isActive", filter);
+        }
+        queryParams.append("projectName", searchTerm);
+        url = `/Project/search?${queryParams.toString()}`;
+      } else {
+        queryParams.append("isActive", sortConfig.isActive || "");
+        const sortByString = sortConfig.sortBy
+          .map((sort) => `${sort.field}:${sort.direction}`)
+          .join(",");
+        queryParams.append("sortBy", sortByString);
+        url = `/Project/sort?${queryParams.toString()}`;
+      }
+
+      const response = await fetcher(url);
+      const hasData = Array.isArray(response.data) && response.data.length > 0;
+      setHasNextPage(hasData);
+    } catch (err) {
+      setHasNextPage(false);
+    }
+  };
+
   return (
     <>
       <ToastNotification />
@@ -641,129 +798,32 @@ const ProjectDashboard = () => {
         <TopLoadingBar />
       </div>
 
-      <div className="flex h-screen">
+      <div className="flex">
         <HeaderAdmin />
 
-        <main className="flex-1 p-6">
-          <div className="container mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-4">
-                <h1 className="text-2xl font-bold">Projects</h1>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-2"
-                    >
-                      <Filter className="h-4 w-4" />
-                      Filter
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <DropdownMenuLabel>Status Filter</DropdownMenuLabel>
-                    <DropdownMenuRadioGroup
-                      value={filter}
-                      onValueChange={(value) => handleFilterClick(value)}
-                    >
-                      <DropdownMenuRadioItem value="true">
-                        Active Projects
-                      </DropdownMenuRadioItem>
-                      <DropdownMenuRadioItem value="false">
-                        Inactive Projects
-                      </DropdownMenuRadioItem>
-                    </DropdownMenuRadioGroup>
-
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        try {
-                          setIsLoading(true);
-                          setSortConfig({
-                            isActive: "",
-                            sortBy: [],
-                          });
-                          setFilter("");
-                          setSearchTerm("");
-                          setIsSearchMode(false);
-                          setCurrentPage(1);
-
-                          const queryParams = new URLSearchParams({
-                            pageNumber: "1",
-                            pageSize: ITEMS_PER_PAGE.toString(),
-                          });
-                          queryParams.append("isActive", "");
-                          queryParams.append("sortBy", "");
-
-                          const url = `/Project/sort?${queryParams.toString()}`;
-                          const response = await fetcher(url);
-
-                          if (
-                            response.success &&
-                            Array.isArray(response.data)
-                          ) {
-                            setProjects(response.data);
-                            setError(null);
-
-                            const nextPageQueryParams = new URLSearchParams({
-                              pageNumber: "2",
-                              pageSize: ITEMS_PER_PAGE.toString(),
-                            });
-                            nextPageQueryParams.append("isActive", "");
-                            nextPageQueryParams.append("sortBy", "");
-
-                            const nextPageUrl = `/Project/sort?${nextPageQueryParams.toString()}`;
-                            const nextPageResponse = await fetcher(nextPageUrl);
-
-                            const hasNextPageData =
-                              Array.isArray(nextPageResponse.data) &&
-                              nextPageResponse.data.length > 0;
-                            setHasNextPage(hasNextPageData);
-                          } else {
-                            setError("Invalid response format from server");
-                          }
-                        } catch (err) {
-                          setError(
-                            "Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau."
-                          );
-                        } finally {
-                          setIsLoading(false);
-                        }
-                      }}
-                    >
-                      Reset Filter
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <div className="flex gap-4 items-center">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Search project..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setIsSearchMode(true);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        setCurrentPage(1);
-                        handleSearch();
-                      }
-                    }}
-                    className="px-4 py-2 border rounded-md"
-                  />
+        <main className="flex-1 p-6 pb-0 flex flex-col">
+          <div className="container mx-auto flex flex-col h-full">
+            {/* Header with title and action buttons */}
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <h1 className="text-2xl font-bold">Projects</h1>
+                  {/* Primary action button - Add Project - moved here for prominence */}
                   <Button
                     variant="default"
                     onClick={() => {
-                      setCurrentPage(1);
-                      handleSearch();
+                      setFormMode("create");
+                      setSelectedProject(null);
+                      setIsFormOpen(true);
                     }}
+                    className="flex items-center gap-2"
                   >
-                    Search
+                    Add Project
                   </Button>
                 </div>
-                <div className="flex gap-2">
+
+                {/* Move import/export buttons near the title for better grouping */}
+                <div className="flex items-center gap-2">
                   <input
                     type="file"
                     id="excel-import"
@@ -789,238 +849,394 @@ const ProjectDashboard = () => {
                     <Download className="h-4 w-4" />
                     Export
                   </Button>
-                  <Button
-                    variant="default"
-                    onClick={() => {
-                      setFormMode("create");
-                      setSelectedProject(null);
-                      setIsFormOpen(true);
-                    }}
-                  >
-                    Add Project
-                  </Button>
+                  <div className="flex items-center gap-2 ml-4">
+                    <label
+                      htmlFor="itemsPerPage"
+                      className="text-sm font-medium"
+                    >
+                      Items:
+                    </label>
+                    <input
+                      id="itemsPerPage"
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (value > 0 && value <= 50) {
+                          setItemsPerPage(value);
+                          setCurrentPage(1);
+                          if (isSearchMode && searchTerm) {
+                            handleSearchWithPageSize(value);
+                          } else {
+                            handleSortWithConfigAndPageSize(sortConfig, value);
+                          }
+                        }
+                      }}
+                      className="w-16 px-2 py-1 border rounded-md text-center"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Search and filter row */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="flex-1 max-w-md">
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        placeholder="Search project..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          setIsSearchMode(true);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            setCurrentPage(1);
+                            handleSearch();
+                          }
+                        }}
+                        className="px-4 py-2 border rounded-md w-full"
+                      />
+                      <Button
+                        variant="default"
+                        onClick={() => {
+                          setCurrentPage(1);
+                          handleSearch();
+                        }}
+                      >
+                        Search
+                      </Button>
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Filter className="h-4 w-4" />
+                        Filter
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56">
+                      <DropdownMenuLabel>Status Filter</DropdownMenuLabel>
+                      <DropdownMenuRadioGroup
+                        value={filter}
+                        onValueChange={(value) => handleFilterClick(value)}
+                      >
+                        <DropdownMenuRadioItem value="true">
+                          Active Projects
+                        </DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="false">
+                          Inactive Projects
+                        </DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          try {
+                            setIsLoading(true);
+                            setSortConfig({
+                              isActive: "",
+                              sortBy: [],
+                            });
+                            setFilter("");
+                            setSearchTerm("");
+                            setIsSearchMode(false);
+                            setCurrentPage(1);
+
+                            const queryParams = new URLSearchParams({
+                              pageNumber: "1",
+                              pageSize: itemsPerPage.toString(),
+                            });
+                            queryParams.append("isActive", "");
+                            queryParams.append("sortBy", "");
+
+                            const url = `/Project/sort?${queryParams.toString()}`;
+                            const response = await fetcher(url);
+
+                            if (
+                              response.success &&
+                              Array.isArray(response.data)
+                            ) {
+                              setProjects(response.data);
+                              setError(null);
+
+                              const nextPageQueryParams = new URLSearchParams({
+                                pageNumber: "2",
+                                pageSize: itemsPerPage.toString(),
+                              });
+                              nextPageQueryParams.append("isActive", "");
+                              nextPageQueryParams.append("sortBy", "");
+
+                              const nextPageUrl = `/Project/sort?${nextPageQueryParams.toString()}`;
+                              const nextPageResponse = await fetcher(
+                                nextPageUrl
+                              );
+
+                              const hasNextPageData =
+                                Array.isArray(nextPageResponse.data) &&
+                                nextPageResponse.data.length > 0;
+                              setHasNextPage(hasNextPageData);
+                            } else {
+                              setError("Invalid response format from server");
+                            }
+                          } catch (err) {
+                            setError(
+                              "Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau."
+                            );
+                          } finally {
+                            setIsLoading(false);
+                          }
+                        }}
+                      >
+                        Reset Filter
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </div>
 
-            {isLoading || isSorting ? (
-              <div className="flex items-center justify-center h-[400px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
-            ) : error ? (
-              <div className="flex items-center justify-center h-[400px]">
-                <div className="text-red-500 text-center">
-                  <p className="text-xl font-semibold mb-2">ERROR</p>
-                  <p className="text-xl font-semibold mb-2">ERROR</p>
-                  <p>{error}</p>
+            {/* Table content - unchanged */}
+            <div className="flex-grow">
+              {isLoading || isSorting ? (
+                <div className="flex items-center justify-center h-[400px]">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-              </div>
-            ) : (
-              <div className="rounded-md border">
-                <Table className="w-full">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px] text-center">
-                        <Button
-                          variant="ghost"
-                          className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full"
-                          onClick={() => handleColumnSort("ProjectId")}
-                        >
-                          Project ID
-                          {getSortIcon("ProjectId")}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="w-[250px] text-center">
-                        <Button
-                          variant="ghost"
-                          className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full"
-                          onClick={() => handleColumnSort("ProjectName")}
-                        >
-                          Project Name
-                          {getSortIcon("ProjectName")}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="w-[120px] text-center">
-                        <Button
-                          variant="ghost"
-                          className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full"
-                          onClick={() => handleColumnSort("ProjectCode")}
-                        >
-                          Project Code
-                          {getSortIcon("ProjectCode")}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="w-[180px] text-center">
-                        <Button
-                          variant="ghost"
-                          className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full"
-                          onClick={() => handleColumnSort("ProjectManager")}
-                        >
-                          Project Manager
-                          {getSortIcon("ProjectManager")}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="w-[120px] text-center">
-                        <Button
-                          variant="ghost"
-                          className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full"
-                          onClick={() => handleColumnSort("StartDate")}
-                        >
-                          Start Date
-                          {getSortIcon("StartDate")}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="w-[120px] text-center">
-                        <Button
-                          variant="ghost"
-                          className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full"
-                          onClick={() => handleColumnSort("EndDate")}
-                        >
-                          End Date
-                          {getSortIcon("EndDate")}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="w-[100px] text-center">
-                        <Button
-                          variant="ghost"
-                          className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full"
-                          onClick={() => handleColumnSort("isActive")}
-                        >
-                          Status
-                          {getSortIcon("isActive")}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="w-[100px] text-center">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(currentProjects || []).map((project) => (
-                      <TableRow key={project.projectId}>
-                        <TableCell className="max-w-[100px] truncate text-center">
-                          {project.projectId}
-                        </TableCell>
-                        <TableCell className="max-w-[250px] truncate font-medium">
-                          <div className="truncate" title={project.projectName}>
-                            {project.projectName}
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-[120px] truncate text-center">
-                          <div
-                            className="truncate text-center"
-                            title={project.projectCode}
-                          >
-                            {project.projectCode}
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-[180px] truncate text-center">
-                          <div
-                            className="truncate text-center"
-                            title={project.managerName || "N/A"}
-                          >
-                            {project.managerName || "N/A"}
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-[120px] truncate text-center">
-                          {new Date(project.startDate).toLocaleDateString(
-                            "vi-VN"
-                          )}
-                        </TableCell>
-                        <TableCell className="max-w-[120px] truncate text-center">
-                          {new Date(project.endDate).toLocaleDateString(
-                            "vi-VN"
-                          )}
-                        </TableCell>
-                        <TableCell className="max-w-[100px] text-center">
-                          <div className="flex justify-center">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                project.isActive
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {project.isActive ? "Active" : "Inactive"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <span className="sr-only">Open menu</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedProject(project);
-                                    setFormMode("edit");
-                                    setIsFormOpen(true);
-                                  }}
-                                >
-                                  <Pencil className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    handleDeleteProject(project.projectId)
-                                  }
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  <Link
-                                    to={`/admin/projects/${project.projectId}`}
-                                  >
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    View details
-                                  </Link>
-                                  {/* <Eye className="mr-2 h-4 w-4" />
-                                  View  */}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {currentProjects.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8">
-                          <div className="flex flex-col items-center justify-center text-gray-500">
-                            <p className="text-lg font-medium">
-                              No projects found
-                            </p>
-                            <p className="text-sm mt-1">
-                              {isSearchMode
-                                ? "Try adjusting your search criteria"
-                                : "Add a new project to get started"}
-                            </p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-
-                {currentProjects.length > 0 && (
-                  <div className="py-4">
-                    <CustomPagination
-                      page={currentPage}
-                      hasNextPage={hasNextPage}
-                      onPageChange={handlePageChange}
-                    />
+              ) : error ? (
+                <div className="flex items-center justify-center h-[400px]">
+                  <div className="text-red-500 text-center">
+                    <p className="text-xl font-semibold mb-2">ERROR</p>
+                    <p>{error}</p>
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader className="sticky top-0">
+                        <TableRow>
+                          <TableHead className="w-[100px] text-center">
+                            <Button
+                              variant="ghost"
+                              className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full h-full"
+                              onClick={() => handleColumnSort("ProjectId")}
+                            >
+                              Project ID
+                              {getSortIcon("ProjectId")}
+                            </Button>
+                          </TableHead>
+                          <TableHead className="w-[250px] text-center">
+                            <Button
+                              variant="ghost"
+                              className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full h-full"
+                              onClick={() => handleColumnSort("ProjectName")}
+                            >
+                              Project Name
+                              {getSortIcon("ProjectName")}
+                            </Button>
+                          </TableHead>
+                          <TableHead className="w-[120px] text-center">
+                            <Button
+                              variant="ghost"
+                              className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full h-full"
+                              onClick={() => handleColumnSort("ProjectCode")}
+                            >
+                              Project Code
+                              {getSortIcon("ProjectCode")}
+                            </Button>
+                          </TableHead>
+                          <TableHead className="w-[180px] text-center">
+                            <Button
+                              variant="ghost"
+                              className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full h-full"
+                              onClick={() => handleColumnSort("ProjectManager")}
+                            >
+                              Project Manager
+                              {getSortIcon("ProjectManager")}
+                            </Button>
+                          </TableHead>
+                          <TableHead className="w-[120px] text-center">
+                            <Button
+                              variant="ghost"
+                              className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full h-full"
+                              onClick={() => handleColumnSort("StartDate")}
+                            >
+                              Start Date
+                              {getSortIcon("StartDate")}
+                            </Button>
+                          </TableHead>
+                          <TableHead className="w-[120px] text-center">
+                            <Button
+                              variant="ghost"
+                              className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full h-full"
+                              onClick={() => handleColumnSort("EndDate")}
+                            >
+                              End Date
+                              {getSortIcon("EndDate")}
+                            </Button>
+                          </TableHead>
+                          <TableHead className="w-[100px] text-center">
+                            <Button
+                              variant="ghost"
+                              className="flex items-center justify-center gap-2 p-0 hover:bg-transparent w-full h-full"
+                              onClick={() => handleColumnSort("isActive")}
+                            >
+                              Status
+                              {getSortIcon("isActive")}
+                            </Button>
+                          </TableHead>
+                          <TableHead className="w-[100px] text-center">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(currentProjects || []).map((project) => (
+                          <TableRow key={project.projectId}>
+                            <TableCell className="max-w-[100px] truncate text-center">
+                              {project.projectId}
+                            </TableCell>
+                            <TableCell className="max-w-[250px] truncate font-medium">
+                              <div
+                                className="truncate"
+                                title={project.projectName}
+                              >
+                                {project.projectName}
+                              </div>
+                            </TableCell>
+                            <TableCell className="max-w-[120px] truncate text-center">
+                              <div
+                                className="truncate text-center"
+                                title={project.projectCode}
+                              >
+                                {project.projectCode}
+                              </div>
+                            </TableCell>
+                            <TableCell className="max-w-[180px] truncate text-center">
+                              <div
+                                className="truncate text-center"
+                                title={project.managerName || "N/A"}
+                              >
+                                {project.managerName || "N/A"}
+                              </div>
+                            </TableCell>
+                            <TableCell className="max-w-[120px] truncate text-center">
+                              {new Date(project.startDate).toLocaleDateString(
+                                "vi-VN"
+                              )}
+                            </TableCell>
+                            <TableCell className="max-w-[120px] truncate text-center">
+                              {new Date(project.endDate).toLocaleDateString(
+                                "vi-VN"
+                              )}
+                            </TableCell>
+                            <TableCell className="max-w-[100px] text-center">
+                              <div className="flex justify-center">
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    project.isActive
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-red-100 text-red-800"
+                                  }`}
+                                >
+                                  {project.isActive ? "Active" : "Inactive"}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <div className="flex items-center justify-center">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <span className="sr-only">Open menu</span>
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="end"
+                                    className="w-[150px] p-2"
+                                  >
+                                    <DropdownMenuLabel className="text-base py-2">
+                                      Actions
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuItem
+                                      className="py-2 cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedProject(project);
+                                        setFormMode("edit");
+                                        setIsFormOpen(true);
+                                      }}
+                                    >
+                                      <Pencil className="mr-3 h-5 w-5" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="py-2 cursor-pointer"
+                                      onClick={() =>
+                                        handleDeleteProject(project.projectId)
+                                      }
+                                    >
+                                      <Trash2 className="mr-3 h-5 w-5" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator className="my-2" />
+                                    <DropdownMenuItem className="py-2 cursor-pointer">
+                                      <Link
+                                        to={`/admin/projects/${project.projectId}`}
+                                        className="flex items-center w-full"
+                                      >
+                                        <Folder className="mr-3 h-5 w-5" />
+                                        View details
+                                      </Link>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {currentProjects.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={8} className="text-center py-8">
+                              <div className="flex flex-col items-center justify-center text-gray-500">
+                                <p className="text-lg font-medium">
+                                  No projects found
+                                </p>
+                                <p className="text-sm mt-1">
+                                  {isSearchMode
+                                    ? "Try adjusting your search criteria"
+                                    : "Add a new project to get started"}
+                                </p>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {currentProjects.length > 0 && (
+                    <div className="py-4">
+                      <CustomPagination
+                        page={currentPage}
+                        hasNextPage={hasNextPage}
+                        onPageChange={handlePageChange}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </main>
       </div>

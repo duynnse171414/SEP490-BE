@@ -7,9 +7,18 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { useRoleInProject, useUpdateStaffInProject } from "@/features/project/hooks/useProject";
+import {
+  useRoleInProject,
+  useUpdateStaffInProject,
+} from "@/features/project/hooks/useProject";
 import { useProjects } from "@/features/project/hooks/userProject";
 
 export function UpdateStaffToProjectDialog({
@@ -50,7 +59,11 @@ export function UpdateStaffToProjectDialog({
       setIsSubmitting(true);
 
       // Call the API using the hook
-      await useUpdateStaffInProject(staffUpdatePayload, Number(projectId), mutate);
+      await useUpdateStaffInProject(
+        staffUpdatePayload,
+        Number(projectId),
+        mutate
+      );
 
       toast.success("Staff updated successfully!");
       onUpdate(); // Trigger parent component's update logic
@@ -66,7 +79,11 @@ export function UpdateStaffToProjectDialog({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-2 text-blue-500 hover:bg-blue-100">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2 text-blue-500 hover:bg-blue-100"
+        >
           Update
         </Button>
       </DialogTrigger>
@@ -76,11 +93,15 @@ export function UpdateStaffToProjectDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Staff Name:</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Staff Name:
+            </label>
             <p>{staff.staffName}</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Role:</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Role:
+            </label>
             <Select
               value={selectedRole}
               onValueChange={(value) => setSelectedRole(value)}
@@ -95,7 +116,10 @@ export function UpdateStaffToProjectDialog({
                   </SelectItem>
                 ) : (
                   roles?.map((role) => (
-                    <SelectItem key={role.roleProjectId} value={role.roleProjectId.toString()}>
+                    <SelectItem
+                      key={role.roleProjectId}
+                      value={role.roleProjectId.toString()}
+                    >
                       {role.name}
                     </SelectItem>
                   ))

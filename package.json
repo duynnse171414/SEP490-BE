@@ -39,6 +39,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "crweb": "file:",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.4.10",
     "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",

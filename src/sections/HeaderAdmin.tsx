@@ -19,7 +19,7 @@ const HeaderAdmin = () => {
   const { theme, setTheme } = useTheme();
 
   return (
-    <div className="flex h-screen">
+    <div className="flex">
       {/* Sidebar */}
       <aside className="p-4 flex flex-col transition-all duration-300 hover:w-64 w-20 bg-background border-r">
         <div className="flex items-center gap-2 bg-accent/30 p-1 rounded-full mb-4">
