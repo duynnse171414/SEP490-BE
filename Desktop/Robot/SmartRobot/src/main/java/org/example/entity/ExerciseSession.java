@@ -23,7 +23,7 @@ public class ExerciseSession {
 
     @ManyToOne
     private Robot robot;
-
+    boolean deleted = false;
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
     private String feedback;

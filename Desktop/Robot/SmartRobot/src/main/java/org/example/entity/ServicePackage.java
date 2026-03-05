@@ -20,6 +20,6 @@ public class ServicePackage {
     private String description;
     private String level;
     private double price;
-
+    boolean deleted = false;
     private boolean active = true;
 }

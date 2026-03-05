@@ -3,7 +3,7 @@ package org.example.service;
 import org.example.entity.Account;
 import org.example.exception.DuplicateEntity;
 import org.example.exception.NotFoundException;
-import org.example.model.reponse.AccountResponse;
+import org.example.model.response.AccountResponse;
 import org.example.model.request.LoginRequest;
 import org.example.model.request.RegisterRequest;
 import org.example.repository.AccountRepository;

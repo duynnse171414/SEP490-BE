@@ -23,8 +23,7 @@ public class SystemLog {
     private Account account;
 
     private String action;
-
+    boolean deleted = false;
     private String targetEntity;
-
     private LocalDateTime createdAt;
 }

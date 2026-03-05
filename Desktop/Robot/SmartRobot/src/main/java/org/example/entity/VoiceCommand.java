@@ -21,4 +21,6 @@ public class VoiceCommand {
     private String commandText;
     private String commandType;
     private LocalDateTime createdAt;
+    boolean deleted = false;
+
 }

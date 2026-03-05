@@ -25,6 +25,6 @@ public class InteractionLog {
     private String userInputText;
     private String robotResponseText;
     private String emotionDetected;
-
+    boolean deleted = false;
     private LocalDateTime createdAt;
 }

@@ -15,10 +15,9 @@ public class CaregiverProfile {
     private Long id;
 
     @OneToOne
-    @MapsId
     @JoinColumn(name = "account_id")
     private Account account;
-
+    boolean deleted = false;
     private String relationship;
     private String notificationPreference;
 }

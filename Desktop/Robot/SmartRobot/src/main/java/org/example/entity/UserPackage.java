@@ -23,4 +23,6 @@ public class UserPackage {
 
     private LocalDateTime assignedAt;
     private LocalDateTime expiredAt;
+    boolean deleted = false;
+
 }

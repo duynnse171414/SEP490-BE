@@ -21,6 +21,6 @@ public class AlertNotification {
     private String alertType;
     private String message;
     private boolean resolved;
-
+    boolean deleted = false;
     private LocalDateTime createdAt;
 }

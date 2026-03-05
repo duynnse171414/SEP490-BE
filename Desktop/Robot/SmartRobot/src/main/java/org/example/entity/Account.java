@@ -96,4 +96,5 @@ public class Account implements UserDetails {
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
     private ElderlyProfile elderlyProfile;
+
 }

@@ -27,7 +27,7 @@ public class ReminderLog {
     @ManyToOne
     @JoinColumn(name = "elderly_id")
     private ElderlyProfile elderly;
-
+    boolean deleted = false;
     private LocalDateTime triggeredTime;
     private boolean confirmed;
     private LocalDateTime confirmedTime;

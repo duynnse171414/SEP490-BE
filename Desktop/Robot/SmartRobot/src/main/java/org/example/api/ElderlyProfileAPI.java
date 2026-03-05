@@ -1,6 +1,6 @@
 package org.example.api;
 
-import org.example.model.reponse.ElderlyProfileResponse;
+import org.example.model.response.ElderlyProfileResponse;
 import org.example.model.request.ElderlyProfileRequest;
 import org.example.service.ElderlyProfileService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

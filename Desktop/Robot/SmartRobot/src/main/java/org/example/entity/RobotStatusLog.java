@@ -22,6 +22,7 @@ public class RobotStatusLog {
     private Robot robot;
 
     private String status;
+    boolean deleted = false;
 
     private LocalDateTime reportedAt;
 }

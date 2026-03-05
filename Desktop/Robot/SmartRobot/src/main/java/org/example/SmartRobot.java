@@ -11,10 +11,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 @OpenAPIDefinition(info = @Info(title = "WebHIV API", version = "1.0", description = "Information"))
 @SecurityScheme(name = "api", scheme = "bearer", type = SecuritySchemeType.HTTP, in = SecuritySchemeIn.HEADER)
-public class Main {
+public class SmartRobot {
 
     public static void main(String[] args) {
-        SpringApplication.run(Main.class, args);
+        SpringApplication.run(SmartRobot.class, args);
     }
 
 }

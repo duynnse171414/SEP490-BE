@@ -18,6 +18,7 @@ public class Robot {
     private String serialNumber;
     private String firmwareVersion;
     private String status;
+    boolean deleted = false;
 
     @ManyToOne
     @JoinColumn(name = "assigned_elderly_id")

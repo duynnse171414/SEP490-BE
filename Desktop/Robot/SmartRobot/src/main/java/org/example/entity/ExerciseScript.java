@@ -15,7 +15,7 @@ public class ExerciseScript {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    boolean deleted = false;
     private String name;
     private String description;
     private int durationMinutes;

@@ -3,7 +3,7 @@ package org.example.service;
 import org.example.entity.Account;
 import org.example.entity.ElderlyProfile;
 import org.example.exception.NotFoundException;
-import org.example.model.reponse.ElderlyProfileResponse;
+import org.example.model.response.ElderlyProfileResponse;
 import org.example.model.request.ElderlyProfileRequest;
 import org.example.repository.AccountRepository;
 import org.example.repository.ElderlyProfileRepository;

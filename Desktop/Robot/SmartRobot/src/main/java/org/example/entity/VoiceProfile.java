@@ -20,6 +20,7 @@ public class VoiceProfile {
 
     private String voicePrintHash;
     private int sampleCount;
+    boolean deleted = false;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -1,7 +1,7 @@
 package org.example.api;
 
 
-import org.example.model.reponse.AccountResponse;
+import org.example.model.response.AccountResponse;
 import org.example.model.request.LoginRequest;
 import org.example.model.request.RegisterRequest;
 import org.example.service.AuthenticationService;

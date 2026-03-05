@@ -29,4 +29,5 @@ public class Reminder {
     private String repeatPattern;
 
     private boolean active = true;
+    private boolean deleted = false;
 }
