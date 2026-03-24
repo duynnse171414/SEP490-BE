@@ -101,7 +101,7 @@ public class AuthenticationService implements UserDetailsService {
     public AccountResponse login(LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                    loginRequest.getUsername(),
+                    loginRequest.getPhone(),
                     loginRequest.getPassword()
             ));
             Account account = (Account) authentication.getPrincipal();

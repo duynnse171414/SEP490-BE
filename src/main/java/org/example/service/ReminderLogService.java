@@ -6,6 +6,7 @@ import org.example.model.request.ReminderLogRequest;
 import org.example.model.response.ReminderLogResponse;
 import org.example.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -73,8 +74,23 @@ public class ReminderLogService {
 
     // GET BY ID
     public ReminderLogResponse getById(Long id) {
-        ReminderLog log = repository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new RuntimeException("Reminder log not found"));
+        ReminderLog log = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Not found"));
+
+        Account currentUser = (Account) SecurityContextHolder
+                .getContext().getAuthentication().getPrincipal();
+
+        boolean isOwner = log.getElderly().getId().equals(currentUser.getId());
+
+        boolean isAllowedRole =
+                currentUser.getRole().name().equals("ADMINISTRATOR") ||
+                        currentUser.getRole().name().equals("MANAGER") ||
+                        currentUser.getRole().name().equals("CAREGIVER") ||
+                        currentUser.getRole().name().equals("FAMILYMEMBER");
+
+        if (!isOwner && !isAllowedRole) {
+            throw new RuntimeException("Forbidden");
+        }
 
         return mapToResponse(log);
     }

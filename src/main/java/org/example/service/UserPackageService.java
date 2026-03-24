@@ -10,6 +10,7 @@ import org.example.repository.AccountRepository;
 import org.example.repository.ServicePackageRepository;
 import org.example.repository.UserPackageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -58,9 +59,19 @@ public class UserPackageService {
 
     // GET BY ID
     public UserPackageResponse getById(Long id) {
+        UserPackage userPackage = userPackageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Not found"));
 
-        UserPackage userPackage = userPackageRepository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new RuntimeException("UserPackage not found"));
+        Account currentUser = (Account) SecurityContextHolder
+                .getContext().getAuthentication().getPrincipal();
+
+        boolean isOwner = userPackage.getAccount().getId() == currentUser.getId();
+
+        boolean isAdmin = currentUser.getRole().name().equals("ADMINISTRATOR");
+
+        if (!isOwner && !isAdmin) {
+            throw new RuntimeException("Forbidden");
+        }
 
         return mapToResponse(userPackage);
     }

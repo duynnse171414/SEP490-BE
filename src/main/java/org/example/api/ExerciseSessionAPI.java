@@ -6,6 +6,7 @@ import org.example.model.request.ExerciseSessionRequest;
 import org.example.model.response.ExerciseSessionResponse;
 import org.example.service.ExerciseSessionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,31 +15,41 @@ import java.util.List;
 @RequestMapping("/api/exercise-sessions")
 @SecurityRequirement(name = "api")
 public class ExerciseSessionAPI {
+
     @Autowired
     ExerciseSessionService service;
 
+
     @PostMapping
+    @PreAuthorize("hasRole('ELDERLYUSER')")
     public ExerciseSessionResponse create(@RequestBody ExerciseSessionRequest request) {
         return service.create(request);
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public List<ExerciseSessionResponse> getAll() {
         return service.getAll();
     }
 
+
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ExerciseSessionResponse getById(@PathVariable Long id) {
         return service.getById(id);
     }
 
+
     @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ExerciseSessionResponse update(@PathVariable Long id,
                                           @RequestBody ExerciseSessionRequest request) {
         return service.update(id, request);
     }
 
+
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }

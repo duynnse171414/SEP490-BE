@@ -1,6 +1,7 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.entity.Account;
 import org.example.entity.ElderlyProfile;
 import org.example.entity.VoiceProfile;
 import org.example.model.request.VoiceProfileRequest;
@@ -8,6 +9,7 @@ import org.example.model.response.VoiceProfileResponse;
 import org.example.repository.ElderlyProfileRepository;
 import org.example.repository.VoiceProfileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -53,9 +55,19 @@ public class VoiceProfileService {
 
     // GET BY ID
     public VoiceProfileResponse getById(Long id) {
+        VoiceProfile profile = voiceProfileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Not found"));
 
-        VoiceProfile profile = voiceProfileRepository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new RuntimeException("VoiceProfile not found"));
+        Account currentUser = (Account) SecurityContextHolder
+                .getContext().getAuthentication().getPrincipal();
+
+        boolean isOwner = profile.getElderly().getId() == currentUser.getId();
+
+        boolean isAdmin = currentUser.getRole().name().equals("ADMINISTRATOR");
+
+        if (!isOwner && !isAdmin) {
+            throw new RuntimeException("Forbidden");
+        }
 
         return mapToResponse(profile);
     }
