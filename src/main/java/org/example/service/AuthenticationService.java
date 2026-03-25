@@ -42,11 +42,9 @@ public class AuthenticationService implements UserDetailsService {
     @Autowired
     TokenService tokenService;
 
-    // Temporary store for OTPs
-    private Map<String, String> otpStore = new HashMap<>();
-    private Map<String, Long> otpExpirationStore = new HashMap<>();
+    @Autowired
+    EmailService emailService;
 
-    // Define the expiration time for OTPs (e.g., 5 minutes)
     private static final long OTP_EXPIRATION_TIME = 300000; // in milliseconds
 
     private boolean isOtpExpired(Long expirationTime) {
@@ -55,15 +53,12 @@ public class AuthenticationService implements UserDetailsService {
 
 
     public AccountResponse register(RegisterRequest registerRequest) {
-        // map RegisterRequest => Account
         Account account = modelMapper.map(registerRequest, Account.class);
 
-        // Kiểm tra gender ngay lập tức
         if (!account.getGender().equals("Male") && !account.getGender().equals("Female")) {
             throw new IllegalArgumentException("Not Valid Gender!");
         }
 
-        // Kiểm tra xem số điện thoại đã tồn tại chưa
         if (accountRepository.findAccountByPhone(account.getPhone()) != null) {
             throw new DuplicateEntity("Duplicate phone!");
         }
@@ -72,25 +67,36 @@ public class AuthenticationService implements UserDetailsService {
             throw new DuplicateEntity("Duplicate Email!");
         }
 
-        try {
-            // Mã hóa mật khẩu
-            String originPassword = account.getPassword();
-            account.setPassword(passwordEncoder.encode(originPassword));
+        String originPassword = account.getPassword();
+        account.setPassword(passwordEncoder.encode(originPassword));
 
-            // Lưu tài khoản mới vào database
-            Account newAccount = accountRepository.save(account);
+        account.setVerified(false);
 
-            // Trả về thông tin tài khoản đã tạo
-            return modelMapper.map(newAccount, AccountResponse.class);
-        } catch (Exception e) {
-            throw new RuntimeException("An unexpected error occurred: " + e.getMessage());
-        }
+        // 👉 Tạo OTP
+        String otp = generateOtp();
+
+        account.setOtp(otp);
+        account.setOtpExpiredAt(System.currentTimeMillis() + OTP_EXPIRATION_TIME);
+
+        Account newAccount = accountRepository.save(account);
+
+        // 👉 Gửi mail
+        sendOtpToEmail(account.getEmail(), otp);
+
+        AccountResponse response = modelMapper.map(newAccount, AccountResponse.class);
+        response.setMessage("Register successfully. Please verify OTP sent to your email.");
+
+        return response;
     }
 
 
     public List<Account> getAllAccount() {
         List<Account> accounts = accountRepository.findAll();
         return accounts;
+    }
+
+    private void sendOtpToEmail(String email, String otp) {
+        emailService.sendOtpEmail(email, otp);
     }
 
     public Account getAccountById(Long accountId) {
@@ -100,22 +106,38 @@ public class AuthenticationService implements UserDetailsService {
 
     public AccountResponse login(LoginRequest loginRequest) {
         try {
-            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                    loginRequest.getUsername(),
-                    loginRequest.getPassword()
-            ));
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getEmail(),
+                            loginRequest.getPassword()
+                    )
+            );
+
             Account account = (Account) authentication.getPrincipal();
+
+            if (!account.isVerified()) {
+                throw new IllegalStateException("Account chưa verify OTP");
+            }
+
             AccountResponse accountResponse = modelMapper.map(account, AccountResponse.class);
             accountResponse.setToken(tokenService.generateToken(account));
+
             return accountResponse;
+
         } catch (Exception e) {
             throw new NotFoundException("Username or password invalid!");
         }
     }
 
     @Override
-    public UserDetails loadUserByUsername(String phone) throws UsernameNotFoundException {
-        return accountRepository.findAccountByPhone(phone);
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Account account = accountRepository.findByEmail(email);
+
+        if (account == null) {
+            throw new UsernameNotFoundException("User not found with email: " + email);
+        }
+
+        return account;
     }
 
     //ai đang gọi cái request này
@@ -124,16 +146,37 @@ public class AuthenticationService implements UserDetailsService {
         return accountRepository.findAccountById(account.getId());
     }
 
-//    public Account updateAuthentication(Long authId, ChangInforRequest request) {
-//        Account auth = accountRepository.findById(authId)
-//                .orElseThrow(() -> new NotFoundException("Authentication not found for this id: " + authId));
-//
-//        auth.setFullName(request.getFullName());
-//        auth.setGender(request.getGender());
-//        auth.setEmail(request.getEmail());
-//
-//        return accountRepository.save(auth);
-//    }
+    public void verifyOtp(String email, String otp) {
+
+        email = email.trim();
+
+        Account account = accountRepository.findByEmail(email);
+
+        if (account == null) {
+            throw new RuntimeException("Not found account with email: " + email);
+        }
+
+        if (account.getOtp() == null) {
+            throw new IllegalArgumentException("The OTP has either not been generated or has already been verified.");
+        }
+
+        if (!account.getOtp().equals(otp)) {
+            throw new IllegalArgumentException("Incorrect OTP");
+        }
+
+        if (System.currentTimeMillis() > account.getOtpExpiredAt()) {
+            throw new IllegalArgumentException("OTP has expired.");
+        }
+
+
+        account.setVerified(true);
+
+
+        account.setOtp(null);
+        account.setOtpExpiredAt(null);
+
+        accountRepository.save(account);
+    }
 
     public void changePassword(String currentPassword, String newPassword, String confirmPassword) {
         // Get the current authenticated account
@@ -144,7 +187,7 @@ public class AuthenticationService implements UserDetailsService {
             throw new IllegalArgumentException("Current password is incorrect.");
         }
 
-        // Verify that the new password matches the confirm password
+
         if (!newPassword.equals(confirmPassword)) {
             throw new IllegalArgumentException("New password and confirm password do not match.");
         }
@@ -164,57 +207,9 @@ public class AuthenticationService implements UserDetailsService {
         return String.format("%06d", new Random().nextInt(999999));
     }
 
-    // Phương thức gửi OTP tới số điện thoại của người dùng
-    private void sendOtpToPhoneNumber(String phoneNumber, String otp) {
-        // Mô phỏng gửi OTP (thay thế bằng logic gửi SMS thực tế)
-        System.out.println("Sending OTP " + otp + " to phone number: " + phoneNumber);
-    }
 
-    // Phương pháp gửi OTP để reset mật khẩu
-    public String sendResetPasswordOtp(String phoneNumber) {
-        String otp = generateOtp(); // Giả sử có phương pháp tạo OTP
-        otpStore.put(phoneNumber, otp);
-        otpExpirationStore.put(phoneNumber, System.currentTimeMillis() + OTP_EXPIRATION_TIME);
-        sendOtpToPhoneNumber(phoneNumber, otp);
-        return otp; // Trả về OTP đã tạo
-    }
 
-    // Phương pháp đặt lại mật khẩu (được xác định trước đó)
-//    public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
-//        String phoneNumber = resetPasswordRequest.getPhoneNumber();
-//        String otp = resetPasswordRequest.getOtp();
-//        String newPassword = resetPasswordRequest.getNewPassword();
-//        String confirmPassword = resetPasswordRequest.getConfirmPassword();
-//
-//        // Xác thực OTP
-//        String storedOtp = otpStore.get(phoneNumber);
-//        Long expirationTime = otpExpirationStore.get(phoneNumber);
-//
-//        // Kiểm tra OTP có hợp lệ và chưa hết hạn không
-//        if (storedOtp == null || !storedOtp.equals(otp) || isOtpExpired(expirationTime)) {
-//            throw new IllegalArgumentException("Invalid or expired OTP.");
-//        }
-//
-//        // Tìm người dùng theo số điện thoại
-//        Account user = accountRepository.findAccountByPhone(phoneNumber);
-//        if (user == null) {
-//            throw new IllegalArgumentException("User not found."); // Handle user not found case
-//        }
-//
-//
-//        // Kiểm tra xem mật khẩu mới có khớp với mật khẩu xác nhận không
-//        if (!newPassword.equals(confirmPassword)) {
-//            throw new IllegalArgumentException("New password and confirm password do not match.");
-//        }
-//
-//        // Cập nhật mật khẩu
-//        user.setPassword(passwordEncoder.encode(newPassword)); // Lưu trữ mật khẩu mới đã đô
-//        accountRepository.save(user); // Lưu người dùng đã cập nhật
-//
-//        // Tùy chọn, xóa OTP sau khi xác thực thành công
-//        otpStore.remove(phoneNumber);
-//        otpExpirationStore.remove(phoneNumber);
-//    }
+
 
     public Account deleteAccount(long accountId) {
         Account account = accountRepository.findAccountById(accountId);

@@ -49,8 +49,17 @@ public class Account implements UserDetails {
     @Size(min = 6, message = "Password must be at least 6 character!")
     String password;
 
+    @Column(name = "otp")
+    private String otp;
+
+    @Column(name = "otp_expired_at")
+    private Long otpExpiredAt;
+
     @Column(nullable = false)
     private String status = "ACTIVE";
+
+    @Column(name = "is_verified")
+    private boolean verified = false;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -58,14 +67,14 @@ public class Account implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        if(this.role != null) authorities.add(new SimpleGrantedAuthority(this.role.toString()));
-        return authorities;
+        return List.of(
+                new SimpleGrantedAuthority("ROLE_" + role.name().toUpperCase())
+        );
     }
 
     @Override
     public String getUsername() {
-        return this.phone;
+        return this.email;
     }
 
     @Override
