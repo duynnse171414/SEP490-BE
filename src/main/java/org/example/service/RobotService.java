@@ -9,9 +9,13 @@ import org.example.repository.ElderlyProfileRepository;
 import org.example.repository.RobotRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,6 +29,11 @@ public class RobotService {
 
     @Autowired
     ModelMapper modelMapper;
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    @Value("${robot.flask.url:http://localhost:5000}")
+    private String flaskUrl;
 
     // CREATE
     public RobotResponse create(RobotRequest request) {
@@ -124,5 +133,36 @@ public class RobotService {
         }
 
         return response;
+    }
+    // ===== Điều khiển robot (thêm mới) =====
+    public Object performAction(String actionName) {
+        try {
+            String url = flaskUrl + "/robot/action";
+            Map<String, String> body = new HashMap<>();
+            body.put("action", actionName);
+            return restTemplate.postForObject(url, body, Object.class);
+        } catch (Exception e) {
+            return Map.of("status", "error", "message", e.getMessage());
+        }
+    }
+
+    public Object performDance(String danceName) {
+        try {
+            String url = flaskUrl + "/robot/dance";
+            Map<String, String> body = new HashMap<>();
+            body.put("dance", danceName);
+            return restTemplate.postForObject(url, body, Object.class);
+        } catch (Exception e) {
+            return Map.of("status", "error", "message", e.getMessage());
+        }
+    }
+
+    public Object getRobotStatus() {
+        try {
+            String url = flaskUrl + "/robot/status";
+            return restTemplate.getForObject(url, Object.class);
+        } catch (Exception e) {
+            return Map.of("status", "offline", "message", "Flask server không chạy");
+        }
     }
 }

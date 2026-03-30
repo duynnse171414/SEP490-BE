@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @SecurityRequirement(name = "api")
 @RestController
@@ -44,5 +45,22 @@ public class RobotAPI {
     public ResponseEntity delete(@PathVariable Long id) {
         robotService.delete(id);
         return ResponseEntity.ok("Deleted successfully");
+    }
+    // ===== Điều khiển robot (thêm mới) =====
+    @PostMapping("/action")
+    public ResponseEntity performAction(@RequestBody Map<String, String> body) {
+        String action = body.get("action");
+        return ResponseEntity.ok(robotService.performAction(action));
+    }
+
+    @PostMapping("/dance")
+    public ResponseEntity performDance(@RequestBody Map<String, String> body) {
+        String dance = body.get("dance");
+        return ResponseEntity.ok(robotService.performDance(dance));
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity getRobotStatus() {
+        return ResponseEntity.ok(robotService.getRobotStatus());
     }
 }
