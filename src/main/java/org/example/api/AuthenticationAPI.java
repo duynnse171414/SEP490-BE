@@ -9,10 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @SecurityRequirement(name = "api")
 @RestController
@@ -34,5 +31,12 @@ public class AuthenticationAPI {
     public ResponseEntity login(@Valid @RequestBody LoginRequest loginRequest) {
         AccountResponse newAccount = authenticationService.login(loginRequest);
         return ResponseEntity.ok(newAccount);
+    }
+
+    @PostMapping("verify-otp")
+    public ResponseEntity verifyOtp(@RequestParam String email,
+                                    @RequestParam String otp) {
+        authenticationService.verifyOtp(email, otp);
+        return ResponseEntity.ok("Verify OTP successfully!");
     }
 }

@@ -13,5 +13,7 @@ public class AccountResponse {
     String phone;
     String token;
     String status;
+    String message;
+    String verified;
     LocalDateTime createdAt;
 }
