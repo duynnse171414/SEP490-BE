@@ -19,11 +19,11 @@ public class CaregiverProfileAPI {
     CaregiverProfileService service;
 
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public CaregiverProfileResponse create(@RequestBody CaregiverProfileRequest request) {
-        return service.create(request);
-    }
+//    @PostMapping
+//    @PreAuthorize("hasAnyRole('ADMINISTRATOR')")
+//    public CaregiverProfileResponse create(@RequestBody CaregiverProfileRequest request) {
+//        return service.create(request);
+//    }
 
 
     @GetMapping

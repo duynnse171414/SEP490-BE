@@ -1,12 +1,16 @@
 package org.example.service;
 
 import org.example.entity.Account;
+import org.example.entity.CaregiverProfile;
+import org.example.entity.Role;
 import org.example.exception.DuplicateEntity;
 import org.example.exception.NotFoundException;
 import org.example.model.response.AccountResponse;
 import org.example.model.request.LoginRequest;
 import org.example.model.request.RegisterRequest;
 import org.example.repository.AccountRepository;
+import org.example.repository.CaregiverProfileRepository;
+import org.example.repository.ElderlyProfileRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -45,6 +49,9 @@ public class AuthenticationService implements UserDetailsService {
     @Autowired
     EmailService emailService;
 
+    @Autowired
+    CaregiverProfileRepository caregiverProfileRepository;
+
     private static final long OTP_EXPIRATION_TIME = 300000; // in milliseconds
 
     private boolean isOtpExpired(Long expirationTime) {
@@ -71,7 +78,7 @@ public class AuthenticationService implements UserDetailsService {
         account.setPassword(passwordEncoder.encode(originPassword));
 
         account.setVerified(false);
-
+        account.setRole(Role.valueOf("FAMILYMEMBER"));
         // 👉 Tạo OTP
         String otp = generateOtp();
 
@@ -115,7 +122,7 @@ public class AuthenticationService implements UserDetailsService {
 
             Account account = (Account) authentication.getPrincipal();
 
-            if (!account.isVerified()) {
+            if (!account.isVerified() && account.getRole() == Role.FAMILYMEMBER) {
                 throw new IllegalStateException("Account chưa verify OTP");
             }
 
@@ -230,5 +237,26 @@ public class AuthenticationService implements UserDetailsService {
         }
         account.setDeleted(false);
         return accountRepository.save(account);
+    }
+
+    public AccountResponse createByAdmin(RegisterRequest request) {
+
+        Account account = modelMapper.map(request, Account.class);
+
+        account.setPassword(passwordEncoder.encode(request.getPassword()));
+        account.setRole(request.getRole());
+        account.setVerified(true);
+
+        Account savedAccount = accountRepository.save(account);
+
+        // 👉 TỰ ĐỘNG TẠO PROFILE
+        if (savedAccount.getRole() == Role.CAREGIVER) {
+            CaregiverProfile profile = new CaregiverProfile();
+            profile.setAccount(savedAccount);
+            profile.setName(savedAccount.getFullName()); // optional
+            caregiverProfileRepository.save(profile);
+        }
+
+        return modelMapper.map(savedAccount, AccountResponse.class);
     }
 }

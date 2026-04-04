@@ -45,7 +45,7 @@ public class ElderlyProfileAPI {
 
 
     @PutMapping("{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER')")
     public ResponseEntity update(@PathVariable Long id,
                                  @Valid @RequestBody ElderlyProfileRequest request) {
 

@@ -9,6 +9,7 @@ public class ElderlyProfileRequest {
 
     private LocalDate dateOfBirth;
     private String healthNotes;
+    private String name;
     private String preferredLanguage;
     private String speakingSpeed;
 }

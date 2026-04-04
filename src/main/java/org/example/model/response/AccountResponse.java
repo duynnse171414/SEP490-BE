@@ -1,6 +1,7 @@
 package org.example.model.response;
 
 import lombok.Data;
+import org.example.entity.Role;
 
 import java.time.LocalDateTime;
 
@@ -16,4 +17,5 @@ public class AccountResponse {
     String message;
     String verified;
     LocalDateTime createdAt;
+    Role role;
 }

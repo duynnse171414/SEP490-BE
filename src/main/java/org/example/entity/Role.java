@@ -2,13 +2,13 @@ package org.example.entity;
 
 public enum Role {
 
-    ElderlyUser,
+    ELDERLYUSER,
 
-    Caregiver ,
+    CAREGIVER ,
 
-    FamilyMember,
+    FAMILYMEMBER,
 
     MANAGER,
 
-    Administrator
+    ADMINISTRATOR
 }

@@ -9,6 +9,7 @@ public class ElderlyProfileResponse {
 
     private Long id;
     private Long accountId;
+    private String name;
     private LocalDate dateOfBirth;
     private String healthNotes;
     private String preferredLanguage;

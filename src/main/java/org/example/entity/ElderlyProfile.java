@@ -19,7 +19,7 @@ public class ElderlyProfile {
     @OneToOne
     @JoinColumn(name = "account_id")
     private Account account;
-
+    private String name;
     private LocalDate dateOfBirth;
     private String healthNotes;
     private String preferredLanguage;

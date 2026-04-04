@@ -10,14 +10,24 @@ import lombok.Setter;
 @Entity
 public class CaregiverProfile {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "account_id")
-    private Account account;
-    boolean deleted = false;
-    private String relationship;
-    private String notificationPreference;
-}
+        private boolean deleted = false;
+
+        @Column(name = "name")
+        private String name;
+
+        @Column(name = "relationship")
+        private String relationship;
+
+        // 🔥 FIX CHỖ NÀY
+        @Column(name = "notification_preference")
+        private String notificationPreference;
+
+        @OneToOne
+        @JoinColumn(name = "account_id")
+        private Account account;
+    }
+

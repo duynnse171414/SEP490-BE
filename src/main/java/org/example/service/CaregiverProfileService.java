@@ -31,6 +31,7 @@ public class CaregiverProfileService {
 
         CaregiverProfile profile = new CaregiverProfile();
         profile.setAccount(account);
+        profile.setName(request.getName());
         profile.setRelationship(request.getRelationship());
         profile.setNotificationPreference(request.getNotificationPreference());
 
@@ -61,6 +62,7 @@ public class CaregiverProfileService {
         CaregiverProfile profile = repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new RuntimeException("Caregiver profile not found"));
 
+        profile.setName(request.getName());
         profile.setRelationship(request.getRelationship());
         profile.setNotificationPreference(request.getNotificationPreference());
 
@@ -84,8 +86,10 @@ public class CaregiverProfileService {
         CaregiverProfileResponse response = new CaregiverProfileResponse();
 
         response.setId(profile.getId());
+        response.setName(profile.getName());
         response.setRelationship(profile.getRelationship());
         response.setNotificationPreference(profile.getNotificationPreference());
+
 
         if (profile.getAccount() != null) {
             response.setAccountId(profile.getAccount().getId());

@@ -34,7 +34,7 @@ public class ElderlyProfileService {
 
         ElderlyProfile profile = new ElderlyProfile();
         profile.setAccount(account);
-
+        profile.setName(request.getName());
         profile.setDateOfBirth(request.getDateOfBirth());
         profile.setHealthNotes(request.getHealthNotes());
         profile.setPreferredLanguage(request.getPreferredLanguage());
@@ -84,6 +84,7 @@ public class ElderlyProfileService {
         profile.setHealthNotes(request.getHealthNotes());
         profile.setPreferredLanguage(request.getPreferredLanguage());
         profile.setSpeakingSpeed(request.getSpeakingSpeed());
+        profile.setName(request.getName());
 
         ElderlyProfile updated = elderlyProfileRepository.save(profile);
 
