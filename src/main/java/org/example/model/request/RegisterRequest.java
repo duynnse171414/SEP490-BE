@@ -12,7 +12,7 @@ public class RegisterRequest {
     @NotBlank
     String fullName;
 
-    String Gender;
+    String gender;
 
     String email;
 
