@@ -1,6 +1,6 @@
-import com.fasterxml.jackson.annotation.JsonCreator;
 
 package org.example.entity;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum Role {
 
