@@ -32,7 +32,7 @@ public class ExerciseScriptAPI {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     public ExerciseScriptResponse getById(@PathVariable Long id) {
         return service.getById(id);
     }
