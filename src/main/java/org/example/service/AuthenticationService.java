@@ -5,6 +5,7 @@ import org.example.entity.CaregiverProfile;
 import org.example.entity.Role;
 import org.example.exception.DuplicateEntity;
 import org.example.exception.NotFoundException;
+import org.example.model.request.UpdateAccountRequest;
 import org.example.model.response.AccountResponse;
 import org.example.model.request.LoginRequest;
 import org.example.model.request.RegisterRequest;
@@ -13,6 +14,7 @@ import org.example.repository.CaregiverProfileRepository;
 import org.example.repository.ElderlyProfileRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -88,7 +90,7 @@ public class AuthenticationService implements UserDetailsService {
         Account newAccount = accountRepository.save(account);
 
         // 👉 Gửi mail
-        sendOtpToEmail(account.getEmail(), otp);
+        emailService.sendOtpEmail(account.getEmail(), otp);
 
         AccountResponse response = modelMapper.map(newAccount, AccountResponse.class);
         response.setMessage("Register successfully. Please verify OTP sent to your email.");
@@ -98,17 +100,19 @@ public class AuthenticationService implements UserDetailsService {
 
 
     public List<Account> getAllAccount() {
-        List<Account> accounts = accountRepository.findAll();
+        List<Account> accounts = accountRepository.findByDeletedFalse();
         return accounts;
     }
 
-    private void sendOtpToEmail(String email, String otp) {
-        emailService.sendOtpEmail(email, otp);
-    }
 
     public Account getAccountById(Long accountId) {
-        return accountRepository.findById(accountId).orElseThrow(() -> new NotFoundException("Account not found"));
+        Account account = accountRepository.findAccountById(accountId);
 
+        if (account == null || account.isDeleted()) {
+            throw new NotFoundException("Account not found");
+        }
+
+        return account;
     }
 
     public AccountResponse login(LoginRequest loginRequest) {
@@ -227,15 +231,39 @@ public class AuthenticationService implements UserDetailsService {
         return accountRepository.save(account);
     }
 
-    public Account restoreAccount(long accountId) {
-        Account account = accountRepository.findAccountById(accountId);
+    public Account updateAccount(Long id, UpdateAccountRequest updateRequest) {
+        Account account = accountRepository.findAccountById(id);
+
         if (account == null) {
             throw new NotFoundException("Account not found");
         }
-        if (!account.isDeleted()) {
-            throw new IllegalStateException("Account is not deleted");
+
+        // ✅ Update basic info
+        if (updateRequest.getFullName() != null) {
+            account.setFullName(updateRequest.getFullName());
         }
-        account.setDeleted(false);
+
+        if (updateRequest.getPhone() != null) {
+            account.setPhone(updateRequest.getPhone());
+        }
+
+        if (updateRequest.getGender() != null) {
+            account.setGender(updateRequest.getGender());
+        }
+        if (updateRequest.getPassword() != null) {
+            account.setPassword(updateRequest.getPassword());
+        }
+
+        // ✅ Update role
+        if (updateRequest.getRole() != null) {
+            account.setRole(updateRequest.getRole());
+        }
+
+        // ✅ Lock / Unlock account (dùng field deleted hoặc thêm field isActive)
+        if (updateRequest.getDeleted() != account.isDeleted()) {
+            account.setDeleted(updateRequest.getDeleted());
+        }
+
         return accountRepository.save(account);
     }
 

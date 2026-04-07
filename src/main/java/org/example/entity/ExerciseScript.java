@@ -20,4 +20,5 @@ public class ExerciseScript {
     private String description;
     private int durationMinutes;
     private String difficultyLevel;
+    private String uploadScript;
 }

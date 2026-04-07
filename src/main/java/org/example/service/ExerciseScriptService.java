@@ -25,6 +25,9 @@ public class ExerciseScriptService {
         script.setDescription(request.getDescription());
         script.setDurationMinutes(request.getDurationMinutes());
         script.setDifficultyLevel(request.getDifficultyLevel());
+        script.setUploadScript(request.getUploadScript());
+
+
         script.setDeleted(false);
 
         repository.save(script);
@@ -58,6 +61,8 @@ public class ExerciseScriptService {
         script.setDescription(request.getDescription());
         script.setDurationMinutes(request.getDurationMinutes());
         script.setDifficultyLevel(request.getDifficultyLevel());
+        script.setUploadScript(request.getUploadScript());
+
 
         repository.save(script);
 
@@ -83,6 +88,7 @@ public class ExerciseScriptService {
         response.setDescription(script.getDescription());
         response.setDurationMinutes(script.getDurationMinutes());
         response.setDifficultyLevel(script.getDifficultyLevel());
+        response.setUploadScript(script.getUploadScript());
 
         return response;
     }

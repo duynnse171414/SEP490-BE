@@ -10,4 +10,5 @@ public class ExerciseScriptResponse {
     private String description;
     private Integer durationMinutes;
     private String difficultyLevel;
+    private String uploadScript;
 }
