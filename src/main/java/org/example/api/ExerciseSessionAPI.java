@@ -34,7 +34,7 @@ public class ExerciseSessionAPI {
 
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     public ExerciseSessionResponse getById(@PathVariable Long id) {
         return service.getById(id);
     }
