@@ -3,10 +3,15 @@ package org.example.service;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Account;
 import org.example.entity.CaregiverProfile;
+import org.example.exception.NotFoundException;
 import org.example.model.request.CaregiverProfileRequest;
+import org.example.model.request.ElderlyProfileRequest;
 import org.example.model.response.CaregiverProfileResponse;
+import org.example.model.response.ElderlyProfileResponse;
 import org.example.repository.AccountRepository;
 import org.example.repository.CaregiverProfileRepository;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,25 +24,35 @@ public class CaregiverProfileService {
     private final CaregiverProfileRepository repository;
     private final AccountRepository accountRepository;
 
+    @Autowired
+    CaregiverProfileRepository caregiverProfileRepository;
+    @Autowired
+    ModelMapper modelMapper;
+
+
     // CREATE
-    public CaregiverProfileResponse create(CaregiverProfileRequest request) {
+    public CaregiverProfileResponse create(Long accountId, CaregiverProfileRequest request) {
 
-        if (repository.existsByAccountId(request.getAccountId())) {
-            throw new RuntimeException("Account already has caregiver profile");
-        }
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NotFoundException("Account not found"));
 
-        Account account = accountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        CaregiverProfile profile = new CaregiverProfile();
+        // ✅ map request → entity (giống Elderly)
+        CaregiverProfile profile = modelMapper.map(request, CaregiverProfile.class);
+
+        // ✅ set account
         profile.setAccount(account);
-        profile.setName(request.getName());
-        profile.setRelationship(request.getRelationship());
-        profile.setNotificationPreference(request.getNotificationPreference());
+        profile.setDeleted(false);
 
-        repository.save(profile);
+        CaregiverProfile saved = caregiverProfileRepository.save(profile);
 
-        return mapToResponse(profile);
+        // ✅ map entity → response (giống Elderly)
+        CaregiverProfileResponse response =
+                modelMapper.map(saved, CaregiverProfileResponse.class);
+
+        response.setAccountId(account.getId());
+
+        return response;
     }
 
     // GET ALL
@@ -97,5 +112,22 @@ public class CaregiverProfileService {
         }
 
         return response;
+    }
+
+    public List<CaregiverProfileResponse> getByAccount(Long accountId) {
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NotFoundException("Account not found"));
+
+
+        return caregiverProfileRepository.findByAccountIdAndDeletedFalse(accountId)
+                .stream()
+                .map(profile -> {
+                    CaregiverProfileResponse response =
+                            modelMapper.map(profile, CaregiverProfileResponse.class);
+                    response.setAccountId(profile.getAccount().getId());
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 }

@@ -21,7 +21,7 @@ public class ExerciseSessionAPI {
 
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public ExerciseSessionResponse create(@RequestBody ExerciseSessionRequest request) {
         return service.create(request);
     }

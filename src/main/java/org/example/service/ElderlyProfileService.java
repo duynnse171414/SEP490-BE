@@ -100,4 +100,21 @@ public class ElderlyProfileService {
         profile.setDeleted(true);
         elderlyProfileRepository.save(profile);
     }
+
+    public List<ElderlyProfileResponse> getByAccount(Long accountId) {
+
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new NotFoundException("Account not found"));
+        
+
+        return elderlyProfileRepository.findByAccountIdAndDeletedFalse(accountId)
+                .stream()
+                .map(profile -> {
+                    ElderlyProfileResponse response =
+                            modelMapper.map(profile, ElderlyProfileResponse.class);
+                    response.setAccountId(profile.getAccount().getId());
+                    return response;
+                })
+                .collect(Collectors.toList());
+    }
 }

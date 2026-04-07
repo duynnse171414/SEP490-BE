@@ -11,4 +11,6 @@ public interface ElderlyProfileRepository extends JpaRepository<ElderlyProfile, 
     List<ElderlyProfile> findByDeletedFalse();
 
     Optional<ElderlyProfile> findByIdAndDeletedFalse(Long id);
+
+    List<ElderlyProfile> findByAccountIdAndDeletedFalse(Long accountId);
 }

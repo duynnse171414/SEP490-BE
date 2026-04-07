@@ -2,10 +2,13 @@ package org.example.api;
 
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import org.example.model.request.CaregiverProfileRequest;
+import org.example.model.request.ElderlyProfileRequest;
 import org.example.model.response.CaregiverProfileResponse;
 import org.example.service.CaregiverProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,26 +19,28 @@ import java.util.List;
 public class CaregiverProfileAPI {
 
     @Autowired
-    CaregiverProfileService service;
+    CaregiverProfileService caregiverProfileService;
 
 
-//    @PostMapping
-//    @PreAuthorize("hasAnyRole('ADMINISTRATOR')")
-//    public CaregiverProfileResponse create(@RequestBody CaregiverProfileRequest request) {
-//        return service.create(request);
-//    }
+    @PostMapping("{accountId}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    public ResponseEntity create(@PathVariable Long accountId,
+                                 @Valid @RequestBody CaregiverProfileRequest request) {
+
+        return ResponseEntity.ok(caregiverProfileService.create(accountId, request));
+    }
 
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public List<CaregiverProfileResponse> getAll() {
-        return service.getAll();
+        return caregiverProfileService.getAll();
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
     public CaregiverProfileResponse getById(@PathVariable Long id) {
-        return service.getById(id);
+        return caregiverProfileService.getById(id);
     }
 
 
@@ -43,13 +48,13 @@ public class CaregiverProfileAPI {
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public CaregiverProfileResponse update(@PathVariable Long id,
                                            @RequestBody CaregiverProfileRequest request) {
-        return service.update(id, request);
+        return caregiverProfileService.update(id, request);
     }
 
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRATOR')")
     public void delete(@PathVariable Long id) {
-        service.delete(id);
+        caregiverProfileService.delete(id);
     }
 }

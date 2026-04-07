@@ -22,7 +22,7 @@ public class ElderlyProfileAPI {
 
 
     @PostMapping("{accountId}")
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER','CAREGIVER')")
     public ResponseEntity create(@PathVariable Long accountId,
                                  @Valid @RequestBody ElderlyProfileRequest request) {
 
@@ -58,5 +58,15 @@ public class ElderlyProfileAPI {
     public ResponseEntity delete(@PathVariable Long id) {
         elderlyProfileService.delete(id);
         return ResponseEntity.ok("Deleted successfully");
+    }
+
+    // GET list by caregiver account
+    @GetMapping("/account/{accountId}")
+    public ResponseEntity<List<ElderlyProfileResponse>> getByAccount(
+            @PathVariable Long accountId) {
+
+        return ResponseEntity.ok(
+                elderlyProfileService.getByAccount(accountId)
+        );
     }
 }

@@ -26,7 +26,7 @@ public class CaregiverProfile {
         @Column(name = "notification_preference")
         private String notificationPreference;
 
-        @OneToOne
+        @ManyToOne
         @JoinColumn(name = "account_id")
         private Account account;
     }

@@ -1,6 +1,7 @@
 package org.example.repository;
 
 import org.example.entity.CaregiverProfile;
+import org.example.entity.ElderlyProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -13,4 +14,6 @@ public interface CaregiverProfileRepository extends JpaRepository<CaregiverProfi
     Optional<CaregiverProfile> findByIdAndDeletedFalse(Long id);
 
     boolean existsByAccountId(Long accountId);
+
+    List<CaregiverProfile> findByAccountIdAndDeletedFalse(Long accountId);
 }

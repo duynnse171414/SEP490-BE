@@ -103,7 +103,12 @@ public class Account implements UserDetails {
         return this.password;
     }
 
-    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
-    private ElderlyProfile elderlyProfile;
+    @OneToMany(mappedBy = "account")
+    private List<ElderlyProfile> elderlyProfiles;
+
+    @OneToMany(mappedBy = "account")
+    private List<CaregiverProfile> caregiverProfiles;
+
+
 
 }

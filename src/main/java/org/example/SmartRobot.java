@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @EnableAsync
-@OpenAPIDefinition(info = @Info(title = "WebHIV API", version = "1.0", description = "Information"))
+@OpenAPIDefinition(info = @Info(title = "Robot API", version = "1.0", description = "Information"))
 @SecurityScheme(name = "api", scheme = "bearer", type = SecuritySchemeType.HTTP, in = SecuritySchemeIn.HEADER)
 public class SmartRobot {
 
