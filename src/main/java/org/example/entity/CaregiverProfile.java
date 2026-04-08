@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -29,5 +31,8 @@ public class CaregiverProfile {
         @ManyToOne
         @JoinColumn(name = "account_id")
         private Account account;
+
+        @ManyToMany(mappedBy = "caregiverProfiles")
+        private List<Room> rooms;
     }
 

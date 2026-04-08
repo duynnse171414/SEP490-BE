@@ -114,4 +114,20 @@ public class ReminderService {
 
         return response;
     }
+
+    // GET BY CAREGIVER ID
+    public List<ReminderResponse> getByCaregiverId(Long caregiverId) {
+        return repository.findByCaregiverIdAndDeletedFalse(caregiverId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // GET BY ELDERLY ID
+    public List<ReminderResponse> getByElderlyId(Long elderlyId) {
+        return repository.findByElderlyIdAndDeletedFalse(elderlyId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
 }

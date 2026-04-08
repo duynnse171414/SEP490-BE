@@ -12,6 +12,6 @@ public class RobotResponse {
     private String firmwareVersion;
     private String status;
 
-    private Long assignedElderlyId;
-    private String assignedElderlyName;
+
+
 }

@@ -53,4 +53,18 @@ public class ReminderAPI {
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
+
+    // GET by caregiver
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @GetMapping("/caregiver/{caregiverId}")
+    public List<ReminderResponse> getByCaregiver(@PathVariable Long caregiverId) {
+        return service.getByCaregiverId(caregiverId);
+    }
+
+    // GET by elderly
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
+    @GetMapping("/elderly/{elderlyId}")
+    public List<ReminderResponse> getByElderly(@PathVariable Long elderlyId) {
+        return service.getByElderlyId(elderlyId);
+    }
 }

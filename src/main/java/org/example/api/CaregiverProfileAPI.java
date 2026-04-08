@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.example.model.request.CaregiverProfileRequest;
 import org.example.model.request.ElderlyProfileRequest;
 import org.example.model.response.CaregiverProfileResponse;
+import org.example.model.response.ElderlyProfileResponse;
 import org.example.service.CaregiverProfileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -56,5 +57,15 @@ public class CaregiverProfileAPI {
     @PreAuthorize("hasRole('ADMINISTRATOR')")
     public void delete(@PathVariable Long id) {
         caregiverProfileService.delete(id);
+    }
+
+
+    @GetMapping("/account/{accountId}")
+    public ResponseEntity<List<CaregiverProfileResponse>> getByAccount(
+            @PathVariable Long accountId) {
+
+        return ResponseEntity.ok(
+                caregiverProfileService.getByAccount(accountId)
+        );
     }
 }

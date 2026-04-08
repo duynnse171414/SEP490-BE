@@ -23,4 +23,7 @@ public class Robot {
     @ManyToOne
     @JoinColumn(name = "assigned_elderly_id")
     private ElderlyProfile assignedElderly;
+    @OneToOne
+    @JoinColumn(name = "room_id", unique = true)
+    private Room room;
 }

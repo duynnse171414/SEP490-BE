@@ -45,17 +45,6 @@ public class RobotService {
         robot.setFirmwareVersion(request.getFirmwareVersion());
         robot.setStatus(request.getStatus());
 
-        if (robotRepository.existsByAssignedElderlyId(request.getAssignedElderlyId())) {
-            throw new RuntimeException("This elderly is already assigned to another robot");
-        }
-
-        if (request.getAssignedElderlyId() != null) {
-            ElderlyProfile elderly = elderlyProfileRepository
-                    .findById(request.getAssignedElderlyId())
-                    .orElseThrow(() -> new RuntimeException("Elderly not found"));
-
-            robot.setAssignedElderly(elderly);
-        }
 
         robotRepository.save(robot);
 
@@ -91,15 +80,7 @@ public class RobotService {
         robot.setFirmwareVersion(request.getFirmwareVersion());
         robot.setStatus(request.getStatus());
 
-        if (request.getAssignedElderlyId() != null) {
-            ElderlyProfile elderly = elderlyProfileRepository
-                    .findById(request.getAssignedElderlyId())
-                    .orElseThrow(() -> new RuntimeException("Elderly not found"));
 
-            robot.setAssignedElderly(elderly);
-        } else {
-            robot.setAssignedElderly(null); // unassign
-        }
 
         robotRepository.save(robot);
 
@@ -127,10 +108,6 @@ public class RobotService {
         response.setFirmwareVersion(robot.getFirmwareVersion());
         response.setStatus(robot.getStatus());
 
-        if (robot.getAssignedElderly() != null) {
-            response.setAssignedElderlyId(robot.getAssignedElderly().getId());
-            response.setAssignedElderlyName(robot.getAssignedElderly().getAccount().getFullName());
-        }
 
         return response;
     }

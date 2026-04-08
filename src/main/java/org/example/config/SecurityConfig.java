@@ -68,7 +68,8 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOriginPatterns("http://localhost:*") // URL của frontend
+//                        .allowedOriginPatterns("http://localhost:*")
+                        .allowedOrigins("http://localhost:3000")// URL của frontend
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

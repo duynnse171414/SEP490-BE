@@ -10,3 +10,5 @@ public class CaregiverProfileRequest {
     private String name;
     private String notificationPreference;
 }
+
+

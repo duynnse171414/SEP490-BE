@@ -25,4 +25,8 @@ public class ElderlyProfile {
     private String preferredLanguage;
     private String speakingSpeed;
     private boolean deleted = false;
+
+    @ManyToOne
+    @JoinColumn(name = "room_id")
+    private Room room;
 }

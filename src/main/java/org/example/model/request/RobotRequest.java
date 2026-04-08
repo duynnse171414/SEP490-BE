@@ -10,5 +10,5 @@ public class RobotRequest {
     private String serialNumber;
     private String firmwareVersion;
     private String status;
-    private Long assignedElderlyId;
+
 }
