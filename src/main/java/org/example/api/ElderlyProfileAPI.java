@@ -31,7 +31,7 @@ public class ElderlyProfileAPI {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
     public ResponseEntity<List<ElderlyProfileResponse>> getAll() {
         return ResponseEntity.ok(elderlyProfileService.getAll());
     }

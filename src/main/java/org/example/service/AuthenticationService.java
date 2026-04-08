@@ -142,11 +142,9 @@ public class AuthenticationService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Account account = accountRepository.findByEmail(email);
 
-        if (account == null) {
-            throw new UsernameNotFoundException("User not found with email: " + email);
-        }
+        Account account = accountRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Account not found"));
 
         return account;
     }
@@ -159,13 +157,10 @@ public class AuthenticationService implements UserDetailsService {
 
     public void verifyOtp(String email, String otp) {
 
-        email = email.trim();
+        String trimmedEmail = email.trim();
 
-        Account account = accountRepository.findByEmail(email);
-
-        if (account == null) {
-            throw new RuntimeException("Not found account with email: " + email);
-        }
+        Account account = accountRepository.findByEmail(trimmedEmail)
+                .orElseThrow(() -> new RuntimeException("Not found account with email: " + trimmedEmail));
 
         if (account.getOtp() == null) {
             throw new IllegalArgumentException("The OTP has either not been generated or has already been verified.");
@@ -179,10 +174,7 @@ public class AuthenticationService implements UserDetailsService {
             throw new IllegalArgumentException("OTP has expired.");
         }
 
-
         account.setVerified(true);
-
-
         account.setOtp(null);
         account.setOtpExpiredAt(null);
 

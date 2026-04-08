@@ -2,9 +2,11 @@ package org.example.api;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.model.request.ReminderRequest;
+import org.example.model.response.ElderlyProfileResponse;
 import org.example.model.response.ReminderResponse;
 import org.example.service.ReminderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +29,7 @@ public class ReminderAPI {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','CAREGIVER')")
     public List<ReminderResponse> getAll() {
         return service.getAll();
     }
@@ -66,5 +68,14 @@ public class ReminderAPI {
     @GetMapping("/elderly/{elderlyId}")
     public List<ReminderResponse> getByElderly(@PathVariable Long elderlyId) {
         return service.getByElderlyId(elderlyId);
+    }
+
+    @GetMapping("/account/{accountId}")
+    public ResponseEntity<List<ReminderResponse>> getByAccount(
+            @PathVariable Long accountId) {
+
+        return ResponseEntity.ok(
+                service.getByAccount(accountId)
+        );
     }
 }

@@ -10,7 +10,7 @@ public class ReminderResponse {
 
     private Long elderlyId;
     private String elderlyName;
-
+    private Long accountId;
     private Long caregiverId;
     private String caregiverName;
 
