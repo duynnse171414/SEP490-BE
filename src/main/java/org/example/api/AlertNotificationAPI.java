@@ -28,7 +28,7 @@ public class AlertNotificationAPI {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public List<AlertNotificationResponse> getAll() {
         return service.getAll();
     }
