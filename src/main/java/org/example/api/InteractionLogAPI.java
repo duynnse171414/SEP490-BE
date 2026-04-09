@@ -26,7 +26,7 @@ public class InteractionLogAPI {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
     public List<InteractionLogResponse> getAll() {
         return service.getAll();
     }
