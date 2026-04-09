@@ -22,7 +22,7 @@ public class RobotAPI {
 
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRATOR')")
+    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
     public ResponseEntity create(@Valid @RequestBody RobotRequest request) {
         return ResponseEntity.ok(robotService.create(request));
     }
@@ -43,7 +43,7 @@ public class RobotAPI {
 
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRATOR')")
+    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
     public ResponseEntity update(@PathVariable Long id,
                                  @Valid @RequestBody RobotRequest request) {
         return ResponseEntity.ok(robotService.update(id, request));
@@ -51,7 +51,7 @@ public class RobotAPI {
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRATOR')")
+    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
     public ResponseEntity delete(@PathVariable Long id) {
         robotService.delete(id);
         return ResponseEntity.ok("Deleted successfully");
