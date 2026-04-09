@@ -72,9 +72,7 @@ public class AuthenticationService implements UserDetailsService {
             throw new DuplicateEntity("Duplicate phone!");
         }
 
-        if (accountRepository.findByEmail(account.getEmail()) != null) {
-            throw new DuplicateEntity("Duplicate Email!");
-        }
+      
 
         String originPassword = account.getPassword();
         account.setPassword(passwordEncoder.encode(originPassword));
