@@ -27,7 +27,7 @@ public class UserPackageAPI {
 
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public List<UserPackageResponse> getAll() {
         return userPackageService.getAll();
     }
@@ -41,7 +41,7 @@ public class UserPackageAPI {
 
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public UserPackageResponse update(@PathVariable Long id,
                                       @RequestBody UserPackageRequest request) {
         return userPackageService.update(id, request);
@@ -49,7 +49,7 @@ public class UserPackageAPI {
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public void delete(@PathVariable Long id) {
         userPackageService.delete(id);
     }
