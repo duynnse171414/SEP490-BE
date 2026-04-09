@@ -29,7 +29,7 @@ public class ReminderAPI {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','CAREGIVER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','CAREGIVER','FAMILYMEMBER')")
     public List<ReminderResponse> getAll() {
         return service.getAll();
     }
