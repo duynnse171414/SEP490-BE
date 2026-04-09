@@ -35,13 +35,13 @@ public class RoomAPI {
     public ResponseEntity<RoomResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(roomService.getById(id));
     }
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR')")
+   @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     @PutMapping("/{id}")
     public ResponseEntity<RoomResponse> update(@PathVariable Long id,
                                                @RequestBody RoomRequest request) {
         return ResponseEntity.ok(roomService.update(id, request));
     }
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         roomService.delete(id);
@@ -65,7 +65,7 @@ public class RoomAPI {
         roomService.assignRobotToRoom(roomId, robotId);
         return ResponseEntity.ok("Robot assigned to room");
     }
-     @PreAuthorize("hasAnyRole('CAREGIVER','MANAGER')")
+     @PreAuthorize("hasAnyRole('CAREGIVER','MANAGER','ADMINISTRATOR')")
     @PostMapping("/{roomId}/elderly/{elderlyId}")
     public ResponseEntity<?> addElderlyToRoom(
             @PathVariable Long roomId,
@@ -80,7 +80,7 @@ public class RoomAPI {
     public ResponseEntity<List<CaregiverDTO>> getCaregivers(@PathVariable Long roomId) {
         return ResponseEntity.ok(roomService.getCaregiversByRoom(roomId));
     }
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
+      @PreAuthorize("hasAnyRole('CAREGIVER','MANAGER','ADMINISTRATOR')")
     @GetMapping("/{roomId}/elderlies")
     public ResponseEntity<List<ElderlyDTO>> getElderlies(@PathVariable Long roomId) {
         return ResponseEntity.ok(roomService.getElderliesByRoom(roomId));
