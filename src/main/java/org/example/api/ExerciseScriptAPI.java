@@ -6,6 +6,7 @@ import org.example.service.ExerciseScriptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import jakarta.persistence.Column;
 
 import java.util.List;
 
