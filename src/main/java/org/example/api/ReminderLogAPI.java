@@ -33,7 +33,7 @@ public class ReminderLogAPI {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
     public List<ReminderLogResponse> getAll() {
         return service.getAll();
     }
