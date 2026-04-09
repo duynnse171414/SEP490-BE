@@ -65,7 +65,7 @@ public class RoomAPI {
         roomService.assignRobotToRoom(roomId, robotId);
         return ResponseEntity.ok("Robot assigned to room");
     }
-    @PreAuthorize("hasAnyRole('CAREGIVER')")
+     @PreAuthorize("hasAnyRole('CAREGIVER','MANAGER')")
     @PostMapping("/{roomId}/elderly/{elderlyId}")
     public ResponseEntity<?> addElderlyToRoom(
             @PathVariable Long roomId,
