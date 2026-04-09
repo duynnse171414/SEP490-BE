@@ -39,7 +39,7 @@ public class CaregiverProfileAPI {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     public CaregiverProfileResponse getById(@PathVariable Long id) {
         return caregiverProfileService.getById(id);
     }
