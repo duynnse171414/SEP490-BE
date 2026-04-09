@@ -27,7 +27,7 @@ public class AdminAPI {
     ModelMapper modelMapper;
 
     @PostMapping("admin/create-account")
-    @PreAuthorize("hasRole('ADMINISTRATOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public ResponseEntity createByAdmin(@RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authenticationService.createByAdmin(request));
     }
