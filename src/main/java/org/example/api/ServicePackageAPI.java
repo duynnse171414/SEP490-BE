@@ -21,7 +21,7 @@ public class ServicePackageAPI {
 
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public ServicePackageResponse create(@RequestBody ServicePackageRequest request) {
         return service.create(request);
     }
@@ -42,7 +42,7 @@ public class ServicePackageAPI {
 
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public ServicePackageResponse update(@PathVariable Long id,
                                          @RequestBody ServicePackageRequest request) {
         return service.update(id, request);
@@ -50,7 +50,7 @@ public class ServicePackageAPI {
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
