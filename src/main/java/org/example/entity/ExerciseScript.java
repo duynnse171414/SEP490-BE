@@ -20,5 +20,6 @@ public class ExerciseScript {
     private String description;
     private int durationMinutes;
     private String difficultyLevel;
+    @Column(columnDefinition = "TEXT")
     private String uploadScript;
 }
