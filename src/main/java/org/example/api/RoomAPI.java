@@ -75,12 +75,12 @@ public class RoomAPI {
         return ResponseEntity.ok("Elderly added to room");
     }
 
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER')")
     @GetMapping("/{roomId}/caregivers")
     public ResponseEntity<List<CaregiverDTO>> getCaregivers(@PathVariable Long roomId) {
         return ResponseEntity.ok(roomService.getCaregiversByRoom(roomId));
     }
-      @PreAuthorize("hasAnyRole('CAREGIVER','MANAGER','ADMINISTRATOR')")
+      @PreAuthorize("hasAnyRole('CAREGIVER','MANAGER','ADMINISTRATOR','FAMILYMEMBER')")
     @GetMapping("/{roomId}/elderlies")
     public ResponseEntity<List<ElderlyDTO>> getElderlies(@PathVariable Long roomId) {
         return ResponseEntity.ok(roomService.getElderliesByRoom(roomId));
