@@ -42,7 +42,7 @@ public class AlertNotificationAPI {
 
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('CAREGIVER','FAMILYMEMBER')")
+    @PreAuthorize("hasAnyRole('CAREGIVER','FAMILYMEMBER','MANAGER')")
     public AlertNotificationResponse update(@PathVariable Long id,
                                             @RequestBody AlertNotificationRequest request) {
         return service.update(id, request);
