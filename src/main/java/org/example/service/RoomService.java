@@ -28,6 +28,12 @@ public class RoomService {
 
         Room room = new Room();
         room.setRoomName(request.getRoomName());
+        if (request.getManagerId() != null) {
+            Account manager = accountRepository.findById(request.getManagerId())
+                    .orElseThrow(() -> new NotFoundException("Manager not found"));
+
+            room.setManager(manager);
+        }
 
         roomRepository.save(room);
 
