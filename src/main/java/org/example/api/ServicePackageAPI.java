@@ -21,7 +21,7 @@ public class ServicePackageAPI {
 
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMINISTRATOR')")
+    @PreAuthorize("hasRole('ADMINISTRATOR','MANAGER')")
     public ServicePackageResponse create(@RequestBody ServicePackageRequest request) {
         return service.create(request);
     }
