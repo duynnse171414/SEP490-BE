@@ -21,13 +21,13 @@ public class ReminderLogAPI {
 
 
     @PostMapping
-    @PreAuthorize("hasRole('ELDERLYUSER')")
+    @PreAuthorize("hasAnyRole('ELDERLYUSER','CAREGIVER')")
     public ReminderLogResponse create(@RequestBody ReminderLogRequest request) {
         return service.create(request);
     }
 
     @PostMapping("/{id}/confirm")
-    @PreAuthorize("hasRole('ELDERLYUSER')")
+    @PreAuthorize("hasAnyRole('ELDERLYUSER','CAREGIVER')")
     public ReminderLogResponse confirm(@PathVariable Long id) {
         return service.confirm(id);
     }
