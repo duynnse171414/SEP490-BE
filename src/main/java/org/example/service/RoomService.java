@@ -28,6 +28,7 @@ public class RoomService {
 
         Room room = new Room();
         room.setRoomName(request.getRoomName());
+
         if (request.getManagerId() != null) {
             Account manager = accountRepository.findById(request.getManagerId())
                     .orElseThrow(() -> new NotFoundException("Manager not found"));
@@ -90,15 +91,15 @@ public class RoomService {
         CaregiverProfile caregiver = caregiverProfileRepository.findById(caregiverId)
                 .orElseThrow(() -> new NotFoundException("Caregiver not found"));
 
-        if (room.getCaregiverProfiles() == null) {
-            room.setCaregiverProfiles(new ArrayList<>());
+
+        if (caregiver.getRoom() != null) {
+            throw new RuntimeException("Caregiver already assigned to another room");
         }
 
-        if (!room.getCaregiverProfiles().contains(caregiver)) {
-            room.getCaregiverProfiles().add(caregiver);
-        }
 
-        roomRepository.save(room);
+        caregiver.setRoom(room);
+
+        caregiverProfileRepository.save(caregiver);
     }
 
     // ADD ELDERLY
