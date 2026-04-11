@@ -20,16 +20,11 @@ public class Room {
 
     private boolean deleted = false;
 
-    // 🔥 Caregiver nhiều phòng
-    @ManyToMany
-    @JoinTable(
-            name = "room_caregiver",
-            joinColumns = @JoinColumn(name = "room_id"),
-            inverseJoinColumns = @JoinColumn(name = "caregiver_id")
-    )
+
+    @OneToMany(mappedBy = "room")
     private List<CaregiverProfile> caregiverProfiles;
 
-    // 🔥 1 room - nhiều elderly
+
     @OneToMany(mappedBy = "room")
     private List<ElderlyProfile> elderlyProfiles;
 
