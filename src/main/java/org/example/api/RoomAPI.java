@@ -35,13 +35,13 @@ public class RoomAPI {
     public ResponseEntity<RoomResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(roomService.getById(id));
     }
-   @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR')")
     @PutMapping("/{id}")
     public ResponseEntity<RoomResponse> update(@PathVariable Long id,
                                                @RequestBody RoomRequest request) {
         return ResponseEntity.ok(roomService.update(id, request));
     }
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         roomService.delete(id);
@@ -65,7 +65,7 @@ public class RoomAPI {
         roomService.assignRobotToRoom(roomId, robotId);
         return ResponseEntity.ok("Robot assigned to room");
     }
-     @PreAuthorize("hasAnyRole('CAREGIVER','MANAGER','ADMINISTRATOR')")
+    @PreAuthorize("hasAnyRole('CAREGIVER','MANAGER','ADMINISTRATOR')")
     @PostMapping("/{roomId}/elderly/{elderlyId}")
     public ResponseEntity<?> addElderlyToRoom(
             @PathVariable Long roomId,
@@ -75,12 +75,12 @@ public class RoomAPI {
         return ResponseEntity.ok("Elderly added to room");
     }
 
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     @GetMapping("/{roomId}/caregivers")
     public ResponseEntity<List<CaregiverDTO>> getCaregivers(@PathVariable Long roomId) {
         return ResponseEntity.ok(roomService.getCaregiversByRoom(roomId));
     }
-      @PreAuthorize("hasAnyRole('CAREGIVER','MANAGER','ADMINISTRATOR','FAMILYMEMBER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
     @GetMapping("/{roomId}/elderlies")
     public ResponseEntity<List<ElderlyDTO>> getElderlies(@PathVariable Long roomId) {
         return ResponseEntity.ok(roomService.getElderliesByRoom(roomId));
