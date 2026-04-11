@@ -32,7 +32,8 @@ public class CaregiverProfile {
         @JoinColumn(name = "account_id")
         private Account account;
 
-        @ManyToMany(mappedBy = "caregiverProfiles")
-        private List<Room> rooms;
+        @ManyToOne
+        @JoinColumn(name = "room_id")
+        private Room room;
     }
 
