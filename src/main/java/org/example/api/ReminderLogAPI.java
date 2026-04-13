@@ -39,7 +39,7 @@ public class ReminderLogAPI {
     }
 
     @GetMapping("/elderly/{elderlyId}")
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','ELDERLYUSER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','CAREGIVER','FAMILYMEMBER')")
     public List<ReminderLogResponse> getByElderlyId(@PathVariable Long elderlyId) {
         return service.getByElderlyId(elderlyId);
     }
