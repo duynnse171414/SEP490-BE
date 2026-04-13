@@ -38,6 +38,11 @@ public class ReminderLogAPI {
         return service.getAll();
     }
 
+    @GetMapping("/elderly/{elderlyId}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','ELDERLYUSER')")
+    public List<ReminderLogResponse> getByElderlyId(@PathVariable Long elderlyId) {
+        return service.getByElderlyId(elderlyId);
+    }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")

@@ -79,6 +79,18 @@ public class ReminderLogService {
         return mapToResponse(log);
     }
 
+    public List<ReminderLogResponse> getByElderlyId(Long elderlyId) {
+
+        // check elderly tồn tại (optional nhưng nên có)
+        elderlyRepository.findById(elderlyId)
+                .orElseThrow(() -> new RuntimeException("Elderly not found"));
+
+        return repository.findByElderlyIdAndDeletedFalse(elderlyId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     // SOFT DELETE
     public void delete(Long id) {
 

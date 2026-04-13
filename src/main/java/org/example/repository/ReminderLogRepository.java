@@ -15,4 +15,6 @@ public interface ReminderLogRepository extends JpaRepository<ReminderLog, Long> 
     List<ReminderLog> findByElderlyIdAndDeletedFalse(Long elderlyId);
 
     List<ReminderLog> findByReminderIdAndDeletedFalse(Long reminderId);
+
+
 }

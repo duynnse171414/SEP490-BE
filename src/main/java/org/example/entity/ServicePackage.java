@@ -1,11 +1,10 @@
 package org.example.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,4 +21,12 @@ public class ServicePackage {
     private double price;
     boolean deleted = false;
     private boolean active = true;
+
+    @ManyToMany
+    @JoinTable(
+            name = "service_package_exercise",
+            joinColumns = @JoinColumn(name = "service_package_id"),
+            inverseJoinColumns = @JoinColumn(name = "exercise_id")
+    )
+    private List<ExerciseScript> exercises;
 }
