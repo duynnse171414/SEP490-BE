@@ -12,4 +12,5 @@ public class ElderlyProfileRequest {
     private String name;
     private String preferredLanguage;
     private String speakingSpeed;
+    private Long roomId;
 }

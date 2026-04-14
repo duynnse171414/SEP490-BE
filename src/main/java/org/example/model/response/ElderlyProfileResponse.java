@@ -15,4 +15,5 @@ public class ElderlyProfileResponse {
     private String preferredLanguage;
     private String speakingSpeed;
     private boolean deleted;
+    private Long roomId;
 }

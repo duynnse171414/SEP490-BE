@@ -119,13 +119,19 @@ public class CaregiverProfileService {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Account not found"));
 
-
         return caregiverProfileRepository.findByAccountIdAndDeletedFalse(accountId)
                 .stream()
                 .map(profile -> {
                     CaregiverProfileResponse response =
                             modelMapper.map(profile, CaregiverProfileResponse.class);
+
                     response.setAccountId(profile.getAccount().getId());
+
+                    // ✅ set roomId
+                    if (profile.getRoom() != null) {
+                        response.setRoomId(profile.getRoom().getId());
+                    }
+
                     return response;
                 })
                 .collect(Collectors.toList());

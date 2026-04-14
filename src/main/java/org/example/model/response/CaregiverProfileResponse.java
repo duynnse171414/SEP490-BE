@@ -11,4 +11,5 @@ public class CaregiverProfileResponse {
     private String name;
     private String relationship;
     private String notificationPreference;
+    private Long roomId;
 }

@@ -2,11 +2,13 @@ package org.example.service;
 
 import org.example.entity.Account;
 import org.example.entity.ElderlyProfile;
+import org.example.entity.Room;
 import org.example.exception.NotFoundException;
 import org.example.model.response.ElderlyProfileResponse;
 import org.example.model.request.ElderlyProfileRequest;
 import org.example.repository.AccountRepository;
 import org.example.repository.ElderlyProfileRepository;
+import org.example.repository.RoomRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,9 @@ public class ElderlyProfileService {
 
     @Autowired
     ModelMapper modelMapper;
+
+    @Autowired
+    RoomRepository roomRepository;
 
     // CREATE
     public ElderlyProfileResponse create(Long accountId, ElderlyProfileRequest request) {
@@ -85,6 +90,11 @@ public class ElderlyProfileService {
         profile.setPreferredLanguage(request.getPreferredLanguage());
         profile.setSpeakingSpeed(request.getSpeakingSpeed());
         profile.setName(request.getName());
+        if (request.getRoomId() != null) {
+            Room room = roomRepository.findById(request.getRoomId())
+                    .orElseThrow(() -> new NotFoundException("Room not found"));
+            profile.setRoom(room);
+        }
 
         ElderlyProfile updated = elderlyProfileRepository.save(profile);
 
