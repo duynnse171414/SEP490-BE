@@ -64,7 +64,7 @@ public class ReminderAPI {
     }
 
     // GET by elderly
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     @GetMapping("/elderly/{elderlyId}")
     public List<ReminderResponse> getByElderly(@PathVariable Long elderlyId) {
         return service.getByElderlyId(elderlyId);
