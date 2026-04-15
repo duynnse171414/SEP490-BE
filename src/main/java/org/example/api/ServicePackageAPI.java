@@ -35,7 +35,7 @@ public class ServicePackageAPI {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER','CAREGIVER')")
     public List<ServicePackageResponse> getAll() {
         return service.getAll();
     }
@@ -48,7 +48,7 @@ public class ServicePackageAPI {
     }
 
     @GetMapping("/{pkgId}/exercises")
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER','CAREGIVER')")
     public List<ExerciseScript> getExercises(@PathVariable Long pkgId) {
         return service.getExercises(pkgId);
     }
