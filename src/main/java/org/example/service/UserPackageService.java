@@ -2,14 +2,15 @@ package org.example.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Account;
+import org.example.entity.ElderlyProfile;
 import org.example.entity.ServicePackage;
 import org.example.entity.UserPackage;
 import org.example.model.request.UserPackageRequest;
 import org.example.model.response.UserPackageResponse;
 import org.example.repository.AccountRepository;
+import org.example.repository.ElderlyProfileRepository;
 import org.example.repository.ServicePackageRepository;
 import org.example.repository.UserPackageRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,28 +19,23 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class UserPackageService {
-    @Autowired
-    UserPackageRepository userPackageRepository;
-    @Autowired
-    AccountRepository accountRepository;
-    @Autowired
-    ServicePackageRepository servicePackageRepository;
 
-    // CREATE
+    private final UserPackageRepository userPackageRepository;
+    private final AccountRepository accountRepository;
+    private final ServicePackageRepository servicePackageRepository;
+    private final ElderlyProfileRepository elderlyProfileRepository;
+
+    // ================= CREATE =================
     public UserPackageResponse create(UserPackageRequest request) {
 
-        Account account = accountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
-        ServicePackage servicePackage = servicePackageRepository.findById(request.getServicePackageId())
-                .orElseThrow(() -> new RuntimeException("Service package not found"));
+        Account account = getAccount(request.getAccountId());
+        ServicePackage servicePackage = getServicePackage(request.getServicePackageId());
+        ElderlyProfile elderly = getElderly(request.getElderlyProfileId());
 
         UserPackage userPackage = new UserPackage();
-
         userPackage.setAccount(account);
         userPackage.setServicePackage(servicePackage);
-        userPackage.setAssignedAt(request.getAssignedAt());
-        userPackage.setExpiredAt(request.getExpiredAt());
+        userPackage.setElderlyProfile(elderly);
         userPackage.setDeleted(false);
 
         userPackageRepository.save(userPackage);
@@ -47,55 +43,78 @@ public class UserPackageService {
         return mapToResponse(userPackage);
     }
 
-    // GET ALL
+    // ================= GET ALL =================
     public List<UserPackageResponse> getAll() {
-
         return userPackageRepository.findByDeletedFalse()
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    // GET BY ID
+    // ================= GET BY ID =================
     public UserPackageResponse getById(Long id) {
-
-        UserPackage userPackage = userPackageRepository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new RuntimeException("UserPackage not found"));
-
-        return mapToResponse(userPackage);
+        return mapToResponse(getUserPackage(id));
     }
 
-    // UPDATE
+    // ================= GET BY ELDERLY =================
+    public List<UserPackageResponse> getByElderlyId(Long elderlyId) {
+
+        // validate tồn tại
+        getElderly(elderlyId);
+
+        return userPackageRepository
+                .findByElderlyProfileIdAndDeletedFalse(elderlyId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // ================= UPDATE =================
     public UserPackageResponse update(Long id, UserPackageRequest request) {
 
-        UserPackage userPackage = userPackageRepository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new RuntimeException("UserPackage not found"));
+        UserPackage userPackage = getUserPackage(id);
 
-        Account account = accountRepository.findById(request.getAccountId())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
-        ServicePackage servicePackage = servicePackageRepository.findById(request.getServicePackageId())
-                .orElseThrow(() -> new RuntimeException("Service package not found"));
+        Account account = getAccount(request.getAccountId());
+        ServicePackage servicePackage = getServicePackage(request.getServicePackageId());
+        ElderlyProfile elderly = getElderly(request.getElderlyProfileId());
 
         userPackage.setAccount(account);
         userPackage.setServicePackage(servicePackage);
-        userPackage.setAssignedAt(request.getAssignedAt());
-        userPackage.setExpiredAt(request.getExpiredAt());
+        userPackage.setElderlyProfile(elderly);
 
         userPackageRepository.save(userPackage);
 
         return mapToResponse(userPackage);
     }
 
-    // SOFT DELETE
+    // ================= DELETE =================
     public void delete(Long id) {
 
-        UserPackage userPackage = userPackageRepository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new RuntimeException("UserPackage not found"));
-
+        UserPackage userPackage = getUserPackage(id);
         userPackage.setDeleted(true);
 
         userPackageRepository.save(userPackage);
+    }
+
+    // ================= PRIVATE HELPER =================
+    private UserPackage getUserPackage(Long id) {
+        return userPackageRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new RuntimeException("UserPackage not found"));
+    }
+
+    private Account getAccount(Long id) {
+        return accountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+    }
+
+    private ServicePackage getServicePackage(Long id) {
+        return servicePackageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Service package not found"));
+    }
+
+    private ElderlyProfile getElderly(Long id) {
+        return elderlyProfileRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Elderly profile not found"));
     }
 
     private UserPackageResponse mapToResponse(UserPackage userPackage) {
@@ -107,6 +126,11 @@ public class UserPackageService {
         response.setServicePackageId(userPackage.getServicePackage().getId());
         response.setAssignedAt(userPackage.getAssignedAt());
         response.setExpiredAt(userPackage.getExpiredAt());
+
+        // tránh null crash
+        if (userPackage.getElderlyProfile() != null) {
+            response.setElderlyProfileId(userPackage.getElderlyProfile().getId());
+        }
 
         return response;
     }

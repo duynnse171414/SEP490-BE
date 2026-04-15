@@ -21,6 +21,10 @@ public class UserPackage {
     @ManyToOne
     private ServicePackage servicePackage;
 
+    @ManyToOne
+    @JoinColumn(name = "elderly_profile_id")
+    private ElderlyProfile elderlyProfile;
+
     private LocalDateTime assignedAt;
     private LocalDateTime expiredAt;
     boolean deleted = false;

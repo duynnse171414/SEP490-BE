@@ -54,6 +54,18 @@ public class InteractionLogService {
                 .collect(Collectors.toList());
     }
 
+    public List<InteractionLogResponse> getByElderlyId(Long elderlyId) {
+
+        // check tồn tại elderly (optional nhưng nên có)
+        elderlyRepository.findById(elderlyId)
+                .orElseThrow(() -> new RuntimeException("Elderly not found"));
+
+        return repository.findByElderlyIdAndDeletedFalse(elderlyId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     // GET BY ID
     public InteractionLogResponse getById(Long id) {
         InteractionLog log = repository.findByIdAndDeletedFalse(id)

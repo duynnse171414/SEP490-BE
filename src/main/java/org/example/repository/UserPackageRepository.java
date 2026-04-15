@@ -16,6 +16,13 @@ public interface UserPackageRepository extends JpaRepository<UserPackage, Long> 
 
     Optional<UserPackage> findTopByAccountAndDeletedFalseOrderByAssignedAtDesc(Account account);
 
+    boolean existsByAccount_IdAndServicePackage_IdAndElderlyProfile_IdAndDeletedFalse(
+            Long accountId,
+            Long servicePackageId,
+            Long elderlyProfileId
+    );
+
+    List<UserPackage> findByElderlyProfileIdAndDeletedFalse(Long elderlyId);
 
     @Query("""
 SELECT up FROM UserPackage up

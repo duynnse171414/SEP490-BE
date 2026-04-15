@@ -31,6 +31,11 @@ public class InteractionLogAPI {
         return service.getAll();
     }
 
+    @GetMapping("/elderly/{elderlyId}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
+    public List<InteractionLogResponse> getByElderlyId(@PathVariable Long elderlyId) {
+        return service.getByElderlyId(elderlyId);
+    }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")

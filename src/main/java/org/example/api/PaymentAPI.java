@@ -2,13 +2,12 @@ package org.example.api;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
-import org.example.entity.UserPackage;
-import org.example.repository.UserPackageRepository;
+import org.example.entity.Account;
+import org.example.entity.ServicePackage;
+import org.example.repository.ServicePackageRepository;
 import org.example.service.QRPaymentService;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -17,23 +16,28 @@ import org.springframework.web.bind.annotation.RestController;
 public class PaymentAPI {
 
     private final QRPaymentService qrPaymentService;
-    private final UserPackageRepository userPackageRepository;
+    private final ServicePackageRepository servicePackageRepository;
 
     // ===================== CREATE PAYMENT =====================
-    @PostMapping("/user-package/{id}")
-    public QRPaymentService.PaymentInfo createPayment(@PathVariable Long id) {
+    @PostMapping("/create/{servicePackageId}")
+    public QRPaymentService.PaymentInfo createPayment(
+            @PathVariable Long servicePackageId,
+            @RequestParam Long elderlyProfileId,   // ✅ thêm dòng này
+            @AuthenticationPrincipal Account account
+    ) {
+        ServicePackage servicePackage = servicePackageRepository.findById(servicePackageId)
+                .orElseThrow(() -> new RuntimeException("ServicePackage not found"));
 
-        UserPackage userPackage = userPackageRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("UserPackage not found"));
-
-        // tránh thanh toán lại
-        if (userPackage.getAssignedAt() != null) {
-            throw new RuntimeException("Package already activated");
-        }
-
-        Double amount = userPackage.getServicePackage().getPrice();
-
-        return qrPaymentService.createPayment(userPackage, amount);
+        return qrPaymentService.createPayment(account, servicePackage, elderlyProfileId);
     }
 
+    // ===================== CONFIRM PAYMENT =====================
+    @PostMapping("/confirm")
+    public String confirmPayment(
+            @RequestParam String description,
+            @RequestParam Double amount
+    ) {
+        qrPaymentService.handlePaymentSuccess(description, amount);
+        return "Payment confirmed & package created";
+    }
 }
