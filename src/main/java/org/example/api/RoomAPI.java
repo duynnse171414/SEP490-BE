@@ -41,6 +41,17 @@ public class RoomAPI {
         return roomService.getById(id);
     }
 
+    @GetMapping("/{roomId}/elderlies")
+    public List<ElderlyDTO> getElderliesByRoom(@PathVariable Long roomId) {
+        return roomService.getElderliesByRoom(roomId);
+    }
+
+    // GET caregivers by room
+    @GetMapping("/{roomId}/caregivers")
+    public List<CaregiverDTO> getCaregiversByRoom(@PathVariable Long roomId) {
+        return roomService.getCaregiversByRoom(roomId);
+    }
+
     // UPDATE
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     @PutMapping("/{id}")
