@@ -13,4 +13,6 @@ public interface AlertNotificationRepository extends JpaRepository<AlertNotifica
     Optional<AlertNotification> findByIdAndDeletedFalse(Long id);
 
     List<AlertNotification> findByElderlyIdAndDeletedFalse(Long elderlyId);
+
+
 }

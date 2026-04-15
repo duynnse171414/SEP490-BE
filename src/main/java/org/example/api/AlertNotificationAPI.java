@@ -33,6 +33,11 @@ public class AlertNotificationAPI {
         return service.getAll();
     }
 
+    @GetMapping("/elderly/{elderlyId}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
+    public List<AlertNotificationResponse> getByElderlyId(@PathVariable Long elderlyId) {
+        return service.getByElderlyId(elderlyId);
+    }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")

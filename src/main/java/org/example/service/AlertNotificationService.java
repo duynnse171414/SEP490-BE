@@ -50,6 +50,18 @@ public class AlertNotificationService {
                 .collect(Collectors.toList());
     }
 
+    public List<AlertNotificationResponse> getByElderlyId(Long elderlyId) {
+
+        // check elderly tồn tại (optional nhưng nên có)
+        elderlyRepository.findById(elderlyId)
+                .orElseThrow(() -> new RuntimeException("Elderly not found"));
+
+        return repository.findByElderlyIdAndDeletedFalse(elderlyId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     // GET BY ID
     public AlertNotificationResponse getById(Long id) {
         AlertNotification alert = repository.findByIdAndDeletedFalse(id)
@@ -94,7 +106,7 @@ public class AlertNotificationService {
 
         if (alert.getElderly() != null) {
             response.setElderlyId(alert.getElderly().getId());
-            response.setElderlyName(alert.getElderly().getAccount().getFullName());
+            response.setElderlyName(alert.getElderly().getName());
         }
 
         return response;
