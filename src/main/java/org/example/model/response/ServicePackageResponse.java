@@ -11,4 +11,5 @@ public class ServicePackageResponse {
     private String level;
     private double price;
     private boolean active;
+    private Integer durationDays;
 }

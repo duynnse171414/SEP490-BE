@@ -21,6 +21,7 @@ public class ServicePackage {
     private double price;
     boolean deleted = false;
     private boolean active = true;
+    private Integer durationDays;
 
     @ManyToMany
     @JoinTable(

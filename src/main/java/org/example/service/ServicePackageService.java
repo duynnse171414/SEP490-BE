@@ -58,6 +58,8 @@ public class ServicePackageService {
         servicePackage.setLevel(request.getLevel());
         servicePackage.setPrice(request.getPrice());
         servicePackage.setActive(request.isActive());
+        servicePackage.setDurationDays(request.getDurationDays());
+
         servicePackage.setDeleted(false);
 
         repository.save(servicePackage);
@@ -144,6 +146,8 @@ public class ServicePackageService {
         servicePackage.setLevel(request.getLevel());
         servicePackage.setPrice(request.getPrice());
         servicePackage.setActive(request.isActive());
+        servicePackage.setDurationDays(request.getDurationDays());
+
 
         repository.save(servicePackage);
 
@@ -216,6 +220,7 @@ public class ServicePackageService {
         pkg.setDescription(request.getDescription());
         pkg.setLevel(packageLevel.name());
         pkg.setPrice(request.getPrice());
+        pkg.setDurationDays(request.getDurationDays());
         pkg.setActive(true);
         pkg.setDeleted(false);
 
@@ -236,6 +241,8 @@ public class ServicePackageService {
         response.setLevel(servicePackage.getLevel());
         response.setPrice(servicePackage.getPrice());
         response.setActive(servicePackage.isActive());
+        response.setDurationDays(servicePackage.getDurationDays());
+
 
         return response;
     }
