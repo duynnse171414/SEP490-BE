@@ -27,7 +27,7 @@ public class UserPackageAPI {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER')")
     public List<UserPackageResponse> getAll() {
         return userPackageService.getAll();
     }
