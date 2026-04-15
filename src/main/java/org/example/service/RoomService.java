@@ -2,49 +2,46 @@ package org.example.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.entity.*;
+import org.example.exception.BadRequestException;
 import org.example.exception.NotFoundException;
 import org.example.model.request.RoomRequest;
 import org.example.model.response.*;
 import org.example.repository.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class RoomService {
 
     private final RoomRepository roomRepository;
     private final AccountRepository accountRepository;
-    private final CaregiverProfileRepository caregiverProfileRepository;
-    private final ElderlyProfileRepository elderlyProfileRepository;
+    private final CaregiverProfileRepository caregiverRepository;
+    private final ElderlyProfileRepository elderlyRepository;
     private final RobotRepository robotRepository;
 
-    // CREATE
+    // ================= CREATE =================
     public RoomResponse create(RoomRequest request) {
+
+        Account manager = accountRepository.findById(request.getManagerId())
+                .orElseThrow(() -> new NotFoundException("Manager not found"));
+
+        validateManager(manager);
 
         Room room = new Room();
         room.setRoomName(request.getRoomName());
-
-        if (request.getManagerId() != null) {
-            Account manager = accountRepository.findById(request.getManagerId())
-                    .orElseThrow(() -> new NotFoundException("Manager not found"));
-
-            room.setManager(manager);
-        }
+        room.setManager(manager);
 
         roomRepository.save(room);
 
         return mapToResponse(room);
     }
 
-
-
-
-    // GET ALL
+    // ================= GET =================
+    @Transactional(readOnly = true)
     public List<RoomResponse> getAll() {
         return roomRepository.findByDeletedFalse()
                 .stream()
@@ -52,198 +49,150 @@ public class RoomService {
                 .toList();
     }
 
-    // GET BY ID
+    @Transactional(readOnly = true)
     public RoomResponse getById(Long id) {
+        return mapToResponse(getRoom(id));
+    }
 
-        Room room = roomRepository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new NotFoundException("Room not found"));
+    // ================= UPDATE =================
+    public RoomResponse update(Long id, RoomRequest request) {
+
+        Room room = getRoom(id);
+
+        room.setRoomName(request.getRoomName());
 
         return mapToResponse(room);
     }
 
-    // UPDATE (chỉ update name)
-    public RoomResponse update(Long id, RoomRequest request) {
-
-        Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Room not found"));
-
-        room.setRoomName(request.getRoomName());
-
-        return mapToResponse(roomRepository.save(room));
-    }
-
-    // DELETE
+    // ================= DELETE =================
     public void delete(Long id) {
 
-        Room room = roomRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Room not found"));
+        Room room = getRoom(id);
+
+        validateRoomEmpty(room);
 
         room.setDeleted(true);
-        roomRepository.save(room);
     }
 
-    // ADD CAREGIVER
-    public void addCaregiverToRoom(Long roomId, Long caregiverId) {
+    // ================= ASSIGN =================
+    public void addCaregiver(Long roomId, Long caregiverId) {
 
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("Room not found"));
-
-        CaregiverProfile caregiver = caregiverProfileRepository.findById(caregiverId)
+        Room room = getRoom(roomId);
+        CaregiverProfile caregiver = caregiverRepository.findById(caregiverId)
                 .orElseThrow(() -> new NotFoundException("Caregiver not found"));
 
-
         if (caregiver.getRoom() != null) {
-            throw new RuntimeException("Caregiver already assigned to another room");
+            throw new BadRequestException("Caregiver already assigned");
         }
 
-
         caregiver.setRoom(room);
-
-        caregiverProfileRepository.save(caregiver);
     }
 
-    // ADD ELDERLY
-    public void addElderlyToRoom(Long roomId, Long elderlyId) {
+    public void addElderly(Long roomId, Long elderlyId) {
 
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("Room not found"));
-
-        ElderlyProfile elderly = elderlyProfileRepository.findById(elderlyId)
+        Room room = getRoom(roomId);
+        ElderlyProfile elderly = elderlyRepository.findById(elderlyId)
                 .orElseThrow(() -> new NotFoundException("Elderly not found"));
 
         if (elderly.getRoom() != null) {
-            throw new RuntimeException("Elderly already in another room");
+            throw new BadRequestException("Elderly already assigned");
         }
 
         elderly.setRoom(room);
-        elderlyProfileRepository.save(elderly);
     }
 
+    public void assignRobot(Long roomId, Long robotId) {
 
-    public void assignRobotToRoom(Long roomId, Long robotId) {
-
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("Room not found"));
-
+        Room room = getRoom(roomId);
         Robot robot = robotRepository.findById(robotId)
                 .orElseThrow(() -> new NotFoundException("Robot not found"));
 
-        // ❗ check room đã có robot chưa
         if (room.getRobot() != null) {
-            throw new RuntimeException("Room already has a robot");
+            throw new BadRequestException("Room already has robot");
         }
 
-        // ❗ check robot đã thuộc room khác chưa
         if (robot.getRoom() != null) {
-            throw new RuntimeException("Robot already assigned to another room");
+            throw new BadRequestException("Robot already assigned");
         }
 
         robot.setRoom(room);
         room.setRobot(robot);
-
-        robotRepository.save(robot);
     }
 
-    // MAP RESPONSE
-    private RoomResponse mapToResponse(Room room) {
+    // ================= REMOVE =================
+    public void removeCaregiver(Long caregiverId) {
 
-        RoomResponse res = new RoomResponse();
+        CaregiverProfile caregiver = caregiverRepository.findById(caregiverId)
+                .orElseThrow(() -> new NotFoundException("Caregiver not found"));
 
-        res.setId(room.getId());
-        res.setRoomName(room.getRoomName());
-
-        if (room.getManager() != null) {
-            res.setManagerId(room.getManager().getId());
-        }
-
-        // caregivers
-        if (room.getCaregiverProfiles() != null) {
-            res.setCaregivers(
-                    room.getCaregiverProfiles().stream().map(c -> {
-                        CaregiverDTO dto = new CaregiverDTO();
-                        dto.setId(c.getId());
-                        dto.setName(c.getName());
-                        return dto;
-                    }).toList()
-            );
-        }
-
-        // elderly
-        if (room.getElderlyProfiles() != null) {
-            res.setElderlies(
-                    room.getElderlyProfiles().stream().map(e -> {
-                        ElderlyDTO dto = new ElderlyDTO();
-                        dto.setId(e.getId());
-                        dto.setName(e.getName());
-                        return dto;
-                    }).toList()
-            );
-        }
-
-        // 🔥 robot (1 cái thôi)
-        if (room.getRobot() != null) {
-
-            Robot r = room.getRobot();
-
-            RobotDTO dto = new RobotDTO();
-            dto.setId(r.getId());
-            dto.setRobotName(r.getRobotName());
-
-
-            res.setRobot(dto);
-        }
-
-        return res;
+        caregiver.setRoom(null);
     }
 
-    public List<CaregiverDTO> getCaregiversByRoom(Long roomId) {
+    public void removeElderly(Long elderlyId) {
 
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("Room not found"));
+        ElderlyProfile elderly = elderlyRepository.findById(elderlyId)
+                .orElseThrow(() -> new NotFoundException("Elderly not found"));
 
-        if (room.getCaregiverProfiles() == null) {
-            return new ArrayList<>();
-        }
-
-        return room.getCaregiverProfiles().stream().map(c -> {
-            CaregiverDTO dto = new CaregiverDTO();
-            dto.setId(c.getId());
-            dto.setName(c.getName());
-            return dto;
-        }).toList();
+        elderly.setRoom(null);
     }
 
-    public List<ElderlyDTO> getElderliesByRoom(Long roomId) {
+    public void removeRobot(Long roomId) {
 
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("Room not found"));
-
-        if (room.getElderlyProfiles() == null) {
-            return new ArrayList<>();
-        }
-
-        return room.getElderlyProfiles().stream().map(e -> {
-            ElderlyDTO dto = new ElderlyDTO();
-            dto.setId(e.getId());
-            dto.setName(e.getName());
-            return dto;
-        }).toList();
-    }
-    public RobotDTO getRobotByRoom(Long roomId) {
-
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new NotFoundException("Room not found"));
+        Room room = getRoom(roomId);
 
         if (room.getRobot() == null) {
-            return null;
+            throw new BadRequestException("Room has no robot");
         }
 
-        Robot r = room.getRobot();
+        Robot robot = room.getRobot();
 
-        RobotDTO dto = new RobotDTO();
-        dto.setId(r.getId());
-        dto.setRobotName(r.getRobotName());
+        robot.setRoom(null);
+        room.setRobot(null);
+    }
 
-        return dto;
+    // ================= HELPERS =================
+    private Room getRoom(Long id) {
+        return roomRepository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Room not found"));
+    }
+
+    private void validateManager(Account manager) {
+        if (!manager.getRole().equals(Role.MANAGER)) {
+            throw new BadRequestException("Account is not manager");
+        }
+    }
+
+    private void validateRoomEmpty(Room room) {
+        if (!room.getCaregiverProfiles().isEmpty()
+                || !room.getElderlyProfiles().isEmpty()
+                || room.getRobot() != null) {
+
+            throw new BadRequestException("Room is not empty");
+        }
+    }
+
+    // ================= MAPPER =================
+    private RoomResponse mapToResponse(Room room) {
+
+        return RoomResponse.builder()
+                .id(room.getId())
+                .roomName(room.getRoomName())
+                .managerId(room.getManager() != null ? room.getManager().getId() : null)
+                .caregivers(
+                        room.getCaregiverProfiles().stream()
+                                .map(c -> new CaregiverDTO(c.getId(), c.getName()))
+                                .toList()
+                )
+                .elderlies(
+                        room.getElderlyProfiles().stream()
+                                .map(e -> new ElderlyDTO(e.getId(), e.getName()))
+                                .toList()
+                )
+                .robot(
+                        room.getRobot() != null
+                                ? new RobotDTO(room.getRobot().getId(), room.getRobot().getRobotName())
+                                : null
+                )
+                .build();
     }
 }

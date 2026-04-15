@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -22,11 +23,10 @@ public class Room {
 
 
     @OneToMany(mappedBy = "room")
-    private List<CaregiverProfile> caregiverProfiles;
-
+    private List<CaregiverProfile> caregiverProfiles = new ArrayList<>();
 
     @OneToMany(mappedBy = "room")
-    private List<ElderlyProfile> elderlyProfiles;
+    private List<ElderlyProfile> elderlyProfiles = new ArrayList<>();
 
     @OneToOne(mappedBy = "room")
     private Robot robot;

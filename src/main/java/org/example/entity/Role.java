@@ -12,6 +12,8 @@ public enum Role {
 
     MANAGER,
 
+    ROBOT,
+
     ADMINISTRATOR;
 
     @JsonCreator
