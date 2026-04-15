@@ -31,6 +31,7 @@ public class RoomAPI {
     }
 
     // GET
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     @GetMapping
     public List<RoomResponse> getAll() {
         return roomService.getAll();
