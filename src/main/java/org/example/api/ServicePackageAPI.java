@@ -22,12 +22,17 @@ public class ServicePackageAPI {
     ServicePackageService service;
 
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public ServicePackageResponse create(@RequestBody ServicePackageRequest request) {
-        return service.create(request);
-    }
+//    @PostMapping
+//    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+//    public ServicePackageResponse create(@RequestBody ServicePackageRequest request) {
+//        return service.create(request);
+//    }
 
+    @PostMapping("/auto")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    public ServicePackageResponse createAuto(@RequestBody ServicePackageRequest request) {
+        return service.createAuto(request);
+    }
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
@@ -48,11 +53,11 @@ public class ServicePackageAPI {
         return service.getExercises(pkgId);
     }
 
-    @GetMapping("/{id}/available-exercises")
-    @PreAuthorize("hasAnyRole('CAREGIVER','ADMINISTRATOR','MANAGER')")
-    public List<ExerciseScript> getAvailableExercises(@PathVariable Long id) {
-        return service.getAvailableExercises(id);
-    }
+//    @GetMapping("/{id}/available-exercises")
+//    @PreAuthorize("hasAnyRole('CAREGIVER','ADMINISTRATOR','MANAGER')")
+//    public List<ExerciseScript> getAvailableExercises(@PathVariable Long id) {
+//        return service.getAvailableExercises(id);
+//    }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")

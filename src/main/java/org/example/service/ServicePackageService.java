@@ -11,12 +11,31 @@ import org.example.repository.UserPackageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ServicePackageService {
+
+    private static final Map<PackageLevel, Map<ExerciseLevel, Integer>> PACKAGE_RULES = Map.of(
+            PackageLevel.BASIC, Map.of(
+                    ExerciseLevel.EASY, 2
+            ),
+            PackageLevel.STANDARD, Map.of(
+                    ExerciseLevel.EASY, 2,
+                    ExerciseLevel.MEDIUM, 1
+            ),
+            PackageLevel.PREMIUM, Map.of(
+                    ExerciseLevel.EASY, 2,
+                    ExerciseLevel.MEDIUM, 2,
+                    ExerciseLevel.HARD, 1
+            )
+    );
+
      @Autowired
      ServicePackageRepository repository;
 
@@ -154,6 +173,59 @@ public class ServicePackageService {
         repository.save(servicePackage);
     }
 
+
+    public ServicePackageResponse createAuto(ServicePackageRequest request) {
+
+        PackageLevel packageLevel = PackageLevel.valueOf(request.getLevel().toUpperCase());
+
+        // 1. Lấy rule
+        Map<ExerciseLevel, Integer> rule = PACKAGE_RULES.get(packageLevel);
+
+        if (rule == null) {
+            throw new RuntimeException("Package level không hợp lệ");
+        }
+
+        List<ExerciseScript> selectedExercises = new ArrayList<>();
+
+        // 2. Lấy exercise theo từng level
+        for (Map.Entry<ExerciseLevel, Integer> entry : rule.entrySet()) {
+
+            ExerciseLevel exLevel = entry.getKey();
+            int requiredCount = entry.getValue();
+
+            List<ExerciseScript> available = exerciseScriptRepository
+                    .findByLevelAndDeletedFalse(exLevel);
+
+            if (available.size() < requiredCount) {
+                throw new RuntimeException("Không đủ bài tập level " + exLevel);
+            }
+
+            // 👉 random chọn
+            Collections.shuffle(available);
+
+            selectedExercises.addAll(
+                    available.stream()
+                            .limit(requiredCount)
+                            .toList()
+            );
+        }
+
+        // 3. Tạo package
+        ServicePackage pkg = new ServicePackage();
+        pkg.setName(request.getName());
+        pkg.setDescription(request.getDescription());
+        pkg.setLevel(packageLevel.name());
+        pkg.setPrice(request.getPrice());
+        pkg.setActive(true);
+        pkg.setDeleted(false);
+
+        pkg.setExercises(selectedExercises);
+
+        repository.save(pkg);
+
+        return mapToResponse(pkg);
+    }
+
     private ServicePackageResponse mapToResponse(ServicePackage servicePackage) {
 
         ServicePackageResponse response = new ServicePackageResponse();
@@ -167,4 +239,5 @@ public class ServicePackageService {
 
         return response;
     }
+
 }

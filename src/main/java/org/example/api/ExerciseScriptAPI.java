@@ -4,9 +4,11 @@ import org.example.model.request.ExerciseScriptRequest;
 import org.example.model.response.ExerciseScriptResponse;
 import org.example.service.ExerciseScriptService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.persistence.Column;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,10 +21,16 @@ public class ExerciseScriptAPI {
     ExerciseScriptService service;
 
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public ExerciseScriptResponse create(@RequestBody ExerciseScriptRequest request) {
-        return service.create(request);
+    public ExerciseScriptResponse create(
+            @RequestParam String name,
+            @RequestParam String description,
+            @RequestParam int durationMinutes,
+            @RequestParam String level,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return service.create(name, description, durationMinutes, level, file);
     }
 
 

@@ -1,5 +1,6 @@
 package org.example.repository;
 
+import org.example.entity.ExerciseLevel;
 import org.example.entity.ExerciseScript;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,4 +12,6 @@ public interface ExerciseScriptRepository extends JpaRepository<ExerciseScript, 
     List<ExerciseScript> findByDeletedFalse();
 
     Optional<ExerciseScript> findByIdAndDeletedFalse(Long id);
+
+    List<ExerciseScript> findByLevelAndDeletedFalse(ExerciseLevel level);
 }

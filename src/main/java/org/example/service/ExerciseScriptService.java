@@ -1,13 +1,16 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.entity.ExerciseLevel;
 import org.example.entity.ExerciseScript;
 import org.example.model.request.ExerciseScriptRequest;
 import org.example.model.response.ExerciseScriptResponse;
 import org.example.repository.ExerciseScriptRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,21 +21,33 @@ public class ExerciseScriptService {
     ExerciseScriptRepository repository;
 
     // CREATE
-    public ExerciseScriptResponse create(ExerciseScriptRequest request) {
+    public ExerciseScriptResponse create(String name,
+                                         String description,
+                                         int durationMinutes,
+                                         String level,
+                                         MultipartFile file) {
 
-        ExerciseScript script = new ExerciseScript();
-        script.setName(request.getName());
-        script.setDescription(request.getDescription());
-        script.setDurationMinutes(request.getDurationMinutes());
-        script.setDifficultyLevel(request.getDifficultyLevel());
-        script.setUploadScript(request.getUploadScript());
+        try {
+            ExerciseScript script = new ExerciseScript();
 
+            script.setName(name);
+            script.setDescription(description);
+            script.setDurationMinutes(durationMinutes);
+            script.setLevel(Enum.valueOf(ExerciseLevel.class, level.toUpperCase()));
 
-        script.setDeleted(false);
+            // 🔥 đọc nội dung file
+            String content = new String(file.getBytes());
+            script.setUploadScript(content);
 
-        repository.save(script);
+            script.setDeleted(false);
 
-        return mapToResponse(script);
+            repository.save(script);
+
+            return mapToResponse(script);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi đọc file", e);
+        }
     }
 
     // GET ALL
@@ -60,7 +75,7 @@ public class ExerciseScriptService {
         script.setName(request.getName());
         script.setDescription(request.getDescription());
         script.setDurationMinutes(request.getDurationMinutes());
-        script.setDifficultyLevel(request.getDifficultyLevel());
+        script.setLevel(request.getLevel());
         script.setUploadScript(request.getUploadScript());
 
 
@@ -87,8 +102,8 @@ public class ExerciseScriptService {
         response.setName(script.getName());
         response.setDescription(script.getDescription());
         response.setDurationMinutes(script.getDurationMinutes());
-        response.setDifficultyLevel(script.getDifficultyLevel());
-        response.setUploadScript(script.getUploadScript());
+        response.setLevel(script.getLevel());
+
 
         return response;
     }

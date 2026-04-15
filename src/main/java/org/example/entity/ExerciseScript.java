@@ -18,9 +18,9 @@ public class ExerciseScript {
     private String name;
     private String description;
     private int durationMinutes;
-    private String difficultyLevel;
-    @Column(columnDefinition = "TEXT")
+    @Lob
     private String uploadScript;
-
+    @Enumerated(EnumType.STRING)
+    private ExerciseLevel level;
 
 }
