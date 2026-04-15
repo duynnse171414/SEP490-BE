@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +54,33 @@ public class RoomService {
     @Transactional(readOnly = true)
     public RoomResponse getById(Long id) {
         return mapToResponse(getRoom(id));
+    }
+
+
+    public List<ElderlyDTO> getElderliesByRoom(Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new NotFoundException("Room not found"));
+
+        return room.getElderlyProfiles().stream()
+                .map(elderly -> ElderlyDTO.builder()
+                        .id(elderly.getId())
+                        .name(elderly.getName())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public List<CaregiverDTO> getCaregiversByRoom(Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new NotFoundException("Room not found"));
+
+        return Optional.ofNullable(room.getCaregiverProfiles())
+                .orElse(List.of())
+                .stream()
+                .map(caregiver -> CaregiverDTO.builder()
+                        .id(caregiver.getId())
+                        .name(caregiver.getName())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     // ================= UPDATE =================
