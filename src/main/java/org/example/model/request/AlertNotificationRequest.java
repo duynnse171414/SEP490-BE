@@ -9,5 +9,5 @@ public class AlertNotificationRequest {
     private String alertType;
     private String message;
     private Boolean resolved;
-    private Long reminderId;
+    private Long reminderLogId;
 }

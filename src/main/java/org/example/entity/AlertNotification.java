@@ -19,8 +19,8 @@ public class AlertNotification {
     private ElderlyProfile elderly;
 
     @OneToOne
-    @JoinColumn(name = "reminder_id")
-    private Reminder reminder;
+    @JoinColumn(name = "reminderlog_id")
+    private ReminderLog reminderLog;
 
     private String alertType;
     private String message;

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.example.entity.*;
 import org.example.exception.NotFoundException;
 import org.example.model.request.ReminderRequest;
-import org.example.model.response.ElderlyProfileResponse;
 import org.example.model.response.ReminderResponse;
 import org.example.repository.*;
 import org.modelmapper.ModelMapper;
@@ -144,7 +143,7 @@ public class ReminderService {
 
         if (reminder.getElderly() != null) {
             response.setElderlyId(reminder.getElderly().getId());
-            response.setElderlyName(reminder.getElderly().getAccount().getFullName());
+            response.setElderlyName(reminder.getElderly().getName());
         }
 
         if (reminder.getCaregiver() != null) {

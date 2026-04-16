@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class InteractionLogService {
-     @Autowired
-     InteractionLogRepository repository;
-     @Autowired
-     ElderlyProfileRepository elderlyRepository;
-     @Autowired
-     RobotRepository robotRepository;
+    @Autowired
+    InteractionLogRepository repository;
+    @Autowired
+    ElderlyProfileRepository elderlyRepository;
+    @Autowired
+    RobotRepository robotRepository;
 
     // CREATE
     public InteractionLogResponse create(InteractionLogRequest request) {
@@ -109,7 +109,7 @@ public class InteractionLogService {
 
         if (log.getElderly() != null) {
             response.setElderlyId(log.getElderly().getId());
-            response.setElderlyName(log.getElderly().getAccount().getFullName());
+            response.setElderlyName(log.getElderly().getName());
         }
 
         if (log.getRobot() != null) {

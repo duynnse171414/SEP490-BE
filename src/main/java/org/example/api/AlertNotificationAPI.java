@@ -42,7 +42,7 @@ public class AlertNotificationAPI {
     @GetMapping("/reminder/{reminderId}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     public List<AlertNotificationResponse> getByReminderId(@PathVariable Long reminderId) {
-        return service.getByReminderId(reminderId);
+        return service.getByReminderLogId(reminderId);
     }
 
     @GetMapping("/{id}")

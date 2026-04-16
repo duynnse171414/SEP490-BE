@@ -11,7 +11,7 @@ public class AlertNotificationResponse {
 
     private Long elderlyId;
     private String elderlyName;
-    private Long reminderId;
+    private Long reminderLogId;
     private String alertType;
     private String message;
     private boolean resolved;

@@ -4,10 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.example.entity.AlertNotification;
 import org.example.entity.ElderlyProfile;
 import org.example.entity.Reminder;
+import org.example.entity.ReminderLog;
 import org.example.model.request.AlertNotificationRequest;
 import org.example.model.response.AlertNotificationResponse;
 import org.example.repository.AlertNotificationRepository;
 import org.example.repository.ElderlyProfileRepository;
+import org.example.repository.ReminderLogRepository;
 import org.example.repository.ReminderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,7 +24,7 @@ public class AlertNotificationService {
 
     private final AlertNotificationRepository repository;
     private final ElderlyProfileRepository elderlyRepository;
-    private final ReminderRepository reminderRepository;
+    private final ReminderLogRepository reminderLogRepository;
 
     // CREATE
     public AlertNotificationResponse create(AlertNotificationRequest request) {
@@ -39,10 +41,10 @@ public class AlertNotificationService {
         alert.setCreatedAt(LocalDateTime.now());
 
         // 👉 NEW: set reminder
-        if (request.getReminderId() != null) {
-            Reminder reminder = reminderRepository.findById(request.getReminderId())
+        if (request.getReminderLogId() != null) {
+            ReminderLog reminderLog = reminderLogRepository.findById(request.getReminderLogId())
                     .orElseThrow(() -> new RuntimeException("Reminder not found"));
-            alert.setReminder(reminder);
+            alert.setReminderLog(reminderLog);
         }
 
         repository.save(alert);
@@ -69,13 +71,13 @@ public class AlertNotificationService {
                 .collect(Collectors.toList());
     }
 
-    public List<AlertNotificationResponse> getByReminderId(Long reminderId) {
+    public List<AlertNotificationResponse> getByReminderLogId(Long reminderId) {
 
         // optional: check reminder tồn tại
-        reminderRepository.findById(reminderId)
+        reminderLogRepository.findById(reminderId)
                 .orElseThrow(() -> new RuntimeException("Reminder not found"));
 
-        return repository.findByReminderIdAndDeletedFalse(reminderId)
+        return repository.findByReminderLog_IdAndDeletedFalse(reminderId)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -100,10 +102,10 @@ public class AlertNotificationService {
         }
 
         // 👉 update reminder nếu có truyền lên
-        if (request.getReminderId() != null) {
-            Reminder reminder = reminderRepository.findById(request.getReminderId())
+        if (request.getReminderLogId() != null) {
+            ReminderLog reminderLog = reminderLogRepository.findById(request.getReminderLogId())
                     .orElseThrow(() -> new RuntimeException("Reminder not found"));
-            alert.setReminder(reminder);
+            alert.setReminderLog(reminderLog);
         }
 
         repository.save(alert);
@@ -137,8 +139,8 @@ public class AlertNotificationService {
         }
 
         // 👉 NEW: Reminder mapping
-        if (alert.getReminder() != null) {
-            response.setReminderId(alert.getReminder().getId());
+        if (alert.getReminderLog() != null) {
+            response.setReminderLogId(alert.getReminderLog().getId());
         }
 
         return response;
