@@ -51,7 +51,7 @@ public class ReminderAPI {
 
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMINISTRATOR')")
+     @PreAuthorize("hasAnyRole('ADMINISTRATOR','CAREGIVER','FAMILYMEMBER')")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
