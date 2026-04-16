@@ -62,7 +62,7 @@ public class RoomAPI {
     }
 
     // DELETE
-    @PreAuthorize("hasRole('ADMINISTRATOR')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         roomService.delete(id);
