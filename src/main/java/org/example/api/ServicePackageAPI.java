@@ -42,7 +42,7 @@ public class ServicePackageAPI {
 
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER','CAREGIVER')")
     public ServicePackageResponse getById(@PathVariable Long id) {
         return service.getById(id);
     }
