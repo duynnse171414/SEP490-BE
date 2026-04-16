@@ -39,6 +39,12 @@ public class AlertNotificationAPI {
         return service.getByElderlyId(elderlyId);
     }
 
+    @GetMapping("/reminder/{reminderId}")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
+    public List<AlertNotificationResponse> getByReminderId(@PathVariable Long reminderId) {
+        return service.getByReminderId(reminderId);
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public AlertNotificationResponse getById(@PathVariable Long id) {

@@ -18,6 +18,10 @@ public class AlertNotification {
     @ManyToOne
     private ElderlyProfile elderly;
 
+    @OneToOne
+    @JoinColumn(name = "reminder_id")
+    private Reminder reminder;
+
     private String alertType;
     private String message;
     private boolean resolved;
