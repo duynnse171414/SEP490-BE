@@ -1,6 +1,7 @@
 package org.example.repository;
 
 import org.example.entity.Account;
+import org.example.entity.PaymentStatus;
 import org.example.entity.UserPackage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,13 +17,11 @@ public interface UserPackageRepository extends JpaRepository<UserPackage, Long> 
 
     Optional<UserPackage> findTopByAccountAndDeletedFalseOrderByAssignedAtDesc(Account account);
 
-    boolean existsByAccount_IdAndServicePackage_IdAndElderlyProfile_IdAndDeletedFalse(
-            Long accountId,
-            Long servicePackageId,
-            Long elderlyProfileId
-    );
+    boolean existsByServicePackage_IdAndDeletedFalse(Long servicePackageId);
 
     List<UserPackage> findByElderlyProfileIdAndDeletedFalse(Long elderlyId);
+
+    List<UserPackage> findByStatusAndDeletedFalse(PaymentStatus status);
 
     @Query("""
 SELECT up FROM UserPackage up

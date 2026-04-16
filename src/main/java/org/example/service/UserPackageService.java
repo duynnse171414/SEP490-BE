@@ -1,10 +1,7 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.entity.Account;
-import org.example.entity.ElderlyProfile;
-import org.example.entity.ServicePackage;
-import org.example.entity.UserPackage;
+import org.example.entity.*;
 import org.example.model.request.UserPackageRequest;
 import org.example.model.response.UserPackageResponse;
 import org.example.repository.AccountRepository;
@@ -69,6 +66,13 @@ public class UserPackageService {
                 .collect(Collectors.toList());
     }
 
+    public List<UserPackageResponse> getByStatus(PaymentStatus status) {
+        return userPackageRepository.findByStatusAndDeletedFalse(status)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     // ================= UPDATE =================
     public UserPackageResponse update(Long id, UserPackageRequest request) {
 
@@ -126,6 +130,8 @@ public class UserPackageService {
         response.setServicePackageId(userPackage.getServicePackage().getId());
         response.setAssignedAt(userPackage.getAssignedAt());
         response.setExpiredAt(userPackage.getExpiredAt());
+        response.setStatus(userPackage.getStatus());
+
 
         // tránh null crash
         if (userPackage.getElderlyProfile() != null) {

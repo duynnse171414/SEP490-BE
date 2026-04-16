@@ -25,6 +25,9 @@ public class UserPackage {
     @JoinColumn(name = "elderly_profile_id")
     private ElderlyProfile elderlyProfile;
 
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status;
+
     private LocalDateTime assignedAt;
     private LocalDateTime expiredAt;
     boolean deleted = false;

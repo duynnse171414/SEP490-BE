@@ -12,4 +12,5 @@ public interface ServicePackageRepository extends JpaRepository<ServicePackage, 
 
     Optional<ServicePackage> findByIdAndDeletedFalse(Long id);
 
+
 }

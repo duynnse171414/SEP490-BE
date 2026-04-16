@@ -1,10 +1,8 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
-import org.example.entity.Account;
-import org.example.entity.ElderlyProfile;
-import org.example.entity.ServicePackage;
-import org.example.entity.UserPackage;
+import org.example.entity.*;
+import org.example.model.response.UserPackageResponse;
 import org.example.repository.AccountRepository;
 import org.example.repository.ElderlyProfileRepository;
 import org.example.repository.ServicePackageRepository;
@@ -15,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,9 +30,31 @@ public class QRPaymentService {
     private static final String TEMPLATE = "compact2";
 
     // ===================== CREATE PAYMENT =====================
+    @Transactional
     public PaymentInfo createPayment(Account account, ServicePackage servicePackage, Long elderlyId) {
 
-        String description = buildDescription(account.getId(), servicePackage.getId(), elderlyId);
+        ElderlyProfile elderly = elderlyProfileRepository.findById(elderlyId)
+                .orElseThrow(() -> new RuntimeException("Elderly not found"));
+
+        // ❗ check elderly đã có package active chưa
+        boolean hasActive = userPackageRepository.existsByServicePackage_IdAndDeletedFalse(elderlyId);
+        if (hasActive) {
+            throw new RuntimeException("Elderly already has active package");
+        }
+
+        // 👉 tạo UserPackage PENDING
+        UserPackage userPackage = new UserPackage();
+        userPackage.setAccount(account);
+        userPackage.setServicePackage(servicePackage);
+        userPackage.setElderlyProfile(elderly);
+        userPackage.setAssignedAt(LocalDateTime.now());
+        userPackage.setDeleted(false);
+        userPackage.setStatus(PaymentStatus.PENDING);
+
+        userPackageRepository.save(userPackage);
+
+        // 👉 description dùng ID của userPackage luôn (QUAN TRỌNG)
+        String description = "UP:" + userPackage.getId();
 
         String qrUrl = generatePaymentQR(description, servicePackage.getPrice());
 
@@ -68,47 +89,24 @@ public class QRPaymentService {
     @Transactional
     public void handlePaymentSuccess(String description, Double amount) {
 
-        System.out.println("🔥 handlePaymentSuccess called");
-        System.out.println("DESC: " + description);
-        System.out.println("AMOUNT: " + amount);
+        Long userPackageId = extractUserPackageId(description);
 
-        Long accountId = extractValue(description, "ACC");
-        Long servicePackageId = extractValue(description, "PKG");
-        Long elderlyId = extractValue(description, "ELD");
+        UserPackage userPackage = userPackageRepository.findById(userPackageId)
+                .orElseThrow(() -> new RuntimeException("UserPackage not found"));
 
-        System.out.println("Parsed -> ACC=" + accountId +
-                ", PKG=" + servicePackageId +
-                ", ELD=" + elderlyId);
+        if (userPackage.getStatus() != PaymentStatus.PENDING) {
+            throw new RuntimeException("Already processed");
+        }
 
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+        ServicePackage servicePackage = userPackage.getServicePackage();
 
-        ServicePackage servicePackage = servicePackageRepository.findById(servicePackageId)
-                .orElseThrow(() -> new RuntimeException("ServicePackage not found"));
-
-        ElderlyProfile elderly = elderlyProfileRepository.findById(elderlyId)
-                .orElseThrow(() -> new RuntimeException("Elderly not found"));
-
-        // ✅ check amount
+        // check tiền
         if (Double.compare(servicePackage.getPrice(), amount) != 0) {
             throw new RuntimeException("Invalid amount");
         }
 
-        // ✅ check duplicate
-        boolean exists = userPackageRepository
-                .existsByAccount_IdAndServicePackage_IdAndElderlyProfile_IdAndDeletedFalse(
-                        accountId, servicePackageId, elderlyId
-                );
-
-        if (exists) {
-            throw new RuntimeException("Package already purchased for this elderly");
-        }
-
-        // ✅ CREATE
-        UserPackage userPackage = new UserPackage();
-        userPackage.setAccount(account);
-        userPackage.setServicePackage(servicePackage);
-        userPackage.setElderlyProfile(elderly);
+        // 👉 update trạng thái
+        userPackage.setStatus(PaymentStatus.PAID);
 
         LocalDateTime now = LocalDateTime.now();
         userPackage.setAssignedAt(now);
@@ -117,30 +115,21 @@ public class QRPaymentService {
             userPackage.setExpiredAt(now.plusDays(servicePackage.getDurationDays()));
         }
 
-        userPackage.setDeleted(false);
-
         userPackageRepository.save(userPackage);
 
-        System.out.println("✅ UserPackage saved successfully!");
+        System.out.println("✅ Payment confirmed!");
     }
 
     // ===================== PARSE =====================
-    private Long extractValue(String desc, String key) {
-
-        if (desc == null || !desc.contains("|")) {
+    private Long extractUserPackageId(String desc) {
+        try {
+            return Long.parseLong(desc.replace("UP:", ""));
+        } catch (Exception e) {
             throw new RuntimeException("Invalid description format: " + desc);
         }
-
-        String[] parts = desc.split("\\|");
-
-        for (String part : parts) {
-            if (part.startsWith(key + ":")) {
-                return Long.parseLong(part.split(":")[1]);
-            }
-        }
-
-        throw new RuntimeException("Missing key: " + key + " in desc: " + desc);
     }
+
+
 
     // ===================== DTO =====================
     @lombok.Data
