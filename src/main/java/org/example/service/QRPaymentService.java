@@ -36,10 +36,20 @@ public class QRPaymentService {
         ElderlyProfile elderly = elderlyProfileRepository.findById(elderlyId)
                 .orElseThrow(() -> new RuntimeException("Elderly not found"));
 
-        // ❗ check elderly đã có package active chưa
-        boolean hasActive = userPackageRepository.existsByServicePackage_IdAndDeletedFalse(elderlyId);
+        // ❗ check nếu đang có PENDING thì không cho tạo payment mới
+        boolean hasPending = userPackageRepository
+                .existsByElderlyProfile_IdAndStatusAndDeletedFalse(elderlyId, PaymentStatus.PENDING);
+
+        if (hasPending) {
+            throw new RuntimeException("Elderly already has a pending payment");
+        }
+
+        // (Optional) ❗ check luôn ACTIVE nếu bạn muốn chặn mua khi đang dùng
+        boolean hasActive = userPackageRepository
+                .existsByElderlyProfile_IdAndStatusAndDeletedFalse(elderlyId, PaymentStatus.PENDING);
+
         if (hasActive) {
-            throw new RuntimeException("Elderly already has active package");
+            throw new RuntimeException("Elderly already has an active package");
         }
 
         // 👉 tạo UserPackage PENDING
@@ -53,7 +63,7 @@ public class QRPaymentService {
 
         userPackageRepository.save(userPackage);
 
-        // 👉 description dùng ID của userPackage luôn (QUAN TRỌNG)
+        // 👉 description dùng ID của userPackage luôn
         String description = "UP:" + userPackage.getId();
 
         String qrUrl = generatePaymentQR(description, servicePackage.getPrice());

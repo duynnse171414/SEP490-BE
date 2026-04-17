@@ -23,6 +23,8 @@ public interface UserPackageRepository extends JpaRepository<UserPackage, Long> 
 
     List<UserPackage> findByStatusAndDeletedFalse(PaymentStatus status);
 
+    boolean existsByElderlyProfile_IdAndStatusAndDeletedFalse(Long elderlyId, PaymentStatus status);
+
     @Query("""
 SELECT up FROM UserPackage up
 WHERE up.account = :account
