@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.entity.*;
 import org.example.model.request.UserPackageRequest;
 import org.example.model.response.UserPackageResponse;
-import org.example.repository.AccountRepository;
-import org.example.repository.ElderlyProfileRepository;
-import org.example.repository.ServicePackageRepository;
-import org.example.repository.UserPackageRepository;
+import org.example.repository.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,6 +18,7 @@ public class UserPackageService {
     private final AccountRepository accountRepository;
     private final ServicePackageRepository servicePackageRepository;
     private final ElderlyProfileRepository elderlyProfileRepository;
+
 
     // ================= CREATE =================
     public UserPackageResponse create(UserPackageRequest request) {

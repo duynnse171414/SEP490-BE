@@ -1,7 +1,10 @@
 package org.example.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.List;
 
 @Entity
 @Data
@@ -20,4 +23,7 @@ public class RobotActionLibrary {
     private String description;
 
     private Integer duration;   // seconds (optional)
+    @ManyToMany(mappedBy = "robotActions")
+    @JsonIgnore
+    private List<ServicePackage> servicePackages;
 }

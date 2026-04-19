@@ -6,6 +6,7 @@ import lombok.Data;
 import org.example.entity.PaymentStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class UserPackageResponse {
@@ -20,4 +21,5 @@ public class UserPackageResponse {
 
     private LocalDateTime assignedAt;
     private LocalDateTime expiredAt;
+
 }

@@ -1,6 +1,7 @@
 package org.example.model.response;
 
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class ServicePackageResponse {
@@ -12,4 +13,5 @@ public class ServicePackageResponse {
     private double price;
     private boolean active;
     private Integer durationDays;
+    private List<RobotActionResponse> robotActions;
 }

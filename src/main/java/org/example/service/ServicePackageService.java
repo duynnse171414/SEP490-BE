@@ -3,11 +3,9 @@ package org.example.service;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.*;
 import org.example.model.request.ServicePackageRequest;
+import org.example.model.response.RobotActionResponse;
 import org.example.model.response.ServicePackageResponse;
-import org.example.repository.ElderlyProfileRepository;
-import org.example.repository.ExerciseScriptRepository;
-import org.example.repository.ServicePackageRepository;
-import org.example.repository.UserPackageRepository;
+import org.example.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,20 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ServicePackageService {
 
-    private static final Map<PackageLevel, Map<ExerciseLevel, Integer>> PACKAGE_RULES = Map.of(
-            PackageLevel.BASIC, Map.of(
-                    ExerciseLevel.EASY, 2
-            ),
-            PackageLevel.STANDARD, Map.of(
-                    ExerciseLevel.EASY, 2,
-                    ExerciseLevel.MEDIUM, 1
-            ),
-            PackageLevel.PREMIUM, Map.of(
-                    ExerciseLevel.EASY, 2,
-                    ExerciseLevel.MEDIUM, 2,
-                    ExerciseLevel.HARD, 1
-            )
-    );
+
 
      @Autowired
      ServicePackageRepository repository;
@@ -48,6 +33,9 @@ public class ServicePackageService {
      @Autowired
     ElderlyProfileRepository elderlyProfileRepository;
 
+    @Autowired
+    RobotActionLibraryRepository robotActionRepository;
+
     // CREATE
     public ServicePackageResponse create(ServicePackageRequest request) {
 
@@ -59,8 +47,14 @@ public class ServicePackageService {
         servicePackage.setPrice(request.getPrice());
         servicePackage.setActive(request.isActive());
         servicePackage.setDurationDays(request.getDurationDays());
-
         servicePackage.setDeleted(false);
+
+        // 👇 set robot actions
+        if (request.getRobotActionIds() != null) {
+            List<RobotActionLibrary> actions =
+                    robotActionRepository.findAllById(request.getRobotActionIds());
+            servicePackage.setRobotActions(actions);
+        }
 
         repository.save(servicePackage);
 
@@ -76,20 +70,7 @@ public class ServicePackageService {
                 .collect(Collectors.toList());
     }
 
-    public List<ExerciseScript> getExercises(Long pkgId) {
 
-        ServicePackage pkg = repository.findById(pkgId)
-                .orElseThrow(() -> new RuntimeException("Service package not found"));
-
-        if (pkg.getExercises() == null) {
-            return List.of();
-        }
-
-        return pkg.getExercises()
-                .stream()
-                .filter(e -> !e.isDeleted())
-                .toList();
-    }
 
     // GET BY ID
     public ServicePackageResponse getById(Long id) {
@@ -100,41 +81,57 @@ public class ServicePackageService {
         return mapToResponse(servicePackage);
     }
 
+    public List<RobotActionLibrary> getRobotActions(Long pkgId) {
 
-    public List<ExerciseScript> getAvailableExercises(Long elderlyId) {
+        ServicePackage pkg = repository.findById(pkgId)
+                .orElseThrow(() -> new RuntimeException("Service package not found"));
 
-        // 1. Lấy elderly
-        ElderlyProfile elderly = elderlyProfileRepository.findById(elderlyId)
-                .orElseThrow(() -> new RuntimeException("Elderly not found"));
-
-        if (elderly.getAccount() == null) {
-            throw new RuntimeException("Elderly chưa có account");
-        }
-
-        Account account = elderly.getAccount();
-
-        // 2. Lấy package active
-        UserPackage userPackage = userPackageRepository
-                .findActivePackage(account)
-                .orElseThrow(() -> new RuntimeException("No active package"));
-
-        ServicePackage servicePackage = userPackage.getServicePackage();
-
-        // 3. Check package active
-        if (!servicePackage.isActive() || servicePackage.isDeleted()) {
-            throw new RuntimeException("Package not usable");
-        }
-
-        // 4. Lấy exercises
-        if (servicePackage.getExercises() == null) {
+        if (pkg.getRobotActions() == null) {
             return List.of();
         }
 
-        return servicePackage.getExercises()
+        return pkg.getRobotActions();
+    }
+
+    public List<ServicePackageResponse> getByLevel(String level) {
+
+        return repository.findByLevelAndDeletedFalse(level)
                 .stream()
-                .filter(e -> !e.isDeleted())
+                .map(this::mapToResponse)
                 .toList();
     }
+
+
+
+    public List<RobotActionResponse> getRobotActionsByPackage(Long pkgId) {
+
+        ServicePackage pkg = repository.findById(pkgId)
+                .orElseThrow(() -> new RuntimeException("Package not found"));
+
+        if (pkg.getRobotActions() == null) return List.of();
+
+        return pkg.getRobotActions().stream().map(a -> {
+            RobotActionResponse dto = new RobotActionResponse();
+            dto.setId(a.getId());
+            dto.setName(a.getName());
+            dto.setCode(a.getCode());
+            dto.setType(a.getType());
+            dto.setDuration(a.getDuration());
+            return dto;
+        }).toList();
+    }
+
+    public List<ServicePackageResponse> getPackagesByAccount(Long accountId) {
+
+        List<UserPackage> userPackages =
+                userPackageRepository.findByAccountIdAndDeletedFalse(accountId);
+
+        return userPackages.stream()
+                .map(UserPackage::getServicePackage)
+                .map(this::mapToResponse)
+                .toList();
+    }
+
     // UPDATE
     public ServicePackageResponse update(Long id, ServicePackageRequest request) {
 
@@ -148,23 +145,18 @@ public class ServicePackageService {
         servicePackage.setActive(request.isActive());
         servicePackage.setDurationDays(request.getDurationDays());
 
+        // 👇 update robot actions
+        if (request.getRobotActionIds() != null) {
+            List<RobotActionLibrary> actions =
+                    robotActionRepository.findAllById(request.getRobotActionIds());
+            servicePackage.setRobotActions(actions);
+        }
 
         repository.save(servicePackage);
 
         return mapToResponse(servicePackage);
     }
 
-    public void updateExercises(Long pkgId, List<Long> exerciseIds) {
-
-        ServicePackage pkg = repository.findById(pkgId)
-                .orElseThrow(() -> new RuntimeException("Package not found"));
-
-        List<ExerciseScript> exercises = exerciseScriptRepository.findAllById(exerciseIds);
-
-        pkg.setExercises(exercises);
-
-        repository.save(pkg);
-    }
 
     // SOFT DELETE
     public void delete(Long id) {
@@ -180,41 +172,34 @@ public class ServicePackageService {
 
     public ServicePackageResponse createAuto(ServicePackageRequest request) {
 
-        PackageLevel packageLevel = PackageLevel.valueOf(request.getLevel().toUpperCase());
-
-        // 1. Lấy rule
-        Map<ExerciseLevel, Integer> rule = PACKAGE_RULES.get(packageLevel);
-
-        if (rule == null) {
+        // 🔥 1. Validate level
+        PackageLevel packageLevel;
+        try {
+            packageLevel = PackageLevel.valueOf(request.getLevel().toUpperCase());
+        } catch (Exception e) {
             throw new RuntimeException("Package level không hợp lệ");
         }
 
-        List<ExerciseScript> selectedExercises = new ArrayList<>();
+        // 🔥 2. Lấy tất cả robot action
+        List<RobotActionLibrary> allActions = robotActionRepository.findAll();
 
-        // 2. Lấy exercise theo từng level
-        for (Map.Entry<ExerciseLevel, Integer> entry : rule.entrySet()) {
-
-            ExerciseLevel exLevel = entry.getKey();
-            int requiredCount = entry.getValue();
-
-            List<ExerciseScript> available = exerciseScriptRepository
-                    .findByLevelAndDeletedFalse(exLevel);
-
-            if (available.size() < requiredCount) {
-                throw new RuntimeException("Không đủ bài tập level " + exLevel);
-            }
-
-            // 👉 random chọn
-            Collections.shuffle(available);
-
-            selectedExercises.addAll(
-                    available.stream()
-                            .limit(requiredCount)
-                            .toList()
-            );
+        if (allActions.isEmpty()) {
+            throw new RuntimeException("Không có robot action nào");
         }
 
-        // 3. Tạo package
+        // 🔥 3. Random theo level
+        int limit = switch (packageLevel) {
+            case BASIC -> 2;
+            case STANDARD -> 4;
+            case PREMIUM -> 6;
+        };
+
+        Collections.shuffle(allActions);
+
+        List<RobotActionLibrary> selectedActions =
+                allActions.stream().limit(limit).toList();
+
+        // 🔥 4. Tạo package
         ServicePackage pkg = new ServicePackage();
         pkg.setName(request.getName());
         pkg.setDescription(request.getDescription());
@@ -224,7 +209,7 @@ public class ServicePackageService {
         pkg.setActive(true);
         pkg.setDeleted(false);
 
-        pkg.setExercises(selectedExercises);
+        pkg.setRobotActions(selectedActions);
 
         repository.save(pkg);
 
@@ -243,6 +228,23 @@ public class ServicePackageService {
         response.setActive(servicePackage.isActive());
         response.setDurationDays(servicePackage.getDurationDays());
 
+        // 👇 map robot actions FULL DATA
+        if (servicePackage.getRobotActions() != null) {
+            response.setRobotActions(
+                    servicePackage.getRobotActions()
+                            .stream()
+                            .map(a -> {
+                                RobotActionResponse dto = new RobotActionResponse();
+                                dto.setId(a.getId());
+                                dto.setName(a.getName());
+                                dto.setCode(a.getCode());
+                                dto.setType(a.getType());
+                                dto.setDuration(a.getDuration());
+                                return dto;
+                            })
+                            .toList()
+            );
+        }
 
         return response;
     }

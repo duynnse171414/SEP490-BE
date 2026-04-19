@@ -6,6 +6,7 @@ import lombok.Data;
 import org.example.entity.PaymentStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class UserPackageRequest {
@@ -15,5 +16,6 @@ public class UserPackageRequest {
     private Long elderlyProfileId;
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
+
 
 }

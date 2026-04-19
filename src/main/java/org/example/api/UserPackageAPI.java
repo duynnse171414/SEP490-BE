@@ -39,6 +39,8 @@ public class UserPackageAPI {
         return userPackageService.getById(id);
     }
 
+
+
     // ================= GET BY ELDERLY =================
     @GetMapping("/elderly/{elderlyId}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")

@@ -3,8 +3,10 @@ package org.example.api;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.ExerciseScript;
+import org.example.entity.RobotActionLibrary;
 import org.example.model.request.ServicePackageExerciseRequest;
 import org.example.model.request.ServicePackageRequest;
+import org.example.model.response.RobotActionResponse;
 import org.example.model.response.ServicePackageResponse;
 import org.example.service.ServicePackageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,17 +49,16 @@ public class ServicePackageAPI {
         return service.getById(id);
     }
 
-    @GetMapping("/{pkgId}/exercises")
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER','CAREGIVER')")
-    public List<ExerciseScript> getExercises(@PathVariable Long pkgId) {
-        return service.getExercises(pkgId);
+
+    @GetMapping("/{id}/robot-actions")
+    public List<RobotActionLibrary> getRobotActions(@PathVariable Long id) {
+        return service.getRobotActions(id);
     }
 
-//    @GetMapping("/{id}/available-exercises")
-//    @PreAuthorize("hasAnyRole('CAREGIVER','ADMINISTRATOR','MANAGER')")
-//    public List<ExerciseScript> getAvailableExercises(@PathVariable Long id) {
-//        return service.getAvailableExercises(id);
-//    }
+    @GetMapping("/level/{level}")
+    public List<ServicePackageResponse> getByLevel(@PathVariable String level) {
+        return service.getByLevel(level);
+    }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
@@ -66,17 +67,16 @@ public class ServicePackageAPI {
         return service.update(id, request);
     }
 
-    @PutMapping("/{pkgId}/exercises")
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public void updateExercises(@PathVariable Long pkgId,
-                                @RequestBody ServicePackageExerciseRequest request) {
-        service.updateExercises(pkgId, request.getExerciseIds());
-    }
-
-
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
+
+
+//    // GET package theo account
+//    @GetMapping("/account/{accountId}")
+//    public List<ServicePackageResponse> getByAccount(@PathVariable Long accountId) {
+//        return service.getPackagesByAccount(accountId);
+//    }
 }

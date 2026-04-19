@@ -23,11 +23,13 @@ public class ServicePackage {
     private boolean active = true;
     private Integer durationDays;
 
+
+
     @ManyToMany
     @JoinTable(
-            name = "service_package_exercise",
+            name = "servicepackage_robot_action",
             joinColumns = @JoinColumn(name = "service_package_id"),
-            inverseJoinColumns = @JoinColumn(name = "exercise_id")
+            inverseJoinColumns = @JoinColumn(name = "robot_actionlibrary_id")
     )
-    private List<ExerciseScript> exercises;
+    private List<RobotActionLibrary> robotActions;
 }
