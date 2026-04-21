@@ -59,9 +59,12 @@ public class ReminderService {
         reminder.setReminderType(request.getReminderType());
 
         // ✅ AUTO SET GIỜ VIỆT NAM
-        reminder.setScheduleTime(
-                LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"))
-        );
+        if (request.getScheduleTime() == null) {
+            throw new RuntimeException("scheduleTime is required");
+        }
+
+// nếu FE gửi đúng giờ VN thì set luôn
+        reminder.setScheduleTime(request.getScheduleTime());
 
         reminder.setRepeatPattern(request.getRepeatPattern());
         reminder.setActive(request.getActive() != null ? request.getActive() : true);
@@ -114,10 +117,12 @@ public class ReminderService {
 
         reminder.setTitle(request.getTitle());
         reminder.setReminderType(request.getReminderType());
-        // ✅ AUTO SET GIỜ VIỆT NAM
-        reminder.setScheduleTime(
-                LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"))
-        );
+        if (request.getScheduleTime() == null) {
+            throw new RuntimeException("scheduleTime is required");
+        }
+
+// nếu FE gửi đúng giờ VN thì set luôn
+        reminder.setScheduleTime(request.getScheduleTime());
         reminder.setRepeatPattern(request.getRepeatPattern());
 
         if (request.getActive() != null) {
