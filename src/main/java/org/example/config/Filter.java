@@ -37,7 +37,8 @@ public class Filter extends OncePerRequestFilter {
             "/swagger-resources/**",
             "/api/login",
             "/api/register",
-            "/api/verify-otp"
+            "/api/verify-otp",
+            "/api/payment/payos/webhook"
 
 
 

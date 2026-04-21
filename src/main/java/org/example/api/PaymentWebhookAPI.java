@@ -18,7 +18,7 @@ public class PaymentWebhookAPI {
 
         private final QRPaymentService qrPaymentService;
 
-    @PostMapping("/payos")
+    @PostMapping("/payos/webhook")
     public String handleWebhook(@RequestBody Map<String, Object> payload) {
 
         try {
