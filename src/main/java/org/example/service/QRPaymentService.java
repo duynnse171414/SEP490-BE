@@ -78,32 +78,34 @@ public class QRPaymentService {
     }
 
     @Transactional
-    public void handlePaymentSuccess(String description, Double amount) {
+    public void handlePaymentSuccess(Long orderCode, Double amount) {
 
-        Long userPackageId = extractUserPackageId(description);
+        // ✅ orderCode chính là userPackage.getId()
+        UserPackage userPackage = userPackageRepository.findById(orderCode)
+                .orElseThrow(() -> new RuntimeException("UserPackage not found: " + orderCode));
 
-        UserPackage userPackage = userPackageRepository.findById(userPackageId)
-                .orElseThrow(() -> new RuntimeException("UserPackage not found"));
-
-        // ✅ chống duplicate webhook
+        // ✅ Chống duplicate webhook
         if (userPackage.getStatus() == PaymentStatus.PAID) {
-            System.out.println("⚠️ Duplicate webhook ignored");
+            System.out.println("⚠️ Duplicate webhook ignored for orderCode: " + orderCode);
             return;
         }
 
         ServicePackage servicePackage = userPackage.getServicePackage();
 
-        // check tiền
-        if (Double.compare(servicePackage.getPrice(), amount) != 0) {
+        // ✅ So sánh amount dùng long (tránh lỗi floating point)
+        // ✅ cast trực tiếp vì getPrice() là primitive double
+        long expectedAmount = (long) servicePackage.getPrice();
+        long actualAmount = amount.longValue(); // amount vẫn là Double (wrapper) nên ok
+
+        if (expectedAmount != actualAmount) {
             userPackage.setStatus(PaymentStatus.FAILED);
             userPackageRepository.save(userPackage);
-            throw new RuntimeException("Invalid amount");
+            throw new RuntimeException("Amount mismatch: expected=" + expectedAmount + ", actual=" + actualAmount);
         }
 
-        // update
-        userPackage.setStatus(PaymentStatus.PAID);
-
+        // ✅ Cập nhật trạng thái
         LocalDateTime now = LocalDateTime.now();
+        userPackage.setStatus(PaymentStatus.PAID);
         userPackage.setAssignedAt(now);
 
         if (servicePackage.getDurationDays() != null) {
@@ -111,8 +113,7 @@ public class QRPaymentService {
         }
 
         userPackageRepository.save(userPackage);
-
-        System.out.println("✅ Payment success processed");
+        System.out.println("✅ UserPackage " + orderCode + " → PAID, expires: " + userPackage.getExpiredAt());
     }
 
     @lombok.Data

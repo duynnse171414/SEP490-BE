@@ -40,16 +40,8 @@ public class PaymentAPI {
         return qrPaymentService.createPayment(account, servicePackage, elderlyProfileId);
     }
 
-    // ===================== CONFIRM PAYMENT =====================
-    @PostMapping("/confirm")
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public String confirmPayment(
-            @RequestParam String description,
-            @RequestParam Double amount
-    ) {
-        qrPaymentService.handlePaymentSuccess(description, amount);
-        return "Payment confirmed & package created";
-    }
+
+
 
     // ✅ Manager xem tất cả package đã mua
     @GetMapping("/manager/pending")

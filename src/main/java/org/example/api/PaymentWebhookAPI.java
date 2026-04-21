@@ -3,6 +3,7 @@ package org.example.api;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.example.service.QRPaymentService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,37 +20,33 @@ public class PaymentWebhookAPI {
         private final QRPaymentService qrPaymentService;
 
     @PostMapping("/payos/webhook")
-    public String handleWebhook(@RequestBody Map<String, Object> payload) {
-
+    public ResponseEntity<String> handleWebhook(@RequestBody Map<String, Object> payload) {
         try {
             System.out.println("RAW WEBHOOK: " + payload);
 
             String code = (String) payload.get("code");
-
-            // ❗ check success trước
             if (!"00".equals(code)) {
-                return "IGNORED";
+                return ResponseEntity.ok("IGNORED");
             }
 
             Object dataObj = payload.get("data");
-
-            // ❗ tránh null
             if (!(dataObj instanceof Map)) {
-                throw new RuntimeException("Invalid payload: data is null");
+                return ResponseEntity.badRequest().body("Invalid payload");
             }
 
             Map<String, Object> data = (Map<String, Object>) dataObj;
 
-            String description = (String) data.get("description");
+            // ✅ Dùng orderCode thay vì description
+            Long orderCode = ((Number) data.get("orderCode")).longValue();
             Double amount = ((Number) data.get("amount")).doubleValue();
 
-            qrPaymentService.handlePaymentSuccess(description, amount);
+            qrPaymentService.handlePaymentSuccess(orderCode, amount);
 
-            return "OK";
+            return ResponseEntity.ok("OK");
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "ERROR";
+            return ResponseEntity.status(500).body("ERROR: " + e.getMessage());
         }
     }
     }
