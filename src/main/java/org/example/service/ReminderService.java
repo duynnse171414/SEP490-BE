@@ -12,6 +12,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,9 +44,8 @@ public class ReminderService {
         CaregiverProfile caregiver = caregiverRepository.findById(request.getCaregiverId())
                 .orElseThrow(() -> new RuntimeException("Caregiver not found"));
 
-        // 🔥 LẤY ACCOUNT ĐANG LOGIN
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName(); // thường là email hoặc username
+        String username = authentication.getName();
 
         Account account = accountRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
@@ -50,13 +53,16 @@ public class ReminderService {
         Reminder reminder = new Reminder();
         reminder.setElderly(elderly);
         reminder.setCaregiver(caregiver);
-
-        // ✅ AUTO SET ACCOUNT
         reminder.setAccount(account);
 
         reminder.setTitle(request.getTitle());
         reminder.setReminderType(request.getReminderType());
-        reminder.setScheduleTime(request.getScheduleTime());
+
+        // ✅ AUTO SET GIỜ VIỆT NAM
+        reminder.setScheduleTime(
+                LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"))
+        );
+
         reminder.setRepeatPattern(request.getRepeatPattern());
         reminder.setActive(request.getActive() != null ? request.getActive() : true);
         reminder.setDeleted(false);
@@ -108,7 +114,10 @@ public class ReminderService {
 
         reminder.setTitle(request.getTitle());
         reminder.setReminderType(request.getReminderType());
-        reminder.setScheduleTime(request.getScheduleTime());
+        // ✅ AUTO SET GIỜ VIỆT NAM
+        reminder.setScheduleTime(
+                LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"))
+        );
         reminder.setRepeatPattern(request.getRepeatPattern());
 
         if (request.getActive() != null) {
@@ -185,5 +194,13 @@ public class ReminderService {
                     return response;
                 })
                 .collect(Collectors.toList());
+    }
+
+    private LocalDateTime convertUtcToVN(String utcTimeStr) {
+        Instant instant = Instant.parse(utcTimeStr);
+
+        return instant
+                .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
+                .toLocalDateTime();
     }
 }
