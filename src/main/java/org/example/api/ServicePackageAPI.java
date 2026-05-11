@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/service-packages")
@@ -24,11 +25,11 @@ public class ServicePackageAPI {
     ServicePackageService service;
 
 
-//    @PostMapping
-//    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-//    public ServicePackageResponse create(@RequestBody ServicePackageRequest request) {
-//        return service.create(request);
-//    }
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    public ServicePackageResponse create(@RequestBody ServicePackageRequest request) {
+        return service.create(request);
+    }
 
     @PostMapping("/auto")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
@@ -67,12 +68,32 @@ public class ServicePackageAPI {
         return service.update(id, request);
     }
 
-    @DeleteMapping("/{id}")
+    // Cũ: @DeleteMapping("/{id}")  → đổi tên cho rõ nghĩa
+    @PatchMapping("/{id}/deactivate")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
+    public void deactivate(@PathVariable Long id) {
+        service.deactivate(id);
     }
 
+    @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    public ServicePackageResponse activate(@PathVariable Long id) {
+        return service.activate(id);
+    }
+
+    // Endpoint admin xem tất cả
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
+    public List<ServicePackageResponse> getAllForAdmin() {
+        return service.getAllForAdmin();
+    }
+
+    // ServicePackageAPI
+    @GetMapping("/action-limit")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    public Map<String, Object> getActionLimit(@RequestParam String level) {
+        return service.getActionLimitInfo(level);
+    }
 
 //    // GET package theo account
 //    @GetMapping("/account/{accountId}")

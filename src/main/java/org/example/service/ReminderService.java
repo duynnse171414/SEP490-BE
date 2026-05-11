@@ -3,6 +3,7 @@ package org.example.service;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.*;
 import org.example.exception.NotFoundException;
+import org.example.exception.ReminderLimitException;
 import org.example.model.request.ReminderRequest;
 import org.example.model.response.ReminderResponse;
 import org.example.repository.*;
@@ -16,7 +17,10 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +39,47 @@ public class ReminderService {
     @Autowired
     ModelMapper modelMapper;
 
+    @Autowired
+    UserPackageRepository userPackageRepository;
+
+    private static final int FREE_LIMIT = 5;
+    private static final int UNLIMITED = -1;
+
+    /**
+     * Trả về limit reminder cho elderly:
+     *  - Chưa mua gói còn hạn → 5
+     *  - BASIC    → 5
+     *  - STANDARD → 15
+     *  - PREMIUM  → unlimited (-1)
+     */
+    private int resolveLimitForElderly(Long elderlyId) {
+
+        Optional<UserPackage> activeOpt = userPackageRepository
+                .findFirstByElderlyProfileIdAndStatusAndExpiredAtAfterAndDeletedFalseOrderByExpiredAtDesc(
+                        elderlyId,
+                        PaymentStatus.PAID,        // ⚠️ đổi cho đúng enum
+                        LocalDateTime.now());
+
+        if (activeOpt.isEmpty()) {
+            return FREE_LIMIT;
+        }
+
+        String level = activeOpt.get().getServicePackage().getLevel();
+        PackageLevel pkgLevel;
+        try {
+            pkgLevel = PackageLevel.valueOf(level.toUpperCase());
+        } catch (Exception e) {
+            // Level lạ → fallback về free để khỏi block user
+            return FREE_LIMIT;
+        }
+
+        return switch (pkgLevel) {
+            case BASIC    -> 5;
+            case STANDARD -> 15;
+            case PREMIUM  -> UNLIMITED;
+        };
+    }
+
     // CREATE
     public ReminderResponse create(ReminderRequest request) {
 
@@ -45,33 +90,51 @@ public class ReminderService {
                 .orElseThrow(() -> new RuntimeException("Caregiver not found"));
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        Account account = accountRepository.findByEmail(username)
+        Account account = accountRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        if (request.getScheduleTime() == null) {
+            throw new RuntimeException("scheduleTime is required");
+        }
+
+        // ✅ CHECK 1: Reminder đã từng tồn tại và bị xóa mềm
+        Optional<Reminder> deletedDuplicate = repository
+                .findByElderlyIdAndTitleAndScheduleTimeAndDeletedTrue(
+                        elderly.getId(),
+                        request.getTitle(),
+                        request.getScheduleTime());
+
+        if (deletedDuplicate.isPresent()) {
+            throw new RuntimeException(
+                    "Reminder này đã bị xóa trước đó (id=" + deletedDuplicate.get().getId() +
+                            "). Vui lòng khôi phục thay vì tạo mới."
+            );
+        }
+
+        // ✅ CHECK 2: Limit theo gói của elderly
+        int limit = resolveLimitForElderly(elderly.getId());
+        if (limit != UNLIMITED) {
+            long currentCount = repository.countByElderlyIdAndDeletedFalse(elderly.getId());
+            if (currentCount >= limit) {
+                throw new ReminderLimitException(
+                        "Elderly này đã đạt giới hạn " + limit + " reminders. " +
+                                "Vui lòng nâng cấp gói để tạo thêm."
+                );
+            }
+        }
 
         Reminder reminder = new Reminder();
         reminder.setElderly(elderly);
         reminder.setCaregiver(caregiver);
         reminder.setAccount(account);
-
         reminder.setTitle(request.getTitle());
         reminder.setReminderType(request.getReminderType());
-
-        // ✅ AUTO SET GIỜ VIỆT NAM
-        if (request.getScheduleTime() == null) {
-            throw new RuntimeException("scheduleTime is required");
-        }
-
-// nếu FE gửi đúng giờ VN thì set luôn
         reminder.setScheduleTime(request.getScheduleTime());
-
         reminder.setRepeatPattern(request.getRepeatPattern());
         reminder.setActive(request.getActive() != null ? request.getActive() : true);
         reminder.setDeleted(false);
 
         repository.save(reminder);
-
         return mapToResponse(reminder);
     }
 
@@ -109,6 +172,17 @@ public class ReminderService {
         return mapToResponse(reminder);
     }
 
+    // Lấy danh sách reminder đã xóa (cho UI thùng rác)
+    public List<ReminderResponse> getDeletedReminders() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Account account = accountRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        return repository.findByAccountIdAndDeletedTrue(account.getId())
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
     // UPDATE
     public ReminderResponse update(Long id, ReminderRequest request) {
 
@@ -132,16 +206,6 @@ public class ReminderService {
         repository.save(reminder);
 
         return mapToResponse(reminder);
-    }
-
-    // SOFT DELETE
-    public void delete(Long id) {
-
-        Reminder reminder = repository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new RuntimeException("Reminder not found"));
-
-        reminder.setDeleted(true);
-        repository.save(reminder);
     }
 
     private ReminderResponse mapToResponse(Reminder reminder) {
@@ -201,11 +265,98 @@ public class ReminderService {
                 .collect(Collectors.toList());
     }
 
+    public ReminderResponse toggleActive(Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Account account = accountRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        Reminder reminder = repository.findByIdAndAccountIdAndDeletedFalse(id, account.getId())
+                .orElseThrow(() -> new RuntimeException("Reminder not found or access denied"));
+
+        // Flip trạng thái
+        reminder.setActive(!reminder.isActive());
+        repository.save(reminder);
+        return mapToResponse(reminder);
+    }
+
+    public void delete(Long id) {
+        Reminder reminder = repository.findByIdAndDeletedFalse(id)
+                .orElseThrow(() -> new RuntimeException("Reminder not found"));
+
+        reminder.setDeleted(true);
+        // ❌ Không set active=false ở đây
+        // → Giữ nguyên active để khi restore về đúng trạng thái cũ
+        repository.save(reminder);
+    }
+
+    public ReminderResponse restore(Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Account account = accountRepository.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        Reminder reminder = repository.findByIdAndAccountId(id, account.getId())
+                .orElseThrow(() -> new RuntimeException("Reminder not found or access denied"));
+
+        if (!reminder.isDeleted()) {
+            throw new RuntimeException("Reminder chưa bị xóa");
+        }
+
+        // Check limit trước khi restore
+        int limit = resolveLimitForElderly(reminder.getElderly().getId());
+        if (limit != UNLIMITED) {
+            long currentCount = repository.countByElderlyIdAndDeletedFalse(
+                    reminder.getElderly().getId());
+            if (currentCount >= limit) {
+                throw new ReminderLimitException(
+                        "Không thể khôi phục: đã đạt giới hạn " + limit + " reminders."
+                );
+            }
+        }
+
+        reminder.setDeleted(false);
+        // ✅ active giữ nguyên như lúc xóa → restore về đúng trạng thái cũ
+        repository.save(reminder);
+        return mapToResponse(reminder);
+    }
+
     private LocalDateTime convertUtcToVN(String utcTimeStr) {
         Instant instant = Instant.parse(utcTimeStr);
 
         return instant
                 .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
                 .toLocalDateTime();
+    }
+
+    public Map<String, Object> getQuotaByElderly(Long elderlyId) {
+
+        Optional<UserPackage> activeOpt = userPackageRepository
+                .findFirstByElderlyProfileIdAndStatusAndExpiredAtAfterAndDeletedFalseOrderByExpiredAtDesc(
+                        elderlyId, PaymentStatus.PAID, LocalDateTime.now());
+
+        int limit = resolveLimitForElderly(elderlyId);
+        long used = repository.countByElderlyIdAndDeletedFalse(elderlyId);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("elderlyId", elderlyId);
+        result.put("used", used);
+        result.put("limit", limit);                            // -1 = unlimited
+        result.put("remaining", limit == UNLIMITED ? -1 : Math.max(0, limit - used));
+        result.put("unlimited", limit == UNLIMITED);
+
+        if (activeOpt.isPresent()) {
+            ServicePackage pkg = activeOpt.get().getServicePackage();
+            result.put("hasActivePackage", true);
+            result.put("level", pkg.getLevel());
+            result.put("packageName", pkg.getName());
+            result.put("expiredAt", activeOpt.get().getExpiredAt());
+        } else {
+            result.put("hasActivePackage", false);
+            result.put("level", "FREE");
+        }
+
+        result.put("upgradeRequired",
+                limit != UNLIMITED && used >= limit);
+
+        return result;
     }
 }
