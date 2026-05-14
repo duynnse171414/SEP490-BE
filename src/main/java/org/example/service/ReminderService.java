@@ -12,11 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,8 +102,8 @@ public class ReminderService {
 
         if (deletedDuplicate.isPresent()) {
             throw new RuntimeException(
-                    "Reminder này đã bị xóa trước đó (id=" + deletedDuplicate.get().getId() +
-                            "). Vui lòng khôi phục thay vì tạo mới."
+                    "This reminder was previously deleted (id=" + deletedDuplicate.get().getId() +
+                            "). Please restore instead of creating a new one."
             );
         }
 
@@ -117,8 +113,8 @@ public class ReminderService {
             long currentCount = repository.countByElderlyIdAndDeletedFalse(elderly.getId());
             if (currentCount >= limit) {
                 throw new ReminderLimitException(
-                        "Elderly này đã đạt giới hạn " + limit + " reminders. " +
-                                "Vui lòng nâng cấp gói để tạo thêm."
+                        "Elderly, this has reached its limit. " + limit + " reminders. " +
+                                "Please upgrade your package to create more."
                 );
             }
         }
@@ -189,13 +185,26 @@ public class ReminderService {
         Reminder reminder = repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new RuntimeException("Reminder not found"));
 
-        reminder.setTitle(request.getTitle());
-        reminder.setReminderType(request.getReminderType());
         if (request.getScheduleTime() == null) {
             throw new RuntimeException("scheduleTime is required");
         }
 
-// nếu FE gửi đúng giờ VN thì set luôn
+        // ✅ Thêm: check trùng với reminder đã deleted (trừ chính nó)
+        Optional<Reminder> deletedDuplicate = repository
+                .findByElderlyIdAndTitleAndScheduleTimeAndDeletedTrue(
+                        reminder.getElderly().getId(),
+                        request.getTitle(),
+                        request.getScheduleTime());
+
+        if (deletedDuplicate.isPresent() && !deletedDuplicate.get().getId().equals(id)) {
+            throw new RuntimeException(
+                    "This reminder was previously deleted (id=" + deletedDuplicate.get().getId() +
+                            "). Please restore instead of creating a new one."
+            );
+        }
+
+        reminder.setTitle(request.getTitle());
+        reminder.setReminderType(request.getReminderType());
         reminder.setScheduleTime(request.getScheduleTime());
         reminder.setRepeatPattern(request.getRepeatPattern());
 
@@ -204,7 +213,6 @@ public class ReminderService {
         }
 
         repository.save(reminder);
-
         return mapToResponse(reminder);
     }
 
@@ -298,7 +306,7 @@ public class ReminderService {
                 .orElseThrow(() -> new RuntimeException("Reminder not found or access denied"));
 
         if (!reminder.isDeleted()) {
-            throw new RuntimeException("Reminder chưa bị xóa");
+            throw new RuntimeException("Reminder has not been deleted.");
         }
 
         // Check limit trước khi restore
@@ -308,7 +316,7 @@ public class ReminderService {
                     reminder.getElderly().getId());
             if (currentCount >= limit) {
                 throw new ReminderLimitException(
-                        "Không thể khôi phục: đã đạt giới hạn " + limit + " reminders."
+                        "Cannot be recovered: limit has been reached " + limit + " reminders."
                 );
             }
         }
@@ -319,13 +327,6 @@ public class ReminderService {
         return mapToResponse(reminder);
     }
 
-    private LocalDateTime convertUtcToVN(String utcTimeStr) {
-        Instant instant = Instant.parse(utcTimeStr);
-
-        return instant
-                .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
-                .toLocalDateTime();
-    }
 
     public Map<String, Object> getQuotaByElderly(Long elderlyId) {
 

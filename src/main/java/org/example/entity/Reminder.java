@@ -28,7 +28,9 @@ public class Reminder {
     private Account account;
 
     private String title;
-    private String reminderType;
+    @Enumerated(EnumType.STRING)
+    private ReminderType reminderType;
+
     private LocalDateTime scheduleTime;
     private String repeatPattern;
 

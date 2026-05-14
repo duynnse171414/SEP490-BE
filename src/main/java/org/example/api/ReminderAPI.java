@@ -43,7 +43,7 @@ public class ReminderAPI {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','CAREGIVER','FAMILYMEMBER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','CAREGIVER','FAMILYMEMBER','MANAGER')")
     public ReminderResponse update(@PathVariable Long id,
                                    @RequestBody ReminderRequest request) {
         return service.update(id, request);

@@ -1,6 +1,8 @@
 package org.example.model.response;
 
 import lombok.Data;
+import org.example.entity.ReminderType;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -15,7 +17,7 @@ public class ReminderResponse {
     private String caregiverName;
 
     private String title;
-    private String reminderType;
+    private ReminderType reminderType;
     private LocalDateTime scheduleTime;
     private String repeatPattern;
 
