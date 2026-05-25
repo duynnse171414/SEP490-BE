@@ -55,6 +55,10 @@ public class Account implements UserDetails {
     @Column(name = "otp_expired_at")
     private Long otpExpiredAt;
 
+    private String resetPasswordOtp;
+
+    private Long resetPasswordOtpExpiredAt;
+
     @Column(nullable = false)
     private String status = "ACTIVE";
 

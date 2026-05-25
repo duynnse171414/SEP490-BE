@@ -5,6 +5,7 @@ import org.example.entity.CaregiverProfile;
 import org.example.entity.Role;
 import org.example.exception.DuplicateEntity;
 import org.example.exception.NotFoundException;
+import org.example.model.request.ResetPasswordRequest;
 import org.example.model.request.UpdateAccountRequest;
 import org.example.model.response.AccountResponse;
 import org.example.model.request.LoginRequest;
@@ -72,7 +73,6 @@ public class AuthenticationService implements UserDetailsService {
             throw new DuplicateEntity("Duplicate phone!");
         }
 
-      
 
         String originPassword = account.getPassword();
         account.setPassword(passwordEncoder.encode(originPassword));
@@ -209,9 +209,6 @@ public class AuthenticationService implements UserDetailsService {
     }
 
 
-
-
-
     public Account deleteAccount(long accountId) {
         Account account = accountRepository.findAccountById(accountId);
         if (account == null) {
@@ -241,7 +238,7 @@ public class AuthenticationService implements UserDetailsService {
             account.setGender(updateRequest.getGender());
         }
         if (updateRequest.getPassword() != null) {
-            account.setPassword(updateRequest.getPassword());
+            account.setPassword(passwordEncoder.encode(updateRequest.getPassword())); // ✅
         }
 
         // ✅ Update role
@@ -276,5 +273,67 @@ public class AuthenticationService implements UserDetailsService {
         }
 
         return modelMapper.map(savedAccount, AccountResponse.class);
+    }
+
+    // Bước 1: Gửi OTP về email
+    public void forgotPassword(String email) {
+
+        Account account = accountRepository.findByEmail(email.trim())
+                .orElseThrow(() -> new NotFoundException("Account not found with email: " + email));
+
+        if (account.isDeleted()) {
+            throw new NotFoundException("Account not found");
+        }
+
+        String otp = generateOtp();
+        account.setResetPasswordOtp(otp);
+        account.setResetPasswordOtpExpiredAt(System.currentTimeMillis() + OTP_EXPIRATION_TIME);
+        accountRepository.save(account);
+
+        emailService.sendResetPasswordOtp(account.getEmail(), otp);
+    }
+
+    // Bước 2: Xác nhận OTP + set mật khẩu mới
+    public void resetPassword(ResetPasswordRequest request) {
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email không được để trống.");
+        }
+        if (request.getOtp() == null || request.getOtp().isBlank()) {
+            throw new IllegalArgumentException("OTP không được để trống.");
+        }
+        if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
+            throw new IllegalArgumentException("Mật khẩu mới không được để trống.");
+        }
+        if (request.getConfirmPassword() == null || request.getConfirmPassword().isBlank()) {
+            throw new IllegalArgumentException("Mật khẩu xác nhận không được để trống.");
+        }
+
+        Account account = accountRepository.findByEmail(request.getEmail().trim())
+                .orElseThrow(() -> new NotFoundException("Account not found"));
+
+        if (account.getResetPasswordOtp() == null) {
+            throw new IllegalArgumentException("OTP chưa được tạo. Vui lòng yêu cầu lại.");
+        }
+
+        if (!account.getResetPasswordOtp().equals(request.getOtp())) {
+            throw new IllegalArgumentException("OTP không đúng.");
+        }
+
+        if (System.currentTimeMillis() > account.getResetPasswordOtpExpiredAt()) {
+            throw new IllegalArgumentException("OTP đã hết hạn. Vui lòng yêu cầu lại.");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("Mật khẩu xác nhận không khớp.");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), account.getPassword())) {
+            throw new IllegalArgumentException("Mật khẩu mới không được trùng mật khẩu cũ.");
+        }
+
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        account.setResetPasswordOtp(null);
+        account.setResetPasswordOtpExpiredAt(null);
+        accountRepository.save(account);
     }
 }

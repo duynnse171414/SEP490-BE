@@ -2,19 +2,20 @@ package org.example.api;
 
 
 import org.example.entity.Account;
-import org.example.model.request.UpdateAccountRequest;
+import org.example.model.request.*;
 import org.example.model.response.AccountResponse;
-import org.example.model.request.LoginRequest;
-import org.example.model.request.RegisterRequest;
 import org.example.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @SecurityRequirement(name = "api")
@@ -47,6 +48,38 @@ public class AuthenticationAPI {
                                     @RequestParam String otp) {
         authenticationService.verifyOtp(email, otp);
         return ResponseEntity.ok("Verify OTP successfully!");
+    }
+
+    // Bước 1: Gửi OTP reset password về email
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        authenticationService.forgotPassword(request.getEmail());
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "OTP đã được gửi về email " + request.getEmail());
+        return ResponseEntity.ok(response);
+    }
+
+    // Bước 2: Xác nhận OTP + đặt mật khẩu mới
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        authenticationService.resetPassword(request); // ✅ truyền request, không phải new
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.");
+        return ResponseEntity.ok(response);
+    }
+
+    // Change password (đang login)
+    @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request) {
+        authenticationService.changePassword(
+                request.getCurrentPassword(),
+                request.getNewPassword(),
+                request.getConfirmPassword()
+        );
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Đổi mật khẩu thành công.");
+        return ResponseEntity.ok(response);
     }
 
 }
