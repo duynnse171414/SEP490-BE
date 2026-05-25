@@ -68,7 +68,8 @@ public class SecurityConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                       .allowedOriginPatterns("http://localhost:*")
+                       .allowedOriginPatterns("http://localhost:*"
+                                              ,"https://elderly-app.netlify.app")
                         // .allowedOrigins("http://localhost:3000"
                         //                ,"http://localhost:*")// URL của frontend
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
