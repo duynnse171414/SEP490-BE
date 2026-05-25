@@ -38,6 +38,12 @@ public class ReminderService {
     @Autowired
     UserPackageRepository userPackageRepository;
 
+    @Autowired
+    ReminderLogRepository reminderLogRepository;
+
+    @Autowired
+    AlertNotificationRepository alertNotificationRepository;
+
     private static final int FREE_LIMIT = 5;
     private static final int UNLIMITED = -1;
 
@@ -288,16 +294,36 @@ public class ReminderService {
     }
 
     public void delete(Long id) {
+
         Reminder reminder = repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new RuntimeException("Reminder not found"));
 
+        // ✅ Lấy tất cả log liên quan đến reminder này
+        List<ReminderLog> logs = reminderLogRepository.findByReminderId(reminder.getId());
+
+        for (ReminderLog log : logs) {
+
+            // ✅ Xóa mềm tất cả alert liên quan đến log này
+            List<AlertNotification> alerts =
+                    alertNotificationRepository.findByReminderLogId(log.getId());
+
+            for (AlertNotification alert : alerts) {
+                alert.setDeleted(true);
+            }
+            alertNotificationRepository.saveAll(alerts);
+
+            // ✅ Xóa mềm log
+            log.setDeleted(true);
+        }
+        reminderLogRepository.saveAll(logs);
+
+        // ✅ Xóa mềm reminder
         reminder.setDeleted(true);
-        // ❌ Không set active=false ở đây
-        // → Giữ nguyên active để khi restore về đúng trạng thái cũ
         repository.save(reminder);
     }
 
     public ReminderResponse restore(Long id) {
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Account account = accountRepository.findByEmail(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Account not found"));
@@ -321,8 +347,24 @@ public class ReminderService {
             }
         }
 
+        // ✅ Restore log và alert liên quan
+        List<ReminderLog> logs = reminderLogRepository.findByReminderId(reminder.getId());
+
+        for (ReminderLog log : logs) {
+            List<AlertNotification> alerts =
+                    alertNotificationRepository.findByReminderLogId(log.getId());
+
+            for (AlertNotification alert : alerts) {
+                alert.setDeleted(false);
+            }
+            alertNotificationRepository.saveAll(alerts);
+
+            log.setDeleted(false);
+        }
+        reminderLogRepository.saveAll(logs);
+
+        // ✅ Restore reminder
         reminder.setDeleted(false);
-        // ✅ active giữ nguyên như lúc xóa → restore về đúng trạng thái cũ
         repository.save(reminder);
         return mapToResponse(reminder);
     }
