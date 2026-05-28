@@ -19,14 +19,13 @@ public class VoiceCommandAPI {
     @Autowired
     VoiceCommandService voiceCommandService;
 
-    // Tạo lệnh
+
     @PostMapping
     @PreAuthorize("hasRole('ELDERLYUSER')")
     public VoiceCommandResponse create(@RequestBody VoiceCommandRequest request) {
         return voiceCommandService.create(request);
     }
 
-    // Admin xem tất cả
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public List<VoiceCommandResponse> getAll() {

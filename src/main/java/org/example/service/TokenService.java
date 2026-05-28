@@ -25,8 +25,6 @@ public class TokenService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-
-    // tạo ra token
     public String generateToken(Account account) {
         String token = Jwts.builder()
                 .subject(account.getId()+"")
@@ -38,7 +36,6 @@ public class TokenService {
 
     }
 
-    //verify cái token
     public Account getAccountByToken(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(getSigninKey())

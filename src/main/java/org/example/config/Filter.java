@@ -52,13 +52,8 @@ public class Filter extends OncePerRequestFilter {
     );
 
     public boolean checkIsPublicAPI(String uri){
-        //uri: /api/register
-        //nếu gặp những cái api ở list trên => cho phép truy cập => true
-
 
         AntPathMatcher patchMatcher = new AntPathMatcher();
-
-        //check token ==> false
 
         return AUTH_PERMISION.stream().anyMatch(pattern -> patchMatcher.match(pattern, uri));
     }
@@ -67,31 +62,26 @@ public class Filter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        //check xem cái api mà người dùng yêu cầu có phải là 1 cái public api kh?
-
         boolean isPublicAPI = checkIsPublicAPI(request.getRequestURI());
         if(isPublicAPI){
             filterChain.doFilter(request, response);
         }else{
             String token = getToken(request);
             if(token == null){
-                //kh được phép truy cap
+
                 resolver.resolveException(request, response, null, new AuthException("Empty token"));
                 return;
             }
 
-            // có token
-            //check xem toke có hợp lệ kh
-            //lấy thông tin account từ token
             Account account;
             try{
                 account = tokenService.getAccountByToken(token);
             }catch(ExpiredJwtException e){
-                //token hết hạn
+
                 resolver.resolveException(request, response, null, new AuthException("Expired token"));
                 return;
             }catch(MalformedJwtException malformedJwtException){
-                //token sai
+
                 resolver.resolveException(request, response, null, new AuthException("Invalid token"));
                 return;
             }
@@ -100,10 +90,6 @@ public class Filter extends OncePerRequestFilter {
                     = new UsernamePasswordAuthenticationToken(account, token, account.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             filterChain.doFilter(request, response);
-
-            //token chuẩn
-            //cho phép truy cập
-
 
         }
 

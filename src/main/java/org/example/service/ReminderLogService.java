@@ -24,7 +24,7 @@ public class ReminderLogService {
     @Autowired
     ElderlyProfileRepository elderlyRepository;
 
-    // CREATE (robot triggered reminder)
+
     public ReminderLogResponse create(ReminderLogRequest request) {
 
         Reminder reminder = reminderRepository.findById(request.getReminderId())
@@ -81,7 +81,6 @@ public class ReminderLogService {
 
     public List<ReminderLogResponse> getByElderlyId(Long elderlyId) {
 
-        // check elderly tồn tại (optional nhưng nên có)
         elderlyRepository.findById(elderlyId)
                 .orElseThrow(() -> new RuntimeException("Elderly not found"));
 

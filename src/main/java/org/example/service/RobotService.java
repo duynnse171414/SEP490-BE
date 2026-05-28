@@ -25,9 +25,6 @@ public class RobotService {
     RobotRepository robotRepository;
 
     @Autowired
-    ElderlyProfileRepository elderlyProfileRepository;
-
-    @Autowired
     ModelMapper modelMapper;
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -111,7 +108,6 @@ public class RobotService {
 
         return response;
     }
-    // ===== Điều khiển robot (thêm mới) =====
     public Object performAction(String actionName) {
         try {
             String url = flaskUrl + "/robot/action";

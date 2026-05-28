@@ -14,7 +14,7 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
-    @Async // ✅ đặt ở đây
+    @Async
     public void sendOtpEmail(String toEmail, String otp) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -27,7 +27,7 @@ public class EmailService {
             mailSender.send(message);
 
         } catch (Exception e) {
-            // 🔥 rất quan trọng
+
             System.err.println("Send mail failed: " + e.getMessage());
         }
     }

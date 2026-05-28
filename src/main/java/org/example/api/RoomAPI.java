@@ -23,14 +23,14 @@ public class RoomAPI {
 
     private final RoomService roomService;
 
-    // CREATE
+
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     @PostMapping
     public RoomResponse create(@RequestBody RoomRequest request) {
         return roomService.create(request);
     }
 
-    // GET
+
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     @GetMapping
     public List<RoomResponse> getAll() {
@@ -47,13 +47,12 @@ public class RoomAPI {
         return roomService.getElderliesByRoom(roomId);
     }
 
-    // GET caregivers by room
+
     @GetMapping("/{roomId}/caregivers")
     public List<CaregiverDTO> getCaregiversByRoom(@PathVariable Long roomId) {
         return roomService.getCaregiversByRoom(roomId);
     }
 
-    // UPDATE
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     @PutMapping("/{id}")
     public RoomResponse update(@PathVariable Long id,
@@ -61,14 +60,14 @@ public class RoomAPI {
         return roomService.update(id, request);
     }
 
-    // DELETE
+
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         roomService.delete(id);
     }
 
-    // ===== ASSIGN =====
+
     @PostMapping("/{roomId}/caregivers/{id}")
     public void addCaregiver(@PathVariable Long roomId, @PathVariable Long id) {
         roomService.addCaregiver(roomId, id);
@@ -84,7 +83,6 @@ public class RoomAPI {
         roomService.assignRobot(roomId, id);
     }
 
-    // ===== REMOVE =====
     @DeleteMapping("/caregivers/{id}")
     public void removeCaregiver(@PathVariable Long id) {
         roomService.removeCaregiver(id);

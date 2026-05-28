@@ -18,7 +18,7 @@ public class RobotActionAPI {
     @Autowired
     RobotActionRepository repo;
 
-    // 👉 Web gọi
+
     @PostMapping
     public RobotAction create(@RequestBody Map<String, String> body) {
         RobotAction action = new RobotAction();
@@ -27,7 +27,7 @@ public class RobotActionAPI {
         return repo.save(action);
     }
 
-    // 👉 Robot gọi
+
     @GetMapping("/latest")
     public RobotAction getLatest() {
         return repo.findTopByExecutedFalseOrderByIdDesc()

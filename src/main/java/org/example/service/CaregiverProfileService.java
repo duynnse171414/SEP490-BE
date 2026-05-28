@@ -37,10 +37,7 @@ public class CaregiverProfileService {
                 .orElseThrow(() -> new NotFoundException("Account not found"));
 
 
-        // ✅ map request → entity (giống Elderly)
         CaregiverProfile profile = modelMapper.map(request, CaregiverProfile.class);
-
-        // ✅ set account
         profile.setAccount(account);
         profile.setDeleted(false);
 

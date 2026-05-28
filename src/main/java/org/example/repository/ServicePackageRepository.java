@@ -8,13 +8,13 @@ import java.util.Optional;
 
 public interface ServicePackageRepository extends JpaRepository<ServicePackage, Long> {
 
-    // Mới (catalog cho user):
+
     List<ServicePackage> findByActiveTrue();
     Optional<ServicePackage> findByIdAndActiveTrue(Long id);
     List<ServicePackage> findByLevelAndActiveTrue(String level);
 
-    // Cho admin xem tất cả:
-    List<ServicePackage> findAll();   // có sẵn
+
+    List<ServicePackage> findAll();
 
 
 

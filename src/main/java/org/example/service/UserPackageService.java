@@ -54,7 +54,6 @@ public class UserPackageService {
     // ================= GET BY ELDERLY =================
     public List<UserPackageResponse> getByElderlyId(Long elderlyId) {
 
-        // validate tồn tại
         getElderly(elderlyId);
 
         return userPackageRepository
@@ -131,7 +130,6 @@ public class UserPackageService {
         response.setStatus(userPackage.getStatus());
 
 
-        // tránh null crash
         if (userPackage.getElderlyProfile() != null) {
             response.setElderlyProfileId(userPackage.getElderlyProfile().getId());
         }

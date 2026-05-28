@@ -30,23 +30,18 @@ public class ServicePackageService {
 
     private static final int UNLIMITED = -1;
 
-    /**
-     * Số robot action tối đa cho mỗi level package:
-     *  BASIC    → 5
-     *  STANDARD → 15
-     *  PREMIUM  → unlimited
-     */
+
     private int resolveActionLimitByLevel(String level) {
 
         if (level == null) {
-            throw new RobotActionLimitException("Level không được để trống");
+            throw new RobotActionLimitException("Level can not be blank");
         }
 
         PackageLevel pkgLevel;
         try {
             pkgLevel = PackageLevel.valueOf(level.toUpperCase());
         } catch (Exception e) {
-            throw new RobotActionLimitException("Level không hợp lệ: " + level);
+            throw new RobotActionLimitException("Invalid level: " + level);
         }
 
         return switch (pkgLevel) {
@@ -60,8 +55,8 @@ public class ServicePackageService {
         int limit = resolveActionLimitByLevel(level);
         if (limit != UNLIMITED && requestedSize > limit) {
             throw new RobotActionLimitException(
-                    "Gói " + level.toUpperCase() + " chỉ được phép tối đa " + limit +
-                            " robot actions (đang cố thêm " + requestedSize + ")."
+                    "The package " + level.toUpperCase() + " is only allowed up to a maximum of " + limit +
+                            " robot actions (trying to add " + requestedSize + ")."
             );
         }
     }
@@ -69,7 +64,6 @@ public class ServicePackageService {
     // CREATE
     public ServicePackageResponse create(ServicePackageRequest request) {
 
-        // ✅ CHECK LIMIT TRƯỚC KHI TẠO
         int requestedSize = request.getRobotActionIds() != null
                 ? request.getRobotActionIds().size() : 0;
         validateActionLimit(request.getLevel(), requestedSize);
@@ -87,7 +81,6 @@ public class ServicePackageService {
             List<RobotActionLibrary> actions =
                     robotActionRepository.findAllById(request.getRobotActionIds());
 
-            // ✅ Validate tất cả ID đều tồn tại
             if (actions.size() != request.getRobotActionIds().size()) {
                 throw new RuntimeException("Một số robot action không tồn tại");
             }
@@ -99,42 +92,12 @@ public class ServicePackageService {
         return mapToResponse(servicePackage);
     }
 
-    public List<RobotActionResponse> getRobotActionsByPackage(Long pkgId) {
-
-        ServicePackage pkg = repository.findById(pkgId)
-                .orElseThrow(() -> new RuntimeException("Package not found"));
-
-        if (pkg.getRobotActions() == null) return List.of();
-
-        return pkg.getRobotActions().stream().map(a -> {
-            RobotActionResponse dto = new RobotActionResponse();
-            dto.setId(a.getId());
-            dto.setName(a.getName());
-            dto.setCode(a.getCode());
-            dto.setType(a.getType());
-            dto.setDuration(a.getDuration());
-            return dto;
-        }).toList();
-    }
-
-    public List<ServicePackageResponse> getPackagesByAccount(Long accountId) {
-
-        List<UserPackage> userPackages =
-                userPackageRepository.findByAccountIdAndDeletedFalse(accountId);
-
-        return userPackages.stream()
-                .map(UserPackage::getServicePackage)
-                .map(this::mapToResponse)
-                .toList();
-    }
-
     // UPDATE
     public ServicePackageResponse update(Long id, ServicePackageRequest request) {
 
         ServicePackage servicePackage = repository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new RuntimeException("Service package not found"));
 
-        // ✅ CHECK LIMIT (theo level MỚI nếu có đổi)
         int requestedSize = request.getRobotActionIds() != null
                 ? request.getRobotActionIds().size() : 0;
         validateActionLimit(request.getLevel(), requestedSize);
@@ -161,7 +124,6 @@ public class ServicePackageService {
         return mapToResponse(servicePackage);
     }
 
-    // ServicePackageService
     public List<RobotActionLibrary> getRobotActions(Long pkgId) {
         ServicePackage pkg = repository.findById(pkgId)
                 .orElseThrow(() -> new RuntimeException("Service package not found"));
@@ -190,7 +152,6 @@ public class ServicePackageService {
         return mapToResponse(servicePackage);
     }
 
-    // Cho USER xem (chỉ package active)
     public List<ServicePackageResponse> getAll() {
         return repository.findByActiveTrue()
                 .stream()
@@ -211,7 +172,6 @@ public class ServicePackageService {
                 .toList();
     }
 
-    // Cho ADMIN xem tất cả (cả inactive)
     public List<ServicePackageResponse> getAllForAdmin() {
         return repository.findAll()
                 .stream()
@@ -219,26 +179,24 @@ public class ServicePackageService {
                 .collect(Collectors.toList());
     }
 
-
     public ServicePackageResponse createAuto(ServicePackageRequest request) {
 
         PackageLevel packageLevel;
         try {
             packageLevel = PackageLevel.valueOf(request.getLevel().toUpperCase());
         } catch (Exception e) {
-            throw new RuntimeException("Package level không hợp lệ");
+            throw new RuntimeException("Invalid package level");
         }
 
         List<RobotActionLibrary> allActions = robotActionRepository.findAll();
         if (allActions.isEmpty()) {
-            throw new RuntimeException("Không có robot action nào");
+            throw new RuntimeException("No robot action");
         }
 
-        // ✅ Số lượng action theo level (đồng bộ với validateActionLimit)
         int limit = switch (packageLevel) {
             case BASIC    -> 5;
             case STANDARD -> 15;
-            case PREMIUM  -> Integer.MAX_VALUE;   // lấy tất cả
+            case PREMIUM  -> Integer.MAX_VALUE;
         };
 
         Collections.shuffle(allActions);
@@ -272,7 +230,6 @@ public class ServicePackageService {
         response.setActive(servicePackage.isActive());
         response.setDurationDays(servicePackage.getDurationDays());
 
-        // 👇 map robot actions FULL DATA
         if (servicePackage.getRobotActions() != null) {
             response.setRobotActions(
                     servicePackage.getRobotActions()
@@ -293,7 +250,6 @@ public class ServicePackageService {
         return response;
     }
 
-    // ServicePackageService
     public Map<String, Object> getActionLimitInfo(String level) {
         int limit = resolveActionLimitByLevel(level);
         Map<String, Object> result = new HashMap<>();

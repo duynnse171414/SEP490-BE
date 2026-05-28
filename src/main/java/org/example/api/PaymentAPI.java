@@ -27,7 +27,7 @@ public class PaymentAPI {
     private final UserPackageService userPackageService;
 
 
-    // ===================== CREATE PAYMENT =====================
+
     @PostMapping("/create/{servicePackageId}")
     public QRPaymentService.PaymentInfo createPayment(
             @PathVariable Long servicePackageId,
@@ -41,16 +41,13 @@ public class PaymentAPI {
     }
 
 
-
-
-    // ✅ Manager xem tất cả package đã mua
     @GetMapping("/manager/pending")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public List<UserPackageResponse> getPending() {
         return userPackageService.getByStatus(PaymentStatus.PENDING);
     }
 
-    // ✅ Manager xem theo elderly
+
     @GetMapping("/manager/elderly/{accountId}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public List<UserPackageResponse> getByAccount(@PathVariable Long accountId) {

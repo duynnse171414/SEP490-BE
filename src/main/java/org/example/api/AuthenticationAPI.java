@@ -24,12 +24,8 @@ import java.util.stream.Collectors;
 
 public class AuthenticationAPI {
 
-    // DI: Dependency Injection
     @Autowired
     AuthenticationService authenticationService;
-
-    @Autowired
-    ModelMapper modelMapper;
 
     @PostMapping("register")
     public ResponseEntity register(@Valid @RequestBody RegisterRequest registerRequest) {
@@ -50,25 +46,25 @@ public class AuthenticationAPI {
         return ResponseEntity.ok("Verify OTP successfully!");
     }
 
-    // Bước 1: Gửi OTP reset password về email
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
         authenticationService.forgotPassword(request.getEmail());
         Map<String, String> response = new HashMap<>();
-        response.put("message", "OTP đã được gửi về email " + request.getEmail());
+        response.put("message", "The OTP has been sent to your email." + request.getEmail());
         return ResponseEntity.ok(response);
     }
 
-    // Bước 2: Xác nhận OTP + đặt mật khẩu mới
+
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        authenticationService.resetPassword(request); // ✅ truyền request, không phải new
+        authenticationService.resetPassword(request);
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.");
+        response.put("message",
+                "Password reset successful. Please log in again.");
         return ResponseEntity.ok(response);
     }
 
-    // Change password (đang login)
+
     @PostMapping("/change-password")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request) {
@@ -78,7 +74,8 @@ public class AuthenticationAPI {
                 request.getConfirmPassword()
         );
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Đổi mật khẩu thành công.");
+        response.put("message",
+                "Password changed successfully.");
         return ResponseEntity.ok(response);
     }
 

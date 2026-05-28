@@ -68,7 +68,6 @@ public class ServicePackageAPI {
         return service.update(id, request);
     }
 
-    // Cũ: @DeleteMapping("/{id}")  → đổi tên cho rõ nghĩa
     @PatchMapping("/{id}/deactivate")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public void deactivate(@PathVariable Long id) {
@@ -81,23 +80,18 @@ public class ServicePackageAPI {
         return service.activate(id);
     }
 
-    // Endpoint admin xem tất cả
+
     @GetMapping("/admin/all")
     @PreAuthorize("hasRole('ADMINISTRATOR')")
     public List<ServicePackageResponse> getAllForAdmin() {
         return service.getAllForAdmin();
     }
 
-    // ServicePackageAPI
+
     @GetMapping("/action-limit")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public Map<String, Object> getActionLimit(@RequestParam String level) {
         return service.getActionLimitInfo(level);
     }
 
-//    // GET package theo account
-//    @GetMapping("/account/{accountId}")
-//    public List<ServicePackageResponse> getByAccount(@PathVariable Long accountId) {
-//        return service.getPackagesByAccount(accountId);
-//    }
 }

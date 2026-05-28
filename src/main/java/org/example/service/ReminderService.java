@@ -47,13 +47,7 @@ public class ReminderService {
     private static final int FREE_LIMIT = 5;
     private static final int UNLIMITED = -1;
 
-    /**
-     * Trả về limit reminder cho elderly:
-     *  - Chưa mua gói còn hạn → 5
-     *  - BASIC    → 5
-     *  - STANDARD → 15
-     *  - PREMIUM  → unlimited (-1)
-     */
+
     private int resolveLimitForElderly(Long elderlyId) {
 
         Optional<UserPackage> activeOpt = userPackageRepository
@@ -71,7 +65,6 @@ public class ReminderService {
         try {
             pkgLevel = PackageLevel.valueOf(level.toUpperCase());
         } catch (Exception e) {
-            // Level lạ → fallback về free để khỏi block user
             return FREE_LIMIT;
         }
 
@@ -99,7 +92,7 @@ public class ReminderService {
             throw new RuntimeException("scheduleTime is required");
         }
 
-        // ✅ CHECK 1: Reminder đã từng tồn tại và bị xóa mềm
+
         Optional<Reminder> deletedDuplicate = repository
                 .findByElderlyIdAndTitleAndScheduleTimeAndDeletedTrue(
                         elderly.getId(),
@@ -107,19 +100,16 @@ public class ReminderService {
                         request.getScheduleTime());
 
         if (deletedDuplicate.isPresent()) {
-            throw new RuntimeException(
-                    "This reminder was previously deleted (id=" + deletedDuplicate.get().getId() +
+            throw new RuntimeException("This reminder was previously deleted (id=" + deletedDuplicate.get().getId() +
                             "). Please restore instead of creating a new one."
             );
         }
 
-        // ✅ CHECK 2: Limit theo gói của elderly
         int limit = resolveLimitForElderly(elderly.getId());
         if (limit != UNLIMITED) {
             long currentCount = repository.countByElderlyIdAndDeletedFalse(elderly.getId());
             if (currentCount >= limit) {
-                throw new ReminderLimitException(
-                        "Elderly, this has reached its limit. " + limit + " reminders. " +
+                throw new ReminderLimitException("Elderly, this has reached its limit. " + limit + " reminders. " +
                                 "Please upgrade your package to create more."
                 );
             }
@@ -143,14 +133,12 @@ public class ReminderService {
     // GET ALL
     public List<ReminderResponse> getAll() {
 
-        // 🔥 LẤY USER ĐANG LOGIN
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
         Account account = accountRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        // ✅ CHỈ LẤY REMINDER CỦA ACCOUNT NÀY
         return repository.findByAccountIdAndDeletedFalse(account.getId())
                 .stream()
                 .map(this::mapToResponse)
@@ -160,21 +148,18 @@ public class ReminderService {
     // GET BY ID
     public ReminderResponse getById(Long id) {
 
-        // 🔥 LẤY USER ĐANG LOGIN
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
         Account account = accountRepository.findByEmail(username)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        // ✅ CHỈ LẤY REMINDER CỦA ACCOUNT NÀY
         Reminder reminder = repository.findByIdAndAccountIdAndDeletedFalse(id, account.getId())
                 .orElseThrow(() -> new RuntimeException("Reminder not found or access denied"));
 
         return mapToResponse(reminder);
     }
 
-    // Lấy danh sách reminder đã xóa (cho UI thùng rác)
     public List<ReminderResponse> getDeletedReminders() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Account account = accountRepository.findByEmail(auth.getName())
@@ -195,7 +180,6 @@ public class ReminderService {
             throw new RuntimeException("scheduleTime is required");
         }
 
-        // ✅ Thêm: check trùng với reminder đã deleted (trừ chính nó)
         Optional<Reminder> deletedDuplicate = repository
                 .findByElderlyIdAndTitleAndScheduleTimeAndDeletedTrue(
                         reminder.getElderly().getId(),
@@ -203,8 +187,7 @@ public class ReminderService {
                         request.getScheduleTime());
 
         if (deletedDuplicate.isPresent() && !deletedDuplicate.get().getId().equals(id)) {
-            throw new RuntimeException(
-                    "This reminder was previously deleted (id=" + deletedDuplicate.get().getId() +
+            throw new RuntimeException("This reminder was previously deleted (id=" + deletedDuplicate.get().getId() +
                             "). Please restore instead of creating a new one."
             );
         }
@@ -287,7 +270,6 @@ public class ReminderService {
         Reminder reminder = repository.findByIdAndAccountIdAndDeletedFalse(id, account.getId())
                 .orElseThrow(() -> new RuntimeException("Reminder not found or access denied"));
 
-        // Flip trạng thái
         reminder.setActive(!reminder.isActive());
         repository.save(reminder);
         return mapToResponse(reminder);
@@ -298,12 +280,10 @@ public class ReminderService {
         Reminder reminder = repository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new RuntimeException("Reminder not found"));
 
-        // ✅ Lấy tất cả log liên quan đến reminder này
         List<ReminderLog> logs = reminderLogRepository.findByReminderId(reminder.getId());
 
         for (ReminderLog log : logs) {
 
-            // ✅ Xóa mềm tất cả alert liên quan đến log này
             List<AlertNotification> alerts =
                     alertNotificationRepository.findByReminderLogId(log.getId());
 
@@ -312,12 +292,11 @@ public class ReminderService {
             }
             alertNotificationRepository.saveAll(alerts);
 
-            // ✅ Xóa mềm log
+
             log.setDeleted(true);
         }
         reminderLogRepository.saveAll(logs);
 
-        // ✅ Xóa mềm reminder
         reminder.setDeleted(true);
         repository.save(reminder);
     }
@@ -335,7 +314,6 @@ public class ReminderService {
             throw new RuntimeException("Reminder has not been deleted.");
         }
 
-        // Check limit trước khi restore
         int limit = resolveLimitForElderly(reminder.getElderly().getId());
         if (limit != UNLIMITED) {
             long currentCount = repository.countByElderlyIdAndDeletedFalse(
@@ -347,7 +325,6 @@ public class ReminderService {
             }
         }
 
-        // ✅ Restore log và alert liên quan
         List<ReminderLog> logs = reminderLogRepository.findByReminderId(reminder.getId());
 
         for (ReminderLog log : logs) {
@@ -362,8 +339,6 @@ public class ReminderService {
             log.setDeleted(false);
         }
         reminderLogRepository.saveAll(logs);
-
-        // ✅ Restore reminder
         reminder.setDeleted(false);
         repository.save(reminder);
         return mapToResponse(reminder);

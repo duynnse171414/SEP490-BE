@@ -49,14 +49,12 @@ public class ReminderAPI {
         return service.update(id, request);
     }
 
-    // GET by caregiver
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
     @GetMapping("/caregiver/{caregiverId}")
     public List<ReminderResponse> getByCaregiver(@PathVariable Long caregiverId) {
         return service.getByCaregiverId(caregiverId);
     }
 
-    // GET by elderly
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     @GetMapping("/elderly/{elderlyId}")
     public List<ReminderResponse> getByElderly(@PathVariable Long elderlyId) {
@@ -72,7 +70,6 @@ public class ReminderAPI {
         );
     }
 
-    // ReminderAPI
     @GetMapping("/quota/elderly/{elderlyId}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     public Map<String, Object> getQuotaByElderly(@PathVariable Long elderlyId) {
@@ -80,28 +77,27 @@ public class ReminderAPI {
     }
 
 
-    // Bật/tắt reminder
     @PatchMapping("/{id}/toggle-active")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     public ReminderResponse toggleActive(@PathVariable Long id) {
         return service.toggleActive(id);
     }
 
-    // Xóa mềm
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
 
-    // Thùng rác
+
     @GetMapping("/trash")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     public List<ReminderResponse> getDeleted() {
         return service.getDeletedReminders();
     }
 
-    // Khôi phục
+
     @PostMapping("/{id}/restore")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     public ReminderResponse restore(@PathVariable Long id) {

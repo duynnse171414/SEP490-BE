@@ -73,7 +73,7 @@ public class AlertNotificationService {
 
     public List<AlertNotificationResponse> getByReminderLogId(Long reminderId) {
 
-        // optional: check reminder tồn tại
+
         reminderLogRepository.findById(reminderId)
                 .orElseThrow(() -> new RuntimeException("Reminder not found"));
 
@@ -101,7 +101,7 @@ public class AlertNotificationService {
             alert.setResolved(request.getResolved());
         }
 
-        // 👉 update reminder nếu có truyền lên
+
         if (request.getReminderLogId() != null) {
             ReminderLog reminderLog = reminderLogRepository.findById(request.getReminderLogId())
                     .orElseThrow(() -> new RuntimeException("Reminder not found"));
@@ -132,13 +132,13 @@ public class AlertNotificationService {
         response.setResolved(alert.isResolved());
         response.setCreatedAt(alert.getCreatedAt());
 
-        // Elderly
+
         if (alert.getElderly() != null) {
             response.setElderlyId(alert.getElderly().getId());
             response.setElderlyName(alert.getElderly().getName());
         }
 
-        // 👉 NEW: Reminder mapping
+
         if (alert.getReminderLog() != null) {
             response.setReminderLogId(alert.getReminderLog().getId());
         }

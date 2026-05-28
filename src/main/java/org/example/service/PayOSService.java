@@ -33,13 +33,13 @@ public class PayOSService {
     public String createPaymentLink(PayOSRequest request) {
         try {
             Map<String, Object> body = new LinkedHashMap<>();
-            body.put("orderCode", request.getOrderCode()); // phải là long/int
-            body.put("amount", request.getAmount());       // phải là int (VND)
-            body.put("description", request.getDescription()); // tối đa 25 ký tự
+            body.put("orderCode", request.getOrderCode());
+            body.put("amount", request.getAmount());
+            body.put("description", request.getDescription());
             body.put("returnUrl", request.getReturnUrl());
             body.put("cancelUrl", request.getCancelUrl());
 
-            // ✅ Tạo signature đúng chuẩn PayOS
+
             String signature = buildSignature(body);
             body.put("signature", signature);
 
@@ -73,14 +73,11 @@ public class PayOSService {
         }
     }
 
-    /**
-     * ✅ Đúng chuẩn PayOS:
-     * Sắp xếp key theo alphabet → nối thành "key1=val1&key2=val2" → HMAC-SHA256 → HEX
-     */
+
     private String buildSignature(Map<String, Object> data) {
-        // Chỉ lấy các field PayOS yêu cầu ký
+
         List<String> keys = Arrays.asList("amount", "cancelUrl", "description", "orderCode", "returnUrl");
-        Collections.sort(keys); // sắp xếp alphabet
+        Collections.sort(keys);
 
         StringBuilder sb = new StringBuilder();
         for (String key : keys) {
@@ -93,9 +90,7 @@ public class PayOSService {
         return hmacSHA256Hex(sb.toString(), checksumKey);
     }
 
-    /**
-     * ✅ HMAC-SHA256 trả về HEX (không phải Base64)
-     */
+
     private String hmacSHA256Hex(String data, String key) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
@@ -104,7 +99,7 @@ public class PayOSService {
 
             byte[] hash = mac.doFinal(data.getBytes("UTF-8"));
 
-            // ✅ convert sang HEX
+
             StringBuilder hexString = new StringBuilder();
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);

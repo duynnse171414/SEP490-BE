@@ -17,7 +17,6 @@ public class SystemLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // USER đã đổi thành Account
     @ManyToOne
     @JoinColumn(name = "account_id")
     private Account account;

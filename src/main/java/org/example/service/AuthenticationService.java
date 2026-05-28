@@ -79,7 +79,7 @@ public class AuthenticationService implements UserDetailsService {
 
         account.setVerified(false);
         account.setRole(Role.valueOf("FAMILYMEMBER"));
-        // 👉 Tạo OTP
+
         String otp = generateOtp();
 
         account.setOtp(otp);
@@ -87,7 +87,7 @@ public class AuthenticationService implements UserDetailsService {
 
         Account newAccount = accountRepository.save(account);
 
-        // 👉 Gửi mail
+
         emailService.sendOtpEmail(account.getEmail(), otp);
 
         AccountResponse response = modelMapper.map(newAccount, AccountResponse.class);
@@ -147,7 +147,7 @@ public class AuthenticationService implements UserDetailsService {
         return account;
     }
 
-    //ai đang gọi cái request này
+
     public Account getCurrentAccount() {
         Account account = (Account) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return accountRepository.findAccountById(account.getId());
@@ -203,7 +203,7 @@ public class AuthenticationService implements UserDetailsService {
         accountRepository.save(account);
     }
 
-    // Phương pháp tạo OTP 6 chữ số ngẫu nhiên
+
     private String generateOtp() {
         return String.format("%06d", new Random().nextInt(999999));
     }
@@ -225,7 +225,7 @@ public class AuthenticationService implements UserDetailsService {
             throw new NotFoundException("Account not found");
         }
 
-        // ✅ Update basic info
+
         if (updateRequest.getFullName() != null) {
             account.setFullName(updateRequest.getFullName());
         }
@@ -241,12 +241,12 @@ public class AuthenticationService implements UserDetailsService {
             account.setPassword(passwordEncoder.encode(updateRequest.getPassword())); // ✅
         }
 
-        // ✅ Update role
+
         if (updateRequest.getRole() != null) {
             account.setRole(updateRequest.getRole());
         }
 
-        // ✅ Lock / Unlock account (dùng field deleted hoặc thêm field isActive)
+
         if (updateRequest.getDeleted() != account.isDeleted()) {
             account.setDeleted(updateRequest.getDeleted());
         }
@@ -264,7 +264,7 @@ public class AuthenticationService implements UserDetailsService {
 
         Account savedAccount = accountRepository.save(account);
 
-        // 👉 TỰ ĐỘNG TẠO PROFILE
+
         if (savedAccount.getRole() == Role.CAREGIVER) {
             CaregiverProfile profile = new CaregiverProfile();
             profile.setAccount(savedAccount);
@@ -275,7 +275,7 @@ public class AuthenticationService implements UserDetailsService {
         return modelMapper.map(savedAccount, AccountResponse.class);
     }
 
-    // Bước 1: Gửi OTP về email
+
     public void forgotPassword(String email) {
 
         Account account = accountRepository.findByEmail(email.trim())
@@ -293,42 +293,42 @@ public class AuthenticationService implements UserDetailsService {
         emailService.sendResetPasswordOtp(account.getEmail(), otp);
     }
 
-    // Bước 2: Xác nhận OTP + set mật khẩu mới
+
     public void resetPassword(ResetPasswordRequest request) {
         if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new IllegalArgumentException("Email không được để trống.");
+            throw new IllegalArgumentException("The email address cannot be blank.");
         }
         if (request.getOtp() == null || request.getOtp().isBlank()) {
-            throw new IllegalArgumentException("OTP không được để trống.");
+            throw new IllegalArgumentException("The OTP can not be blank.");
         }
         if (request.getNewPassword() == null || request.getNewPassword().isBlank()) {
-            throw new IllegalArgumentException("Mật khẩu mới không được để trống.");
+            throw new IllegalArgumentException("The password can not blank.");
         }
         if (request.getConfirmPassword() == null || request.getConfirmPassword().isBlank()) {
-            throw new IllegalArgumentException("Mật khẩu xác nhận không được để trống.");
+            throw new IllegalArgumentException("The confirmation password can not be blank.");
         }
 
         Account account = accountRepository.findByEmail(request.getEmail().trim())
                 .orElseThrow(() -> new NotFoundException("Account not found"));
 
         if (account.getResetPasswordOtp() == null) {
-            throw new IllegalArgumentException("OTP chưa được tạo. Vui lòng yêu cầu lại.");
+            throw new IllegalArgumentException("OTP not generated. Please request again.");
         }
 
         if (!account.getResetPasswordOtp().equals(request.getOtp())) {
-            throw new IllegalArgumentException("OTP không đúng.");
+            throw new IllegalArgumentException("The OTP is incorrect.");
         }
 
         if (System.currentTimeMillis() > account.getResetPasswordOtpExpiredAt()) {
-            throw new IllegalArgumentException("OTP đã hết hạn. Vui lòng yêu cầu lại.");
+            throw new IllegalArgumentException("The OTP has expired. Please request it again.");
         }
 
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new IllegalArgumentException("Mật khẩu xác nhận không khớp.");
+            throw new IllegalArgumentException("The confirmation password doesn't match.");
         }
 
         if (passwordEncoder.matches(request.getNewPassword(), account.getPassword())) {
-            throw new IllegalArgumentException("Mật khẩu mới không được trùng mật khẩu cũ.");
+                throw new IllegalArgumentException("The new password must not be the same as the old password.");
         }
 
         account.setPassword(passwordEncoder.encode(request.getNewPassword()));

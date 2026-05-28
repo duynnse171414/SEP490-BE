@@ -17,12 +17,12 @@ public class RobotActionLibrary {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;        // "Hít đất"
-    private String code;        // "012"
-    private String type;        // ACTION / DANCE
+    private String name;
+    private String code;
+    private String type;
     private String description;
 
-    private Integer duration;   // seconds (optional)
+    private Integer duration;
     @ManyToMany(mappedBy = "robotActions")
     @JsonIgnore
     private List<ServicePackage> servicePackages;

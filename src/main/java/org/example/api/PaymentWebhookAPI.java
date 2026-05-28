@@ -36,7 +36,6 @@ public class PaymentWebhookAPI {
 
             Map<String, Object> data = (Map<String, Object>) dataObj;
 
-            // ✅ Dùng orderCode thay vì description
             Long orderCode = ((Number) data.get("orderCode")).longValue();
             Double amount = ((Number) data.get("amount")).doubleValue();
 

@@ -24,7 +24,7 @@ public class CaregiverProfile {
         @Column(name = "relationship")
         private String relationship;
 
-        // 🔥 FIX CHỖ NÀY
+
         @Column(name = "notification_preference")
         private String notificationPreference;
 

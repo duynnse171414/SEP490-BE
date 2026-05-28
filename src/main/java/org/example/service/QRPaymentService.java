@@ -51,7 +51,7 @@ public class QRPaymentService {
 
         String description = "UP:" + userPackage.getId();
 
-        // 👉 gọi PayOS
+
         String checkoutUrl = payOSService.createPaymentLink(
                 org.example.model.request.PayOSRequest.builder()
                         .orderCode(userPackage.getId())
@@ -69,22 +69,16 @@ public class QRPaymentService {
                 .build();
     }
 
-    private Long extractUserPackageId(String desc) {
-        try {
-            return Long.parseLong(desc.replace("UP:", ""));
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid description format: " + desc);
-        }
-    }
+
 
     @Transactional
     public void handlePaymentSuccess(Long orderCode, Double amount) {
 
-        // ✅ orderCode chính là userPackage.getId()
+
         UserPackage userPackage = userPackageRepository.findById(orderCode)
                 .orElseThrow(() -> new RuntimeException("UserPackage not found: " + orderCode));
 
-        // ✅ Chống duplicate webhook
+
         if (userPackage.getStatus() == PaymentStatus.PAID) {
             System.out.println("⚠️ Duplicate webhook ignored for orderCode: " + orderCode);
             return;
@@ -92,10 +86,8 @@ public class QRPaymentService {
 
         ServicePackage servicePackage = userPackage.getServicePackage();
 
-        // ✅ So sánh amount dùng long (tránh lỗi floating point)
-        // ✅ cast trực tiếp vì getPrice() là primitive double
         long expectedAmount = (long) servicePackage.getPrice();
-        long actualAmount = amount.longValue(); // amount vẫn là Double (wrapper) nên ok
+        long actualAmount = amount.longValue();
 
         if (expectedAmount != actualAmount) {
             userPackage.setStatus(PaymentStatus.FAILED);
@@ -103,7 +95,7 @@ public class QRPaymentService {
             throw new RuntimeException("Amount mismatch: expected=" + expectedAmount + ", actual=" + actualAmount);
         }
 
-        // ✅ Cập nhật trạng thái
+
         LocalDateTime now = LocalDateTime.now();
         userPackage.setStatus(PaymentStatus.PAID);
         userPackage.setAssignedAt(now);

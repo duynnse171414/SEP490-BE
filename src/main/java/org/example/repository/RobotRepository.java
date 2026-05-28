@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface RobotRepository extends JpaRepository<Robot, Long> {
 
-    List<Robot> findByDeletedFalse(); // nếu có soft delete
+    List<Robot> findByDeletedFalse();
 
     Optional<Robot> findByIdAndDeletedFalse(Long id);
 

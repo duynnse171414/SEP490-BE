@@ -35,7 +35,6 @@ public class ExerciseScriptService {
             script.setDurationMinutes(durationMinutes);
             script.setLevel(Enum.valueOf(ExerciseLevel.class, level.toUpperCase()));
 
-            // 🔥 đọc nội dung file
             String content = new String(file.getBytes());
             script.setUploadScript(content);
 
@@ -46,7 +45,7 @@ public class ExerciseScriptService {
             return mapToResponse(script);
 
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi đọc file", e);
+            throw new RuntimeException("File reading error", e);
         }
     }
 

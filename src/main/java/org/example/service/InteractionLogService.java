@@ -56,7 +56,6 @@ public class InteractionLogService {
 
     public List<InteractionLogResponse> getByElderlyId(Long elderlyId) {
 
-        // check tồn tại elderly (optional nhưng nên có)
         elderlyRepository.findById(elderlyId)
                 .orElseThrow(() -> new RuntimeException("Elderly not found"));
 
@@ -74,7 +73,6 @@ public class InteractionLogService {
         return mapToResponse(log);
     }
 
-    // UPDATE (chỉ cho update emotion nếu cần)
     public InteractionLogResponse updateEmotion(Long id, String emotion) {
 
         InteractionLog log = repository.findByIdAndDeletedFalse(id)
