@@ -19,10 +19,10 @@ public class ServicePackageService {
 
 
 
-     @Autowired
-     ServicePackageRepository repository;
+    @Autowired
+    ServicePackageRepository repository;
 
-     @Autowired
+    @Autowired
     UserPackageRepository userPackageRepository;
 
     @Autowired
@@ -61,8 +61,26 @@ public class ServicePackageService {
         }
     }
 
+    private void validateNoDuplicateActions(List<Long> robotActionIds) {
+        if (robotActionIds == null || robotActionIds.isEmpty()) return;
+
+        Set<Long> seen = new HashSet<>();
+        List<Long> duplicates = robotActionIds.stream()
+                .filter(id -> !seen.add(id))
+                .distinct()
+                .toList();
+
+        if (!duplicates.isEmpty()) {
+            throw new RobotActionLimitException(
+                    "Duplicate robot action IDs are not allowed: " + duplicates
+            );
+        }
+    }
+
     // CREATE
     public ServicePackageResponse create(ServicePackageRequest request) {
+
+        validateNoDuplicateActions(request.getRobotActionIds());
 
         int requestedSize = request.getRobotActionIds() != null
                 ? request.getRobotActionIds().size() : 0;
@@ -82,7 +100,7 @@ public class ServicePackageService {
                     robotActionRepository.findAllById(request.getRobotActionIds());
 
             if (actions.size() != request.getRobotActionIds().size()) {
-                throw new RuntimeException("Một số robot action không tồn tại");
+                throw new RuntimeException("Some actions performed by robots do not exist.");
             }
 
             servicePackage.setRobotActions(actions);
@@ -97,6 +115,8 @@ public class ServicePackageService {
 
         ServicePackage servicePackage = repository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new RuntimeException("Service package not found"));
+
+        validateNoDuplicateActions(request.getRobotActionIds());
 
         int requestedSize = request.getRobotActionIds() != null
                 ? request.getRobotActionIds().size() : 0;
@@ -114,7 +134,7 @@ public class ServicePackageService {
                     robotActionRepository.findAllById(request.getRobotActionIds());
 
             if (actions.size() != request.getRobotActionIds().size()) {
-                throw new RuntimeException("Một số robot action không tồn tại");
+                throw new RuntimeException("Some action robots don't exist.");
             }
 
             servicePackage.setRobotActions(actions);
