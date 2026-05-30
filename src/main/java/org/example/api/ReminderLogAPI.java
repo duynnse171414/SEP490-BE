@@ -21,7 +21,7 @@ public class ReminderLogAPI {
 
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ELDERLYUSER','CAREGIVER')")
+    @PreAuthorize("hasAnyRole('ELDERLYUSER','CAREGIVER','FAMILYMEMBER')")
     public ReminderLogResponse create(@RequestBody ReminderLogRequest request) {
         return service.create(request);
     }
