@@ -20,10 +20,6 @@ public class Reminder {
     private ElderlyProfile elderly;
 
     @ManyToOne
-    @JoinColumn(name = "caregiver_id")
-    private CaregiverProfile caregiver;
-
-    @ManyToOne
     @JoinColumn(name = "account_id", nullable = true)
     private Account account;
 

@@ -12,10 +12,8 @@ public class ReminderResponse {
 
     private Long elderlyId;
     private String elderlyName;
-    private Long accountId;
-    // private Long caregiverId;
-    private String caregiverName;
-
+//    private Long accountId;
+//    private String caregiverName;
     private String title;
     private ReminderType reminderType;
     private LocalDateTime scheduleTime;

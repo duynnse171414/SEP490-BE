@@ -9,8 +9,6 @@ import java.time.LocalDateTime;
 public class ReminderRequest {
 
     private Long elderlyId;
-    // private Long caregiverId;
-
     private String title;
     private ReminderType reminderType;
     private LocalDateTime scheduleTime;

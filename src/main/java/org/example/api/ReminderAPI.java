@@ -49,11 +49,11 @@ public class ReminderAPI {
         return service.update(id, request);
     }
 
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
-    @GetMapping("/caregiver/{caregiverId}")
-    public List<ReminderResponse> getByCaregiver(@PathVariable Long caregiverId) {
-        return service.getByCaregiverId(caregiverId);
-    }
+//    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER')")
+//    @GetMapping("/caregiver/{caregiverId}")
+//    public List<ReminderResponse> getByCaregiver(@PathVariable Long caregiverId) {
+//        return service.getByCaregiverId(caregiverId);
+//    }
 
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
     @GetMapping("/elderly/{elderlyId}")
@@ -61,14 +61,14 @@ public class ReminderAPI {
         return service.getByElderlyId(elderlyId);
     }
 
-    @GetMapping("/account/{accountId}")
-    public ResponseEntity<List<ReminderResponse>> getByAccount(
-            @PathVariable Long accountId) {
-
-        return ResponseEntity.ok(
-                service.getByAccount(accountId)
-        );
-    }
+//    @GetMapping("/account/{accountId}")
+//    public ResponseEntity<List<ReminderResponse>> getByAccount(
+//            @PathVariable Long accountId) {
+//
+//        return ResponseEntity.ok(
+//                service.getByAccount(accountId)
+//        );
+//    }
 
     @GetMapping("/quota/elderly/{elderlyId}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")

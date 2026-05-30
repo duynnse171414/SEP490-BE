@@ -81,9 +81,6 @@ public class ReminderService {
         ElderlyProfile elderly = elderlyRepository.findById(request.getElderlyId())
                 .orElseThrow(() -> new RuntimeException("Elderly not found"));
 
-        CaregiverProfile caregiver = caregiverRepository.findById(request.getCaregiverId())
-                .orElseThrow(() -> new RuntimeException("Caregiver not found"));
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Account account = accountRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Account not found"));
@@ -117,7 +114,6 @@ public class ReminderService {
 
         Reminder reminder = new Reminder();
         reminder.setElderly(elderly);
-        reminder.setCaregiver(caregiver);
         reminder.setAccount(account);
         reminder.setTitle(request.getTitle());
         reminder.setReminderType(request.getReminderType());
@@ -221,21 +217,9 @@ public class ReminderService {
             response.setElderlyName(reminder.getElderly().getName());
         }
 
-        if (reminder.getCaregiver() != null) {
-            response.setCaregiverId(reminder.getCaregiver().getId());
-            response.setCaregiverName(reminder.getCaregiver().getRelationship());
-        }
-
         return response;
     }
 
-    // GET BY CAREGIVER ID
-    public List<ReminderResponse> getByCaregiverId(Long caregiverId) {
-        return repository.findByCaregiverIdAndDeletedFalse(caregiverId)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
 
     // GET BY ELDERLY ID
     public List<ReminderResponse> getByElderlyId(Long elderlyId) {
@@ -245,22 +229,22 @@ public class ReminderService {
                 .collect(Collectors.toList());
     }
 
-    public List<ReminderResponse> getByAccount(Long accountId) {
-
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new NotFoundException("Account not found"));
-
-
-        return repository.findByAccountIdAndDeletedFalse(accountId)
-                .stream()
-                .map(profile -> {
-                    ReminderResponse response =
-                            modelMapper.map(profile, ReminderResponse.class);
-                    response.setAccountId(profile.getAccount().getId());
-                    return response;
-                })
-                .collect(Collectors.toList());
-    }
+//    public List<ReminderResponse> getByAccount(Long accountId) {
+//
+//        Account account = accountRepository.findById(accountId)
+//                .orElseThrow(() -> new NotFoundException("Account not found"));
+//
+//
+//        return repository.findByAccountIdAndDeletedFalse(accountId)
+//                .stream()
+//                .map(profile -> {
+//                    ReminderResponse response =
+//                            modelMapper.map(profile, ReminderResponse.class);
+//                    response.setAccountId(profile.getAccount().getId());
+//                    return response;
+//                })
+//                .collect(Collectors.toList());
+//    }
 
     public ReminderResponse toggleActive(Long id) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
