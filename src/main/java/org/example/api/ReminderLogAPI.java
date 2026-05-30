@@ -27,7 +27,7 @@ public class ReminderLogAPI {
     }
 
     @PostMapping("/{id}/confirm")
-    @PreAuthorize("hasAnyRole('ELDERLYUSER','CAREGIVER')")
+    @PreAuthorize("hasAnyRole('ELDERLYUSER','CAREGIVER','FAMILYMEMBER')")
     public ReminderLogResponse confirm(@PathVariable Long id) {
         return service.confirm(id);
     }
