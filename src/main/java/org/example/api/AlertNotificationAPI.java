@@ -21,7 +21,7 @@ public class AlertNotificationAPI {
 
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ELDERLYUSER','ADMINISTRATOR','CAREGIVER')")
+    @PreAuthorize("hasAnyRole('ELDERLYUSER','ADMINISTRATOR','CAREGIVER','FAMILYMEMBER')")
     public AlertNotificationResponse create(@RequestBody AlertNotificationRequest request) {
         return service.create(request);
     }
