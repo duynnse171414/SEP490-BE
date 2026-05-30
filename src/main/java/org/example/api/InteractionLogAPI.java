@@ -19,7 +19,7 @@ public class InteractionLogAPI {
 
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ELDERLYUSER','CAREGIVER')")
+    @PreAuthorize("hasAnyRole('ELDERLYUSER','CAREGIVER','FAMILYMEMBER')")
     public InteractionLogResponse create(@RequestBody InteractionLogRequest request) {
         return service.create(request);
     }
