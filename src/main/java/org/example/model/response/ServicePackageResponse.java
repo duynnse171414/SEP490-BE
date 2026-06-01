@@ -13,5 +13,5 @@ public class ServicePackageResponse {
     private double price;
     private boolean active;
     private Integer durationDays;
-    private List<RobotActionResponse> robotActions;
+    private Integer actionLimit;
 }

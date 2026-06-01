@@ -21,14 +21,5 @@ public class ServicePackage {
     private double price;
     private boolean active = true;
     private Integer durationDays;
-
-
-
-    @ManyToMany
-    @JoinTable(
-            name = "servicepackage_robot_action",
-            joinColumns = @JoinColumn(name = "service_package_id"),
-            inverseJoinColumns = @JoinColumn(name = "robot_actionlibrary_id")
-    )
-    private List<RobotActionLibrary> robotActions;
+    private Integer actionLimit;
 }

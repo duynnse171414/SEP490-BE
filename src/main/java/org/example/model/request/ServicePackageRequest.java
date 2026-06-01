@@ -13,5 +13,4 @@ public class ServicePackageRequest {
     private double price;
     private boolean active;
     private Integer durationDays;
-    private List<Long> robotActionIds;
 }

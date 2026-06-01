@@ -51,11 +51,6 @@ public class ServicePackageAPI {
     }
 
 
-    @GetMapping("/{id}/robot-actions")
-    public List<RobotActionLibrary> getRobotActions(@PathVariable Long id) {
-        return service.getRobotActions(id);
-    }
-
     @GetMapping("/level/{level}")
     public List<ServicePackageResponse> getByLevel(@PathVariable String level) {
         return service.getByLevel(level);

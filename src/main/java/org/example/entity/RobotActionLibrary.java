@@ -21,9 +21,6 @@ public class RobotActionLibrary {
     private String code;
     private String type;
     private String description;
-
     private Integer duration;
-    @ManyToMany(mappedBy = "robotActions")
-    @JsonIgnore
-    private List<ServicePackage> servicePackages;
+
 }
