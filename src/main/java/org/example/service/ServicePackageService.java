@@ -36,7 +36,7 @@ public class ServicePackageService {
             throw new RobotActionLimitException("Invalid level: " + level);
         }
         return switch (pkgLevel) {
-            case BASIC    -> 5;
+            case BASIC    -> 10;
             case STANDARD -> 15;
             case PREMIUM  -> UNLIMITED;
         };
