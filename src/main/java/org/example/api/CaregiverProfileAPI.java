@@ -31,7 +31,6 @@ public class CaregiverProfileAPI {
         return ResponseEntity.ok(caregiverProfileService.create(accountId, request));
     }
 
-
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public List<CaregiverProfileResponse> getAll() {
@@ -52,13 +51,11 @@ public class CaregiverProfileAPI {
         return caregiverProfileService.update(id, request);
     }
 
-
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRATOR')")
     public void delete(@PathVariable Long id) {
         caregiverProfileService.delete(id);
     }
-
 
     @GetMapping("/account/{accountId}")
     public ResponseEntity<List<CaregiverProfileResponse>> getByAccount(

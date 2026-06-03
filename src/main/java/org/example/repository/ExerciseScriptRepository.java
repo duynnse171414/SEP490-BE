@@ -13,5 +13,4 @@ public interface ExerciseScriptRepository extends JpaRepository<ExerciseScript, 
 
     Optional<ExerciseScript> findByIdAndDeletedFalse(Long id);
 
-    List<ExerciseScript> findByLevelAndDeletedFalse(ExerciseLevel level);
 }

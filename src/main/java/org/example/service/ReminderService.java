@@ -2,59 +2,65 @@ package org.example.service;
 
 import lombok.RequiredArgsConstructor;
 import org.example.entity.*;
+import org.example.exception.BadRequestException;
 import org.example.exception.NotFoundException;
 import org.example.exception.ReminderLimitException;
 import org.example.model.request.ReminderRequest;
+import org.example.model.response.QuotaResponse;
 import org.example.model.response.ReminderResponse;
 import org.example.repository.*;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Service xử lý nghiệp vụ Reminder (nhắc nhở cho người cao tuổi).
+ *
+ * Các nguyên tắc thiết kế:
+ *  - Constructor injection (field final) thay cho @Autowired field injection.
+ *  - Mọi truy cập đều được giới hạn theo account đang đăng nhập (chống IDOR).
+ *  - Các thao tác ghi nhiều bảng được bọc trong @Transactional để đảm bảo toàn vẹn dữ liệu.
+ *  - Ném exception nghiệp vụ rõ ràng (NotFoundException / BadRequestException / ReminderLimitException)
+ *    thay vì RuntimeException chung chung, để @RestControllerAdvice trả về đúng HTTP status.
+ */
 @Service
 @RequiredArgsConstructor
 public class ReminderService {
-    @Autowired
-    ReminderRepository repository;
-    @Autowired
-    ElderlyProfileRepository elderlyRepository;
-    @Autowired
-    CaregiverProfileRepository caregiverRepository;
 
-    @Autowired
-    AccountRepository accountRepository;
-
-    @Autowired
-    ModelMapper modelMapper;
-
-    @Autowired
-    UserPackageRepository userPackageRepository;
-
-    @Autowired
-    ReminderLogRepository reminderLogRepository;
-
-    @Autowired
-    AlertNotificationRepository alertNotificationRepository;
+    private final ReminderRepository repository;
+    private final ElderlyProfileRepository elderlyRepository;
+    private final AccountRepository accountRepository;
+    private final UserPackageRepository userPackageRepository;
+    private final ReminderLogRepository reminderLogRepository;
+    private final AlertNotificationRepository alertNotificationRepository;
 
     private static final int FREE_LIMIT = 5;
     private static final int UNLIMITED = -1;
 
+    // ============================================================
+    // HELPERS
+    // ============================================================
 
+    /** Lấy account đang đăng nhập từ SecurityContext (gom logic lặp lại ở nhiều method). */
+    private Account getCurrentAccount() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            throw new NotFoundException("No authenticated account in context");
+        }
+        return accountRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new NotFoundException("Account not found"));
+    }
+
+    /** Trả về giới hạn số reminder theo gói dịch vụ đang active của elderly. */
     private int resolveLimitForElderly(Long elderlyId) {
-
         Optional<UserPackage> activeOpt = userPackageRepository
                 .findFirstByElderlyProfileIdAndStatusAndExpiredAtAfterAndDeletedFalseOrderByExpiredAtDesc(
-                        elderlyId,
-                        PaymentStatus.PAID,        // ⚠️ đổi cho đúng enum
-                        LocalDateTime.now());
+                        elderlyId, PaymentStatus.PAID, LocalDateTime.now());
 
         if (activeOpt.isEmpty()) {
             return FREE_LIMIT;
@@ -64,53 +70,66 @@ public class ReminderService {
         PackageLevel pkgLevel;
         try {
             pkgLevel = PackageLevel.valueOf(level.toUpperCase());
-        } catch (Exception e) {
-            return FREE_LIMIT;
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return FREE_LIMIT; // dữ liệu level không hợp lệ -> coi như gói FREE
         }
 
         return switch (pkgLevel) {
-            case BASIC    -> 5;
+            case BASIC    -> 10;
             case STANDARD -> 15;
             case PREMIUM  -> UNLIMITED;
         };
     }
 
-    // CREATE
-    public ReminderResponse create(ReminderRequest request) {
-
-        ElderlyProfile elderly = elderlyRepository.findById(request.getElderlyId())
-                .orElseThrow(() -> new RuntimeException("Elderly not found"));
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Account account = accountRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
-        if (request.getScheduleTime() == null) {
-            throw new RuntimeException("scheduleTime is required");
-        }
-
-
-        Optional<Reminder> deletedDuplicate = repository
-                .findByElderlyIdAndTitleAndScheduleTimeAndDeletedTrue(
-                        elderly.getId(),
-                        request.getTitle(),
-                        request.getScheduleTime());
-
-        if (deletedDuplicate.isPresent()) {
-            throw new RuntimeException("This reminder was previously deleted (id=" + deletedDuplicate.get().getId() +
-                            "). Please restore instead of creating a new one."
-            );
-        }
-
-        int limit = resolveLimitForElderly(elderly.getId());
+    /** Kiểm tra hạn mức trước khi tạo / khôi phục. Ném ReminderLimitException nếu vượt. */
+    private void assertWithinLimit(Long elderlyId, String message) {
+        int limit = resolveLimitForElderly(elderlyId);
         if (limit != UNLIMITED) {
-            long currentCount = repository.countByElderlyIdAndDeletedFalse(elderly.getId());
+            long currentCount = repository.countByElderlyIdAndDeletedFalse(elderlyId);
             if (currentCount >= limit) {
-                throw new ReminderLimitException("Elderly, this has reached its limit. " + limit + " reminders. " +
-                                "Please upgrade your package to create more."
-                );
+                throw new ReminderLimitException(message + " (limit = " + limit + ").");
             }
         }
+    }
+
+    /** Bật/tắt cờ deleted cho toàn bộ log + alert liên quan tới reminder (dùng chung cho delete & restore). */
+    private void cascadeSoftDelete(Long reminderId, boolean deleted) {
+        List<ReminderLog> logs = reminderLogRepository.findByReminderId(reminderId);
+        for (ReminderLog log : logs) {
+            List<AlertNotification> alerts =
+                    alertNotificationRepository.findByReminderLogId(log.getId());
+            alerts.forEach(a -> a.setDeleted(deleted));
+            alertNotificationRepository.saveAll(alerts);
+            log.setDeleted(deleted);
+        }
+        reminderLogRepository.saveAll(logs);
+    }
+
+    // ============================================================
+    // CREATE
+    // ============================================================
+    @Transactional
+    public ReminderResponse create(ReminderRequest request) {
+        if (request.getScheduleTime() == null) {
+            throw new BadRequestException("scheduleTime is required");
+        }
+
+        Account account = getCurrentAccount();
+
+        ElderlyProfile elderly = elderlyRepository.findById(request.getElderlyId())
+                .orElseThrow(() -> new NotFoundException("Elderly not found"));
+
+        // Trùng với một reminder đã xóa mềm -> yêu cầu restore thay vì tạo mới
+        repository.findByElderlyIdAndTitleAndScheduleTimeAndDeletedTrue(
+                        elderly.getId(), request.getTitle(), request.getScheduleTime())
+                .ifPresent(d -> {
+                    throw new BadRequestException(
+                            "This reminder was previously deleted (id=" + d.getId()
+                                    + "). Please restore it instead of creating a new one.");
+                });
+
+        assertWithinLimit(elderly.getId(),
+                "This elderly has reached the reminder limit. Please upgrade the package to create more");
 
         Reminder reminder = new Reminder();
         reminder.setElderly(elderly);
@@ -122,89 +141,156 @@ public class ReminderService {
         reminder.setActive(request.getActive() != null ? request.getActive() : true);
         reminder.setDeleted(false);
 
-        repository.save(reminder);
-        return mapToResponse(reminder);
+        return mapToResponse(repository.save(reminder));
     }
 
-    // GET ALL
+    // ============================================================
+    // READ
+    // ============================================================
+    @Transactional(readOnly = true)
     public List<ReminderResponse> getAll() {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        Account account = accountRepository.findByEmail(username)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
+        Account account = getCurrentAccount();
         return repository.findByAccountIdAndDeletedFalse(account.getId())
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .stream().map(this::mapToResponse).toList();
     }
 
-    // GET BY ID
+    @Transactional(readOnly = true)
     public ReminderResponse getById(Long id) {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-
-        Account account = accountRepository.findByEmail(username)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
+        Account account = getCurrentAccount();
         Reminder reminder = repository.findByIdAndAccountIdAndDeletedFalse(id, account.getId())
-                .orElseThrow(() -> new RuntimeException("Reminder not found or access denied"));
-
+                .orElseThrow(() -> new NotFoundException("Reminder not found or access denied"));
         return mapToResponse(reminder);
     }
 
+    @Transactional(readOnly = true)
     public List<ReminderResponse> getDeletedReminders() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Account account = accountRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
+        Account account = getCurrentAccount();
         return repository.findByAccountIdAndDeletedTrue(account.getId())
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .stream().map(this::mapToResponse).toList();
     }
+    
+    @Transactional(readOnly = true)
+    public List<ReminderResponse> getByElderlyId(Long elderlyId) {
+        Account account = getCurrentAccount();
+        return repository.findByElderlyIdAndAccountIdAndDeletedFalse(elderlyId, account.getId())
+                .stream().map(this::mapToResponse).toList();
+    }
+
+    // ============================================================
     // UPDATE
+    // ============================================================
+    @Transactional
     public ReminderResponse update(Long id, ReminderRequest request) {
-
-        Reminder reminder = repository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new RuntimeException("Reminder not found"));
-
         if (request.getScheduleTime() == null) {
-            throw new RuntimeException("scheduleTime is required");
+            throw new BadRequestException("scheduleTime is required");
         }
 
-        Optional<Reminder> deletedDuplicate = repository
-                .findByElderlyIdAndTitleAndScheduleTimeAndDeletedTrue(
-                        reminder.getElderly().getId(),
-                        request.getTitle(),
-                        request.getScheduleTime());
+        Account account = getCurrentAccount();
+        Reminder reminder = repository.findByIdAndAccountIdAndDeletedFalse(id, account.getId())
+                .orElseThrow(() -> new NotFoundException("Reminder not found or access denied"));
 
-        if (deletedDuplicate.isPresent() && !deletedDuplicate.get().getId().equals(id)) {
-            throw new RuntimeException("This reminder was previously deleted (id=" + deletedDuplicate.get().getId() +
-                            "). Please restore instead of creating a new one."
-            );
-        }
+        repository.findByElderlyIdAndTitleAndScheduleTimeAndDeletedTrue(
+                        reminder.getElderly().getId(), request.getTitle(), request.getScheduleTime())
+                .filter(d -> !d.getId().equals(id))
+                .ifPresent(d -> {
+                    throw new BadRequestException(
+                            "This reminder was previously deleted (id=" + d.getId()
+                                    + "). Please restore it instead.");
+                });
 
         reminder.setTitle(request.getTitle());
         reminder.setReminderType(request.getReminderType());
         reminder.setScheduleTime(request.getScheduleTime());
         reminder.setRepeatPattern(request.getRepeatPattern());
-
         if (request.getActive() != null) {
             reminder.setActive(request.getActive());
         }
 
-        repository.save(reminder);
-        return mapToResponse(reminder);
+        return mapToResponse(repository.save(reminder));
     }
 
+    @Transactional
+    public ReminderResponse toggleActive(Long id) {
+        Account account = getCurrentAccount();
+        Reminder reminder = repository.findByIdAndAccountIdAndDeletedFalse(id, account.getId())
+                .orElseThrow(() -> new NotFoundException("Reminder not found or access denied"));
+
+        reminder.setActive(!reminder.isActive());
+        return mapToResponse(repository.save(reminder));
+    }
+
+    // ============================================================
+    // DELETE / RESTORE (soft delete)
+    // ============================================================
+    @Transactional
+    public void delete(Long id) {
+        Account account = getCurrentAccount();
+        Reminder reminder = repository.findByIdAndAccountIdAndDeletedFalse(id, account.getId())
+                .orElseThrow(() -> new NotFoundException("Reminder not found or access denied"));
+
+        cascadeSoftDelete(reminder.getId(), true);
+        reminder.setDeleted(true);
+        repository.save(reminder);
+    }
+
+    @Transactional
+    public ReminderResponse restore(Long id) {
+        Account account = getCurrentAccount();
+        Reminder reminder = repository.findByIdAndAccountId(id, account.getId())
+                .orElseThrow(() -> new NotFoundException("Reminder not found or access denied"));
+
+        if (!reminder.isDeleted()) {
+            throw new BadRequestException("Reminder has not been deleted.");
+        }
+
+        assertWithinLimit(reminder.getElderly().getId(),
+                "Cannot restore: reminder limit has been reached");
+
+        cascadeSoftDelete(reminder.getId(), false);
+        reminder.setDeleted(false);
+        return mapToResponse(repository.save(reminder));
+    }
+
+    // ============================================================
+    // QUOTA
+    // ============================================================
+    @Transactional(readOnly = true)
+    public QuotaResponse getQuotaByElderly(Long elderlyId) {
+        Optional<UserPackage> activeOpt = userPackageRepository
+                .findFirstByElderlyProfileIdAndStatusAndExpiredAtAfterAndDeletedFalseOrderByExpiredAtDesc(
+                        elderlyId, PaymentStatus.PAID, LocalDateTime.now());
+
+        int limit = resolveLimitForElderly(elderlyId);
+        long used = repository.countByElderlyIdAndDeletedFalse(elderlyId);
+        boolean unlimited = (limit == UNLIMITED);
+
+        QuotaResponse quota = new QuotaResponse();
+        quota.setElderlyId(elderlyId);
+        quota.setUsed(used);
+        quota.setLimit(limit);
+        quota.setRemaining(unlimited ? -1 : Math.max(0, limit - used));
+        quota.setUnlimited(unlimited);
+        quota.setUpgradeRequired(!unlimited && used >= limit);
+
+        if (activeOpt.isPresent()) {
+            ServicePackage pkg = activeOpt.get().getServicePackage();
+            quota.setHasActivePackage(true);
+            quota.setLevel(pkg.getLevel());
+            quota.setPackageName(pkg.getName());
+            quota.setExpiredAt(activeOpt.get().getExpiredAt());
+        } else {
+            quota.setHasActivePackage(false);
+            quota.setLevel("FREE");
+        }
+
+        return quota;
+    }
+
+    // ============================================================
+    // MAPPER
+    // ============================================================
     private ReminderResponse mapToResponse(Reminder reminder) {
-
         ReminderResponse response = new ReminderResponse();
-
         response.setId(reminder.getId());
         response.setTitle(reminder.getTitle());
         response.setReminderType(reminder.getReminderType());
@@ -216,149 +302,6 @@ public class ReminderService {
             response.setElderlyId(reminder.getElderly().getId());
             response.setElderlyName(reminder.getElderly().getName());
         }
-
         return response;
-    }
-
-
-    // GET BY ELDERLY ID
-    public List<ReminderResponse> getByElderlyId(Long elderlyId) {
-        return repository.findByElderlyIdAndDeletedFalse(elderlyId)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-
-//    public List<ReminderResponse> getByAccount(Long accountId) {
-//
-//        Account account = accountRepository.findById(accountId)
-//                .orElseThrow(() -> new NotFoundException("Account not found"));
-//
-//
-//        return repository.findByAccountIdAndDeletedFalse(accountId)
-//                .stream()
-//                .map(profile -> {
-//                    ReminderResponse response =
-//                            modelMapper.map(profile, ReminderResponse.class);
-//                    response.setAccountId(profile.getAccount().getId());
-//                    return response;
-//                })
-//                .collect(Collectors.toList());
-//    }
-
-    public ReminderResponse toggleActive(Long id) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Account account = accountRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
-        Reminder reminder = repository.findByIdAndAccountIdAndDeletedFalse(id, account.getId())
-                .orElseThrow(() -> new RuntimeException("Reminder not found or access denied"));
-
-        reminder.setActive(!reminder.isActive());
-        repository.save(reminder);
-        return mapToResponse(reminder);
-    }
-
-    public void delete(Long id) {
-
-        Reminder reminder = repository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new RuntimeException("Reminder not found"));
-
-        List<ReminderLog> logs = reminderLogRepository.findByReminderId(reminder.getId());
-
-        for (ReminderLog log : logs) {
-
-            List<AlertNotification> alerts =
-                    alertNotificationRepository.findByReminderLogId(log.getId());
-
-            for (AlertNotification alert : alerts) {
-                alert.setDeleted(true);
-            }
-            alertNotificationRepository.saveAll(alerts);
-
-
-            log.setDeleted(true);
-        }
-        reminderLogRepository.saveAll(logs);
-
-        reminder.setDeleted(true);
-        repository.save(reminder);
-    }
-
-    public ReminderResponse restore(Long id) {
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Account account = accountRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Account not found"));
-
-        Reminder reminder = repository.findByIdAndAccountId(id, account.getId())
-                .orElseThrow(() -> new RuntimeException("Reminder not found or access denied"));
-
-        if (!reminder.isDeleted()) {
-            throw new RuntimeException("Reminder has not been deleted.");
-        }
-
-        int limit = resolveLimitForElderly(reminder.getElderly().getId());
-        if (limit != UNLIMITED) {
-            long currentCount = repository.countByElderlyIdAndDeletedFalse(
-                    reminder.getElderly().getId());
-            if (currentCount >= limit) {
-                throw new ReminderLimitException(
-                        "Cannot be recovered: limit has been reached " + limit + " reminders."
-                );
-            }
-        }
-
-        List<ReminderLog> logs = reminderLogRepository.findByReminderId(reminder.getId());
-
-        for (ReminderLog log : logs) {
-            List<AlertNotification> alerts =
-                    alertNotificationRepository.findByReminderLogId(log.getId());
-
-            for (AlertNotification alert : alerts) {
-                alert.setDeleted(false);
-            }
-            alertNotificationRepository.saveAll(alerts);
-
-            log.setDeleted(false);
-        }
-        reminderLogRepository.saveAll(logs);
-        reminder.setDeleted(false);
-        repository.save(reminder);
-        return mapToResponse(reminder);
-    }
-
-
-    public Map<String, Object> getQuotaByElderly(Long elderlyId) {
-
-        Optional<UserPackage> activeOpt = userPackageRepository
-                .findFirstByElderlyProfileIdAndStatusAndExpiredAtAfterAndDeletedFalseOrderByExpiredAtDesc(
-                        elderlyId, PaymentStatus.PAID, LocalDateTime.now());
-
-        int limit = resolveLimitForElderly(elderlyId);
-        long used = repository.countByElderlyIdAndDeletedFalse(elderlyId);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("elderlyId", elderlyId);
-        result.put("used", used);
-        result.put("limit", limit);                            // -1 = unlimited
-        result.put("remaining", limit == UNLIMITED ? -1 : Math.max(0, limit - used));
-        result.put("unlimited", limit == UNLIMITED);
-
-        if (activeOpt.isPresent()) {
-            ServicePackage pkg = activeOpt.get().getServicePackage();
-            result.put("hasActivePackage", true);
-            result.put("level", pkg.getLevel());
-            result.put("packageName", pkg.getName());
-            result.put("expiredAt", activeOpt.get().getExpiredAt());
-        } else {
-            result.put("hasActivePackage", false);
-            result.put("level", "FREE");
-        }
-
-        result.put("upgradeRequired",
-                limit != UNLIMITED && used >= limit);
-
-        return result;
     }
 }

@@ -14,7 +14,6 @@ public interface InteractionLogRepository extends JpaRepository<InteractionLog, 
 
     List<InteractionLog> findByElderlyIdAndDeletedFalse(Long elderlyId);
 
-    List<InteractionLog> findByRobotIdAndDeletedFalse(Long robotId);
 
 
 }

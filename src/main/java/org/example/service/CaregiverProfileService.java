@@ -43,7 +43,6 @@ public class CaregiverProfileService {
 
         CaregiverProfile saved = caregiverProfileRepository.save(profile);
 
-        // ✅ map entity → response (giống Elderly)
         CaregiverProfileResponse response =
                 modelMapper.map(saved, CaregiverProfileResponse.class);
 
@@ -124,7 +123,6 @@ public class CaregiverProfileService {
 
                     response.setAccountId(profile.getAccount().getId());
 
-                    // ✅ set roomId
                     if (profile.getRoom() != null) {
                         response.setRoomId(profile.getRoom().getId());
                     }

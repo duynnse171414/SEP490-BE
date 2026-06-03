@@ -1,22 +1,35 @@
 package org.example.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.entity.*;
+import org.example.exception.BadRequestException;
+import org.example.exception.NotFoundException;
+import org.example.model.request.PayOSRequest;
 import org.example.repository.ElderlyProfileRepository;
 import org.example.repository.UserPackageRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 
-@RequiredArgsConstructor
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class QRPaymentService {
 
     private final UserPackageRepository userPackageRepository;
     private final ElderlyProfileRepository elderlyProfileRepository;
     private final PayOSService payOSService;
+
+    @Value("${payos.return-url:http://localhost:3000/success}")
+    private String returnUrl;
+
+    @Value("${payos.cancel-url:http://localhost:3000/cancel}")
+    private String cancelUrl;
+
 
     @Transactional
     public PaymentInfo createPayment(Account account,
@@ -24,43 +37,43 @@ public class QRPaymentService {
                                      Long elderlyId) {
 
         ElderlyProfile elderly = elderlyProfileRepository.findById(elderlyId)
-                .orElseThrow(() -> new RuntimeException("Elderly not found"));
+                .orElseThrow(() -> new NotFoundException("Elderly not found"));
 
-        // check pending
+
         if (userPackageRepository.existsByElderlyProfile_IdAndStatusAndDeletedFalse(
                 elderlyId, PaymentStatus.PENDING)) {
-            throw new RuntimeException("Already has pending payment");
+            throw new BadRequestException("This elderly already has a pending payment.");
         }
 
-        // check active
+
         if (userPackageRepository.existsByElderlyProfile_IdAndStatusAndDeletedFalse(
                 elderlyId, PaymentStatus.PAID)) {
-            throw new RuntimeException("Already has active package");
+            throw new BadRequestException("This elderly already has an active package.");
         }
 
-        // tạo userPackage
         UserPackage userPackage = new UserPackage();
         userPackage.setAccount(account);
         userPackage.setServicePackage(servicePackage);
         userPackage.setElderlyProfile(elderly);
         userPackage.setStatus(PaymentStatus.PENDING);
-        userPackage.setAssignedAt(java.time.LocalDateTime.now());
+        userPackage.setAssignedAt(LocalDateTime.now());
         userPackage.setDeleted(false);
-
         userPackageRepository.save(userPackage);
 
         String description = "UP:" + userPackage.getId();
 
-
         String checkoutUrl = payOSService.createPaymentLink(
-                org.example.model.request.PayOSRequest.builder()
+                PayOSRequest.builder()
                         .orderCode(userPackage.getId())
-                        .amount((int) servicePackage.getPrice())
+                        .amount((int) Math.round(servicePackage.getPrice()))
                         .description(description)
-                        .returnUrl("http://localhost:3000/success")
-                        .cancelUrl("http://localhost:3000/cancel")
+                        .returnUrl(returnUrl)
+                        .cancelUrl(cancelUrl)
                         .build()
         );
+
+        log.info("Created PENDING UserPackage id={} for elderlyId={}, amount={}",
+                userPackage.getId(), elderlyId, servicePackage.getPrice());
 
         return PaymentInfo.builder()
                 .checkoutUrl(checkoutUrl)
@@ -70,42 +83,40 @@ public class QRPaymentService {
     }
 
 
-
     @Transactional
     public void handlePaymentSuccess(Long orderCode, Double amount) {
 
-
         UserPackage userPackage = userPackageRepository.findById(orderCode)
-                .orElseThrow(() -> new RuntimeException("UserPackage not found: " + orderCode));
+                .orElseThrow(() -> new NotFoundException("UserPackage not found: " + orderCode));
 
 
         if (userPackage.getStatus() == PaymentStatus.PAID) {
-            System.out.println("⚠️ Duplicate webhook ignored for orderCode: " + orderCode);
+            log.warn("Duplicate webhook ignored for orderCode={}", orderCode);
             return;
         }
 
         ServicePackage servicePackage = userPackage.getServicePackage();
+        long expectedAmount = Math.round(servicePackage.getPrice());
+        long actualAmount = Math.round(amount);
 
-        long expectedAmount = (long) servicePackage.getPrice();
-        long actualAmount = amount.longValue();
 
         if (expectedAmount != actualAmount) {
             userPackage.setStatus(PaymentStatus.FAILED);
             userPackageRepository.save(userPackage);
-            throw new RuntimeException("Amount mismatch: expected=" + expectedAmount + ", actual=" + actualAmount);
+            log.error("Amount mismatch for orderCode={}: expected={}, actual={}",
+                    orderCode, expectedAmount, actualAmount);
+            return;
         }
-
 
         LocalDateTime now = LocalDateTime.now();
         userPackage.setStatus(PaymentStatus.PAID);
         userPackage.setAssignedAt(now);
-
         if (servicePackage.getDurationDays() != null) {
             userPackage.setExpiredAt(now.plusDays(servicePackage.getDurationDays()));
         }
-
         userPackageRepository.save(userPackage);
-        System.out.println("✅ UserPackage " + orderCode + " → PAID, expires: " + userPackage.getExpiredAt());
+
+        log.info("UserPackage {} -> PAID, expires {}", orderCode, userPackage.getExpiredAt());
     }
 
     @lombok.Data

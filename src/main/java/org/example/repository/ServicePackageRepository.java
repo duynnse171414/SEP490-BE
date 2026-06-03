@@ -10,9 +10,10 @@ public interface ServicePackageRepository extends JpaRepository<ServicePackage, 
 
 
     List<ServicePackage> findByActiveTrue();
-    Optional<ServicePackage> findByIdAndActiveTrue(Long id);
-    List<ServicePackage> findByLevelAndActiveTrue(String level);
 
+    Optional<ServicePackage> findByIdAndActiveTrue(Long id);
+
+    List<ServicePackage> findByLevelAndActiveTrue(String level);
 
     List<ServicePackage> findAll();
 

@@ -13,7 +13,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     List<Account> findByDeletedFalse();
 
-
     Account findAccountById(Long id);
 
     Optional<Account> findByEmail(String email);

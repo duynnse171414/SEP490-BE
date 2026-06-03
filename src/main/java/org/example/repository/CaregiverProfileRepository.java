@@ -13,7 +13,5 @@ public interface CaregiverProfileRepository extends JpaRepository<CaregiverProfi
 
     Optional<CaregiverProfile> findByIdAndDeletedFalse(Long id);
 
-
-
     List<CaregiverProfile> findByAccountIdAndDeletedFalse(Long accountId);
 }

@@ -16,10 +16,6 @@ public interface UserPackageRepository extends JpaRepository<UserPackage, Long> 
 
     Optional<UserPackage> findByIdAndDeletedFalse(Long id);
 
-    Optional<UserPackage> findTopByAccountAndDeletedFalseOrderByAssignedAtDesc(Account account);
-
-    boolean existsByServicePackage_IdAndDeletedFalse(Long servicePackageId);
-
     List<UserPackage> findByElderlyProfileIdAndDeletedFalse(Long elderlyId);
 
     List<UserPackage> findByStatusAndDeletedFalse(PaymentStatus status);
@@ -29,13 +25,5 @@ public interface UserPackageRepository extends JpaRepository<UserPackage, Long> 
     Optional<UserPackage> findFirstByElderlyProfileIdAndStatusAndExpiredAtAfterAndDeletedFalseOrderByExpiredAtDesc(
             Long elderlyProfileId, PaymentStatus status, LocalDateTime now);
 
-    List<UserPackage> findByAccountIdAndDeletedFalse(Long accountId);
-    @Query("""
-SELECT up FROM UserPackage up
-WHERE up.account = :account
-AND up.deleted = false
-AND (up.expiredAt IS NULL OR up.expiredAt > CURRENT_TIMESTAMP)
-ORDER BY up.assignedAt DESC
-""")
-    Optional<UserPackage> findActivePackage(Account account);
+
 }

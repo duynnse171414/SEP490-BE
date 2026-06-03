@@ -36,7 +36,7 @@ public class Account implements UserDetails {
 
     @NotBlank(message = "Gender can not be blank!")
     @Pattern(regexp = "^(Male|Female)$", message = ("Invalid Gender"))
-    String gender; // Đổi từ Gender thành gender (lowercase)
+    String gender;
 
     @Email(message = "Invalid Email!")
     @Column(unique = true)
@@ -101,7 +101,6 @@ public class Account implements UserDetails {
         return true;
     }
 
-    // Override getPassword() method từ UserDetails interface
     @Override
     public String getPassword() {
         return this.password;

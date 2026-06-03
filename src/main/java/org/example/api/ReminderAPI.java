@@ -2,16 +2,14 @@ package org.example.api;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.example.model.request.ReminderRequest;
-import org.example.model.response.ElderlyProfileResponse;
+import org.example.model.response.QuotaResponse;
 import org.example.model.response.ReminderResponse;
 import org.example.service.ReminderService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/reminders")
@@ -72,7 +70,7 @@ public class ReminderAPI {
 
     @GetMapping("/quota/elderly/{elderlyId}")
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','CAREGIVER','FAMILYMEMBER')")
-    public Map<String, Object> getQuotaByElderly(@PathVariable Long elderlyId) {
+    public QuotaResponse getQuotaByElderly(@PathVariable Long elderlyId) {
         return service.getQuotaByElderly(elderlyId);
     }
 

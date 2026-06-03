@@ -12,5 +12,5 @@ public interface RobotRepository extends JpaRepository<Robot, Long> {
 
     Optional<Robot> findByIdAndDeletedFalse(Long id);
 
-    boolean existsByAssignedElderlyId(Long elderlyId);
+
 }

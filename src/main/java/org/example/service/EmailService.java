@@ -32,7 +32,6 @@ public class EmailService {
         }
     }
 
-    // EmailService.java
     public void sendResetPasswordOtp(String toEmail, String otp) {
         MimeMessage message = mailSender.createMimeMessage();
         try {

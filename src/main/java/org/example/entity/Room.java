@@ -21,7 +21,6 @@ public class Room {
 
     private boolean deleted = false;
 
-
     @OneToMany(mappedBy = "room")
     private List<CaregiverProfile> caregiverProfiles = new ArrayList<>();
 

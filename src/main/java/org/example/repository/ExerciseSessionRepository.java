@@ -12,5 +12,5 @@ public interface ExerciseSessionRepository extends JpaRepository<ExerciseSession
 
     Optional<ExerciseSession> findByIdAndDeletedFalse(Long id);
 
-    List<ExerciseSession> findByElderlyIdAndDeletedFalse(Long elderlyId);
+
 }
