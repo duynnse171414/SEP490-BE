@@ -25,5 +25,6 @@ public interface UserPackageRepository extends JpaRepository<UserPackage, Long> 
     Optional<UserPackage> findFirstByElderlyProfileIdAndStatusAndExpiredAtAfterAndDeletedFalseOrderByExpiredAtDesc(
             Long elderlyProfileId, PaymentStatus status, LocalDateTime now);
 
+    Optional<UserPackage> findByElderlyProfile_IdAndStatusAndDeletedFalse(Long elderlyProfileId, PaymentStatus status);
 
 }

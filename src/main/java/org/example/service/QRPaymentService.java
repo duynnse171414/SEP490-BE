@@ -39,17 +39,28 @@ public class QRPaymentService {
         ElderlyProfile elderly = elderlyProfileRepository.findById(elderlyId)
                 .orElseThrow(() -> new NotFoundException("Elderly not found"));
 
-
+        // Chặn pending trùng
         if (userPackageRepository.existsByElderlyProfile_IdAndStatusAndDeletedFalse(
                 elderlyId, PaymentStatus.PENDING)) {
             throw new BadRequestException("This elderly already has a pending payment.");
         }
 
+        // Validate upgrade: nếu đang có gói PAID → phải nâng cấp, không hạ cấp
+        userPackageRepository
+                .findByElderlyProfile_IdAndStatusAndDeletedFalse(elderlyId, PaymentStatus.PAID)
+                .ifPresent(active -> {
+                    PackageLevel currentLevel = PackageLevel.valueOf(
+                            active.getServicePackage().getLevel().toUpperCase());
+                    PackageLevel newLevel = PackageLevel.valueOf(
+                            servicePackage.getLevel().toUpperCase());
 
-        if (userPackageRepository.existsByElderlyProfile_IdAndStatusAndDeletedFalse(
-                elderlyId, PaymentStatus.PAID)) {
-            throw new BadRequestException("This elderly already has an active package.");
-        }
+                    if (newLevel.getRank() < currentLevel.getRank()) {
+                        throw new BadRequestException(
+                                "Không thể hạ xuống gói thấp hơn. " +
+                                        "Gói hiện tại: " + currentLevel +
+                                        ", Gói mới: " + newLevel);
+                    }
+                });
 
         UserPackage userPackage = new UserPackage();
         userPackage.setAccount(account);
@@ -71,6 +82,8 @@ public class QRPaymentService {
                         .cancelUrl(cancelUrl)
                         .build()
         );
+        userPackage.setCheckoutUrl(checkoutUrl);
+        userPackageRepository.save(userPackage);
 
         log.info("Created PENDING UserPackage id={} for elderlyId={}, amount={}",
                 userPackage.getId(), elderlyId, servicePackage.getPrice());
@@ -83,13 +96,14 @@ public class QRPaymentService {
     }
 
 
+
     @Transactional
     public void handlePaymentSuccess(Long orderCode, Double amount) {
 
         UserPackage userPackage = userPackageRepository.findById(orderCode)
                 .orElseThrow(() -> new NotFoundException("UserPackage not found: " + orderCode));
 
-
+        // Idempotent: ignore duplicate webhook
         if (userPackage.getStatus() == PaymentStatus.PAID) {
             log.warn("Duplicate webhook ignored for orderCode={}", orderCode);
             return;
@@ -97,8 +111,7 @@ public class QRPaymentService {
 
         ServicePackage servicePackage = userPackage.getServicePackage();
         long expectedAmount = Math.round(servicePackage.getPrice());
-        long actualAmount = Math.round(amount);
-
+        long actualAmount   = Math.round(amount);
 
         if (expectedAmount != actualAmount) {
             userPackage.setStatus(PaymentStatus.FAILED);
@@ -108,6 +121,19 @@ public class QRPaymentService {
             return;
         }
 
+        Long elderlyId = userPackage.getElderlyProfile().getId();
+
+        // Ghi đè gói cũ (nếu có) → REPLACED
+        userPackageRepository
+                .findByElderlyProfile_IdAndStatusAndDeletedFalse(elderlyId, PaymentStatus.PAID)
+                .ifPresent(oldPackage -> {
+                    oldPackage.setStatus(PaymentStatus.REPLACED);
+                    userPackageRepository.save(oldPackage);
+                    log.info("UserPackage {} -> REPLACED by new package {}",
+                            oldPackage.getId(), orderCode);
+                });
+
+        // Activate gói mới
         LocalDateTime now = LocalDateTime.now();
         userPackage.setStatus(PaymentStatus.PAID);
         userPackage.setAssignedAt(now);
@@ -117,6 +143,19 @@ public class QRPaymentService {
         userPackageRepository.save(userPackage);
 
         log.info("UserPackage {} -> PAID, expires {}", orderCode, userPackage.getExpiredAt());
+    }
+
+    public PaymentInfo getPendingPayment(Long elderlyId) {
+
+        UserPackage pending = userPackageRepository
+                .findByElderlyProfile_IdAndStatusAndDeletedFalse(elderlyId, PaymentStatus.PENDING)
+                .orElseThrow(() -> new NotFoundException("No pending payment found for elderlyId: " + elderlyId));
+
+        return PaymentInfo.builder()
+                .checkoutUrl(pending.getCheckoutUrl())
+                .amount(pending.getServicePackage().getPrice())
+                .description("UP:" + pending.getId())
+                .build();
     }
 
     @lombok.Data

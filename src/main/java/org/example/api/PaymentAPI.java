@@ -31,7 +31,7 @@ public class PaymentAPI {
     @PostMapping("/create/{servicePackageId}")
     public QRPaymentService.PaymentInfo createPayment(
             @PathVariable Long servicePackageId,
-            @RequestParam Long elderlyProfileId,   // ✅ thêm dòng này
+            @RequestParam Long elderlyProfileId,
             @AuthenticationPrincipal Account account
     ) {
         ServicePackage servicePackage = servicePackageRepository.findById(servicePackageId)
@@ -52,5 +52,12 @@ public class PaymentAPI {
     @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
     public List<UserPackageResponse> getByAccount(@PathVariable Long accountId) {
         return userPackageService.getByElderlyId(accountId);
+    }
+    @GetMapping("/pending/{elderlyId}")
+    public QRPaymentService.PaymentInfo getPendingPayment(
+            @PathVariable Long elderlyId,
+            @AuthenticationPrincipal Account account
+    ) {
+        return qrPaymentService.getPendingPayment(elderlyId);
     }
 }

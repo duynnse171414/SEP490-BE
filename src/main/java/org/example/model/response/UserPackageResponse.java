@@ -1,5 +1,6 @@
 package org.example.model.response;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Data;
@@ -21,5 +22,6 @@ public class UserPackageResponse {
 
     private LocalDateTime assignedAt;
     private LocalDateTime expiredAt;
-
+    @Column(name = "checkout_url")
+    private String checkoutUrl;
 }
