@@ -39,13 +39,12 @@ public class QRPaymentService {
         ElderlyProfile elderly = elderlyProfileRepository.findById(elderlyId)
                 .orElseThrow(() -> new NotFoundException("Elderly not found"));
 
-        // Chặn pending trùng
+
         if (userPackageRepository.existsByElderlyProfile_IdAndStatusAndDeletedFalse(
                 elderlyId, PaymentStatus.PENDING)) {
             throw new BadRequestException("This elderly already has a pending payment.");
         }
-
-        // Validate upgrade: nếu đang có gói PAID → phải nâng cấp, không hạ cấp
+//check upgrade package
         userPackageRepository
                 .findByElderlyProfile_IdAndStatusAndDeletedFalse(elderlyId, PaymentStatus.PAID)
                 .ifPresent(active -> {
@@ -56,9 +55,7 @@ public class QRPaymentService {
 
                     if (newLevel.getRank() < currentLevel.getRank()) {
                         throw new BadRequestException(
-                                "Không thể hạ xuống gói thấp hơn. " +
-                                        "Gói hiện tại: " + currentLevel +
-                                        ", Gói mới: " + newLevel);
+                                "It's not possible to downgrade to a lower package. " + "Current package: " + currentLevel + ",New package: " + newLevel);
                     }
                 });
 
@@ -122,8 +119,7 @@ public class QRPaymentService {
         }
 
         Long elderlyId = userPackage.getElderlyProfile().getId();
-
-        // Ghi đè gói cũ (nếu có) → REPLACED
+//replace old package
         userPackageRepository
                 .findByElderlyProfile_IdAndStatusAndDeletedFalse(elderlyId, PaymentStatus.PAID)
                 .ifPresent(oldPackage -> {
@@ -133,7 +129,6 @@ public class QRPaymentService {
                             oldPackage.getId(), orderCode);
                 });
 
-        // Activate gói mới
         LocalDateTime now = LocalDateTime.now();
         userPackage.setStatus(PaymentStatus.PAID);
         userPackage.setAssignedAt(now);

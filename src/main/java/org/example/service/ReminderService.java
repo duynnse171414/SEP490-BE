@@ -18,16 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Service xử lý nghiệp vụ Reminder (nhắc nhở cho người cao tuổi).
- *
- * Các nguyên tắc thiết kế:
- *  - Constructor injection (field final) thay cho @Autowired field injection.
- *  - Mọi truy cập đều được giới hạn theo account đang đăng nhập (chống IDOR).
- *  - Các thao tác ghi nhiều bảng được bọc trong @Transactional để đảm bảo toàn vẹn dữ liệu.
- *  - Ném exception nghiệp vụ rõ ràng (NotFoundException / BadRequestException / ReminderLimitException)
- *    thay vì RuntimeException chung chung, để @RestControllerAdvice trả về đúng HTTP status.
- */
+
 @Service
 @RequiredArgsConstructor
 public class ReminderService {
@@ -46,7 +37,7 @@ public class ReminderService {
     // HELPERS
     // ============================================================
 
-    /** Lấy account đang đăng nhập từ SecurityContext (gom logic lặp lại ở nhiều method). */
+
     private Account getCurrentAccount() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || authentication.getName() == null) {
@@ -56,7 +47,7 @@ public class ReminderService {
                 .orElseThrow(() -> new NotFoundException("Account not found"));
     }
 
-    /** Trả về giới hạn số reminder theo gói dịch vụ đang active của elderly. */
+
     private int resolveLimitForElderly(Long elderlyId) {
         Optional<UserPackage> activeOpt = userPackageRepository
                 .findFirstByElderlyProfileIdAndStatusAndExpiredAtAfterAndDeletedFalseOrderByExpiredAtDesc(
@@ -71,7 +62,7 @@ public class ReminderService {
         try {
             pkgLevel = PackageLevel.valueOf(level.toUpperCase());
         } catch (IllegalArgumentException | NullPointerException e) {
-            return FREE_LIMIT; // dữ liệu level không hợp lệ -> coi như gói FREE
+            return FREE_LIMIT;
         }
 
         return switch (pkgLevel) {
@@ -81,7 +72,7 @@ public class ReminderService {
         };
     }
 
-    /** Kiểm tra hạn mức trước khi tạo / khôi phục. Ném ReminderLimitException nếu vượt. */
+
     private void assertWithinLimit(Long elderlyId, String message) {
         int limit = resolveLimitForElderly(elderlyId);
         if (limit != UNLIMITED) {
@@ -92,7 +83,7 @@ public class ReminderService {
         }
     }
 
-    /** Bật/tắt cờ deleted cho toàn bộ log + alert liên quan tới reminder (dùng chung cho delete & restore). */
+
     private void cascadeSoftDelete(Long reminderId, boolean deleted) {
         List<ReminderLog> logs = reminderLogRepository.findByReminderId(reminderId);
         for (ReminderLog log : logs) {
@@ -119,17 +110,14 @@ public class ReminderService {
         ElderlyProfile elderly = elderlyRepository.findById(request.getElderlyId())
                 .orElseThrow(() -> new NotFoundException("Elderly not found"));
 
-        // Trùng với một reminder đã xóa mềm -> yêu cầu restore thay vì tạo mới
         repository.findByElderlyIdAndTitleAndScheduleTimeAndDeletedTrue(
                         elderly.getId(), request.getTitle(), request.getScheduleTime())
                 .ifPresent(d -> {
                     throw new BadRequestException(
-                            "This reminder was previously deleted (id=" + d.getId()
-                                    + "). Please restore it instead of creating a new one.");
+                            "This reminder was previously deleted (id=" + d.getId() + "). Please restore it instead of creating a new one.");
                 });
 
-        assertWithinLimit(elderly.getId(),
-                "This elderly has reached the reminder limit. Please upgrade the package to create more");
+        assertWithinLimit(elderly.getId(), "This elderly has reached the reminder limit. Please upgrade the package to create more");
 
         Reminder reminder = new Reminder();
         reminder.setElderly(elderly);
