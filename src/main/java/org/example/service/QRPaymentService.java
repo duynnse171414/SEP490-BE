@@ -96,11 +96,15 @@ public class QRPaymentService {
 
     @Transactional
     public void handlePaymentSuccess(Long orderCode, Double amount) {
+        log.info(">>> handlePaymentSuccess START: orderCode={}, amount={}", orderCode, amount);
 
         UserPackage userPackage = userPackageRepository.findById(orderCode)
                 .orElseThrow(() -> new NotFoundException("UserPackage not found: " + orderCode));
+        log.info(">>> Found UserPackage: id={}, status={}, elderlyId={}",
+                userPackage.getId(),
+                userPackage.getStatus(),
+                userPackage.getElderlyProfile().getId());
 
-        // Idempotent: ignore duplicate webhook
         if (userPackage.getStatus() == PaymentStatus.PAID) {
             log.warn("Duplicate webhook ignored for orderCode={}", orderCode);
             return;
@@ -109,6 +113,7 @@ public class QRPaymentService {
         ServicePackage servicePackage = userPackage.getServicePackage();
         long expectedAmount = Math.round(servicePackage.getPrice());
         long actualAmount   = Math.round(amount);
+        log.info(">>> Amount check: expected={}, actual={}", expectedAmount, actualAmount);
 
         if (expectedAmount != actualAmount) {
             userPackage.setStatus(PaymentStatus.FAILED);
@@ -119,14 +124,15 @@ public class QRPaymentService {
         }
 
         Long elderlyId = userPackage.getElderlyProfile().getId();
-//replace old package
+        log.info(">>> Looking for old PAID package for elderlyId={}, excludeId={}", elderlyId, orderCode);
+
         userPackageRepository
-                .findByElderlyProfile_IdAndStatusAndDeletedFalse(elderlyId, PaymentStatus.PAID)
+                .findByElderlyProfile_IdAndStatusAndDeletedFalseAndIdNot(
+                        elderlyId, PaymentStatus.PAID, orderCode)
                 .ifPresent(oldPackage -> {
+                    log.info(">>> Replacing old package id={}", oldPackage.getId());
                     oldPackage.setStatus(PaymentStatus.REPLACED);
                     userPackageRepository.save(oldPackage);
-                    log.info("UserPackage {} -> REPLACED by new package {}",
-                            oldPackage.getId(), orderCode);
                 });
 
         LocalDateTime now = LocalDateTime.now();
@@ -136,8 +142,7 @@ public class QRPaymentService {
             userPackage.setExpiredAt(now.plusDays(servicePackage.getDurationDays()));
         }
         userPackageRepository.save(userPackage);
-
-        log.info("UserPackage {} -> PAID, expires {}", orderCode, userPackage.getExpiredAt());
+        log.info(">>> UserPackage {} -> PAID, expires {}", orderCode, userPackage.getExpiredAt());
     }
 
     public PaymentInfo getPendingPayment(Long elderlyId) {

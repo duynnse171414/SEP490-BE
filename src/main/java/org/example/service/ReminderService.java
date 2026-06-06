@@ -182,8 +182,7 @@ public class ReminderService {
                 .filter(d -> !d.getId().equals(id))
                 .ifPresent(d -> {
                     throw new BadRequestException(
-                            "This reminder was previously deleted (id=" + d.getId()
-                                    + "). Please restore it instead.");
+                            "This reminder was previously deleted (id=" + d.getId() + "). Please restore it instead.");
                 });
 
         reminder.setTitle(request.getTitle());

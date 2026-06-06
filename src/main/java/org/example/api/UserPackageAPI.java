@@ -20,7 +20,7 @@ public class UserPackageAPI {
 
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMINISTRATOR','MANAGER','FAMILYMEMBER')")
     public UserPackageResponse create(@RequestBody UserPackageRequest request) {
         return userPackageService.create(request);
     }

@@ -27,4 +27,6 @@ public interface UserPackageRepository extends JpaRepository<UserPackage, Long> 
 
     Optional<UserPackage> findByElderlyProfile_IdAndStatusAndDeletedFalse(Long elderlyProfileId, PaymentStatus status);
 
+    Optional<UserPackage> findByElderlyProfile_IdAndStatusAndDeletedFalseAndIdNot(Long elderlyProfileId, PaymentStatus status, Long excludeId);
+
 }
