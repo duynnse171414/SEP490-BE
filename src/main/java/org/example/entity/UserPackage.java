@@ -28,6 +28,7 @@ public class UserPackage {
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
+    private Long orderCode;
 
     private LocalDateTime assignedAt;
     private LocalDateTime expiredAt;
