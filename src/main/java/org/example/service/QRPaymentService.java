@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,7 +29,6 @@ public class QRPaymentService {
     @Value("${payos.cancel-url:http://localhost:3000/cancel}")
     private String cancelUrl;
 
-
     @Transactional
     public PaymentInfo createPayment(Account account,
                                      ServicePackage servicePackage,
@@ -39,12 +37,11 @@ public class QRPaymentService {
         ElderlyProfile elderly = elderlyProfileRepository.findById(elderlyId)
                 .orElseThrow(() -> new NotFoundException("Elderly not found"));
 
-
         if (userPackageRepository.existsByElderlyProfile_IdAndStatusAndDeletedFalse(
                 elderlyId, PaymentStatus.PENDING)) {
             throw new BadRequestException("This elderly already has a pending payment.");
         }
-//check upgrade package
+
         userPackageRepository
                 .findByElderlyProfile_IdAndStatusAndDeletedFalse(elderlyId, PaymentStatus.PAID)
                 .ifPresent(active -> {
@@ -55,9 +52,13 @@ public class QRPaymentService {
 
                     if (newLevel.getRank() < currentLevel.getRank()) {
                         throw new BadRequestException(
-                                "It's not possible to downgrade to a lower package. " + "Current package: " + currentLevel + ",New package: " + newLevel);
+                                "It's not possible to downgrade to a lower package. "
+                                + "Current package: " + currentLevel
+                                + ", New package: " + newLevel);
                     }
                 });
+
+        long orderCode = System.currentTimeMillis();
 
         UserPackage userPackage = new UserPackage();
         userPackage.setAccount(account);
@@ -66,13 +67,14 @@ public class QRPaymentService {
         userPackage.setStatus(PaymentStatus.PENDING);
         userPackage.setAssignedAt(LocalDateTime.now());
         userPackage.setDeleted(false);
+        userPackage.setOrderCode(orderCode);
         userPackageRepository.save(userPackage);
 
         String description = "UP:" + userPackage.getId();
 
         String checkoutUrl = payOSService.createPaymentLink(
                 PayOSRequest.builder()
-                        .orderCode(userPackage.getId())
+                        .orderCode(orderCode)
                         .amount((int) Math.round(servicePackage.getPrice()))
                         .description(description)
                         .returnUrl(returnUrl)
@@ -82,8 +84,8 @@ public class QRPaymentService {
         userPackage.setCheckoutUrl(checkoutUrl);
         userPackageRepository.save(userPackage);
 
-        log.info("Created PENDING UserPackage id={} for elderlyId={}, amount={}",
-                userPackage.getId(), elderlyId, servicePackage.getPrice());
+        log.info("Created PENDING UserPackage id={} orderCode={} for elderlyId={}, amount={}",
+                userPackage.getId(), orderCode, elderlyId, servicePackage.getPrice());
 
         return PaymentInfo.builder()
                 .checkoutUrl(checkoutUrl)
@@ -92,13 +94,11 @@ public class QRPaymentService {
                 .build();
     }
 
-
-
     @Transactional
     public void handlePaymentSuccess(Long orderCode, Double amount) {
         log.info(">>> handlePaymentSuccess START: orderCode={}, amount={}", orderCode, amount);
 
-        UserPackage userPackage = userPackageRepository.findById(orderCode)
+        UserPackage userPackage = userPackageRepository.findByOrderCode(orderCode)
                 .orElseThrow(() -> new NotFoundException("UserPackage not found: " + orderCode));
         log.info(">>> Found UserPackage: id={}, status={}, elderlyId={}",
                 userPackage.getId(),
@@ -124,11 +124,12 @@ public class QRPaymentService {
         }
 
         Long elderlyId = userPackage.getElderlyProfile().getId();
-        log.info(">>> Looking for old PAID package for elderlyId={}, excludeId={}", elderlyId, orderCode);
+        log.info(">>> Looking for old PAID package for elderlyId={}, excludeId={}",
+                elderlyId, userPackage.getId());
 
         userPackageRepository
                 .findByElderlyProfile_IdAndStatusAndDeletedFalseAndIdNot(
-                        elderlyId, PaymentStatus.PAID, orderCode)
+                        elderlyId, PaymentStatus.PAID, userPackage.getId())
                 .ifPresent(oldPackage -> {
                     log.info(">>> Replacing old package id={}", oldPackage.getId());
                     oldPackage.setStatus(PaymentStatus.REPLACED);
@@ -146,10 +147,10 @@ public class QRPaymentService {
     }
 
     public PaymentInfo getPendingPayment(Long elderlyId) {
-
         UserPackage pending = userPackageRepository
                 .findByElderlyProfile_IdAndStatusAndDeletedFalse(elderlyId, PaymentStatus.PENDING)
-                .orElseThrow(() -> new NotFoundException("No pending payment found for elderlyId: " + elderlyId));
+                .orElseThrow(() -> new NotFoundException(
+                        "No pending payment found for elderlyId: " + elderlyId));
 
         return PaymentInfo.builder()
                 .checkoutUrl(pending.getCheckoutUrl())
